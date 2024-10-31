@@ -9,6 +9,7 @@ include { paramsSummaryMap       } from 'plugin/nf-schema'
 include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_bcaortho_pipeline'
+include { SEQTK_TRIM             } from '../modules/nf-core/seqtk/trim/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -24,6 +25,7 @@ workflow BCAORTHO {
 
     ch_versions = Channel.empty()
     ch_multiqc_files = Channel.empty()
+    
     //
     // MODULE: Run FastQC
     //
@@ -32,6 +34,17 @@ workflow BCAORTHO {
     )
     ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]})
     ch_versions = ch_versions.mix(FASTQC.out.versions.first())
+
+    //
+    // MODULE: Run SEQTK_TRIM
+    //
+    if (!params.skip_trim) {
+        SEQTK_TRIM (
+            ch_samplesheet
+        )
+        ch_trimmed  = SEQTK_TRIM.out.reads
+        ch_versions = ch_versions.mix(SEQTK_TRIM.out.versions.first())
+    }
 
     //
     // Collate and save software versions

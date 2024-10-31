@@ -235,5 +235,11 @@
         {
             "$ref": "#/$defs/generic_options"
         }
-    ]
+    ],
+    "properties": {
+        "skip_trim": {
+            "type": "boolean",
+            "description": "Skip seqtk trimming step if true"
+        }
+    }
 }
