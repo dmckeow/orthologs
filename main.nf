@@ -13,7 +13,7 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { BCAORTHO  } from './workflows/bcaortho'
+include { EXPLORTHO } from './workflows/explortho'
 include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_bcaortho_pipeline'
 include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_bcaortho_pipeline'
 include { getGenomeAttribute      } from './subworkflows/local/utils_nfcore_bcaortho_pipeline'
@@ -48,11 +48,11 @@ workflow CRG_BCAORTHO {
     //
     // WORKFLOW: Run pipeline
     //
-    BCAORTHO (
+    EXPLORTHO (
         samplesheet
     )
     emit:
-    multiqc_report = BCAORTHO.out.multiqc_report // channel: /path/to/multiqc_report.html
+    multiqc_report = EXPLORTHO.out.multiqc_report // channel: /path/to/multiqc_report.html
 }
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -5,6 +5,18 @@
     "description": "Genome wide inference of orthology at scale",
     "type": "object",
     "$defs": {
+        "workfow_control": {
+            "title": "workfow_control",
+            "type": "object",
+            "description": "Parameters that alter the steps run by the pipeline",
+            "default": "",
+            "properties": {
+                "skip_orthofinder": {
+                    "type": "boolean",
+                    "description": "Boolean, skip running OrthoFinder if true"
+                }
+            }
+        },
         "input_output_options": {
             "title": "Input/output options",
             "type": "object",
@@ -224,6 +236,9 @@
     },
     "allOf": [
         {
+            "$ref": "#/$defs/workfow_control"
+        },
+        {
             "$ref": "#/$defs/input_output_options"
         },
         {
@@ -235,11 +250,5 @@
         {
             "$ref": "#/$defs/generic_options"
         }
-    ],
-    "properties": {
-        "skip_trim": {
-            "type": "boolean",
-            "description": "Skip seqtk trimming step if true"
-        }
-    }
+    ]
 }
