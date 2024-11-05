@@ -1,0 +1,10 @@
+repository_type: pipeline
+
+lint:
+nextflow_config:
+  - manifest.name
+  - manifest.description
+  - manifest.author
+  - manifest.version
+  - manifest.nextflowVersion
+  - manifest.homePage
