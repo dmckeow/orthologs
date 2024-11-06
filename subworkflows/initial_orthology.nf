@@ -3,7 +3,7 @@
 // Include modules
 include { ORTHOFINDER } from '../modules/nf-core/orthofinder/main'
 
-workflow RUN_ORTHOFINDER {
+workflow INITIAL_ORTHOLOGY {
     take:
     fasta_dir
     prior_run

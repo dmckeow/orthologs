@@ -3,7 +3,7 @@
 
 // Include modules
 include { BAM_INDEX } from './subworkflows/bam_index'
-include { RUN_ORTHOFINDER } from './subworkflows/initial_orthology'
+include { INITIAL_ORTHOLOGY } from './subworkflows/initial_orthology'
 include { SEARCH } from './modules/local/search/search'
 
 workflow {
@@ -12,20 +12,15 @@ workflow {
     }
 // Orthofinder and search
     if (params.run_orthofinder) {
-        RUN_ORTHOFINDER(
+        INITIAL_ORTHOLOGY(
             params.fasta_dir,
             params.prior_run
         )
 
         if (params.run_search) {
-
+            // Wait for INITIAL_ORTHOLOGY to finish and use its output
             // Define channels
-            //ch_fasta = Channel.fromPath("${params.outdir}/orthofinder/Orthogroup_Sequences/*.fa")
-            //    .map { file -> [ [id: file.baseName], file ] }
-
-            // Wait for RUN_ORTHOFINDER to finish and use its output
-            // Define channels
-            ch_fasta = RUN_ORTHOFINDER.out.orthogroup_sequences
+            ch_fasta = INITIAL_ORTHOLOGY.out.orthogroup_sequences
                 .map { meta, dir -> file("${dir}/*.fa") }
                 //.view { "Files in Orthogroup_Sequences: $it" }
                 .flatten()
