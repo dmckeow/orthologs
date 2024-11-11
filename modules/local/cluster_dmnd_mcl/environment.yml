@@ -1,0 +1,15 @@
+name: cluster_dmnd_mcl
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - python
+  - pyyaml
+  - hmmer
+  - bedtools
+  - samtools
+  - diamond
+  - mcl
+  - seqkit
+  - biopython

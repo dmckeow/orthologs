@@ -1,5 +1,5 @@
 process SEARCH {
-    conda "${moduleDir}/environment.yml"
+    conda "${projectDir}/modules/local/search/environment.yml"
     
     input:
     tuple val(meta), path(fasta)

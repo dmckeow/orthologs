@@ -18,7 +18,7 @@ def mcl_input(input_file, output_file):
 			# Replace all tabs with spaces
 			line = line.replace('\t', ' ')
 			# Create the new identifier
-			new_id = f"{base_filename}.mcl.{index + 1}"
+			new_id = f"{base_filename}.{index + 1}.mcl"
 			# Combine the new identifier with the modified line
 			modified_line = f"{new_id}\t{line.strip()}"
 			modified_lines.append(modified_line)
