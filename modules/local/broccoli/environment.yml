@@ -1,0 +1,11 @@
+name: broccoli
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - python
+  - diamond
+  - fasttree
+  - ete3
+  - biopython

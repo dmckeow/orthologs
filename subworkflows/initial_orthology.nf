@@ -2,6 +2,7 @@
 
 // Include modules
 include { ORTHOFINDER } from '../modules/nf-core/orthofinder/main'
+include { BROCCOLI } from '../modules/local/broccoli/main'
 
 workflow WF_ORTHOFINDER {
     take:
@@ -34,4 +35,12 @@ workflow WF_ORTHOFINDER {
     versions = ORTHOFINDER.out.versions
     orthogroup_sequences // emit the location for the fastas
     
+}
+
+workflow WF_BROCCOLI {
+    // ... other processes ...
+
+    BROCCOLI ( ch_proteomes )
+
+    // ... use BROCCOLI outputs ...
 }
