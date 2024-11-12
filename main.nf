@@ -63,7 +63,7 @@ workflow {
             params.fasta_dir,
             params.broccoli.args
         )
-        //if (params.run_search) {
+    
         // Set the channel from the orthofinder output
         ch_broccoli_fastas = WF_BROCCOLI.out.orthologous_groups_sequences
         .map { dir -> 
@@ -72,8 +72,6 @@ workflow {
         }
         .flatten()
         .collate(2)
-
-        ch_broccoli_fastas.view { meta, fasta -> "DEBUG: Processed fasta - meta: $meta, fasta: $fasta" }
 
         if (params.run_search) {
             log.info "Running search as params.run_search is set to true - running clustering on proteins that had search hits and were in orthogroups created by Broccoli"
