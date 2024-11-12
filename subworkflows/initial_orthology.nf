@@ -54,6 +54,7 @@ workflow WF_BROCCOLI {
     )
 
     emit:
-    orthologous_groups = BROCCOLI.out.orthologous_groups
+    orthologous_groups_sequences = BROCCOLI.out.orthologous_groups_sequences
+    broccoli = BROCCOLI.out.broccoli
 
 }

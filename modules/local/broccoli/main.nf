@@ -9,10 +9,11 @@ process BROCCOLI {
     val(args)
     
     output:
-    path("broccoli/**"), emit: broccoli
-    path("broccoli/dir_step3/orthologous_groups.txt"), emit: orthologous_groups
-    path("broccoli/dir_step4/orthologous_pairs.txt"), emit: orthologous_pairs
-    path "broccoli/versions.yml", emit: versions
+    path("dir_step3/orthologous_groups.txt"), emit: orthologous_groups
+    path("**"), emit: broccoli
+    path("dir_step3/orthologous_groups_sequences"), emit: orthologous_groups_sequences
+    path("dir_step4/orthologous_pairs.txt"), emit: orthologous_pairs
+    path "versions.yml", emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -21,13 +22,17 @@ process BROCCOLI {
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
     # Run Broccoli
-    rm -fr broccoli
-    mkdir broccoli
-    cd broccoli
     python ${projectDir}/broccoli/broccoli.py \\
-        -dir ../input \\
+        -dir input \\
         -threads ${task.cpus} \\
         $args
+    
+    python ${projectDir}/bin/parse_fastas_broccoli.py \\
+        -b dir_step3/orthologous_groups.txt \\
+        -f input \\
+        -o dir_step3/orthologous_groups_sequences
+
+    rm -fr input
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
