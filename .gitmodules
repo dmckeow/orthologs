@@ -1,0 +1,3 @@
+[submodule "broccoli"]
+	path = broccoli
+	url = https://github.com/rderelle/Broccoli.git
