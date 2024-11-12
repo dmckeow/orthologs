@@ -38,9 +38,22 @@ workflow WF_ORTHOFINDER {
 }
 
 workflow WF_BROCCOLI {
-    // ... other processes ...
+    take:
+    fasta_dir
+    broccoli_args
 
-    BROCCOLI ( ch_proteomes )
+    main:
+    // Create a channel for the FASTA files
+    fasta_ch = Channel.fromPath("${fasta_dir}/*.{fa,faa,fasta,fas,pep}")
+        .collect()
+        .map { files -> [[id: "broccoli"], files] }
 
-    // ... use BROCCOLI outputs ...
+    BROCCOLI (
+        fasta_ch,
+        broccoli_args
+    )
+
+    emit:
+    orthologous_groups = BROCCOLI.out.orthologous_groups
+
 }

@@ -5,37 +5,33 @@ process BROCCOLI {
     conda "${projectDir}/modules/local/broccoli/environment.yml"
 
     input:
-    tuple val(meta), path(proteomes)
+    tuple val(meta), path(fastas, stageAs: 'input/')
+    val(args)
     
     output:
-    tuple val(meta), path("*.orthologs.txt"), emit: orthologs
-    tuple val(meta), path("*.tree"), emit: tree
-    path "versions.yml", emit: versions
+    path("broccoli/**"), emit: broccoli
+    path("broccoli/dir_step3/orthologous_groups.txt"), emit: orthologous_groups
+    path("broccoli/dir_step4/orthologous_pairs.txt"), emit: orthologous_pairs
+    path "broccoli/versions.yml", emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
-    def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    # Clone Broccoli repository
-    git clone https://github.com/rderelle/Broccoli.git
-    cd broccoli
-
     # Run Broccoli
-    python broccoli.py \\
-        -i $proteomes \\
-        -o ${prefix} \\
+    rm -fr broccoli
+    mkdir broccoli
+    cd broccoli
+    python ${projectDir}/broccoli/broccoli.py \\
+        -dir ../input \\
+        -threads ${task.cpus} \\
         $args
-
-    # Move output files to the current directory
-    mv ${prefix}* ..
-    cd ..
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        broccoli: \$(python broccoli/broccoli.py --version 2>&1 | sed 's/^.*Broccoli //; s/ .*\$//')
+        broccoli: \$(python ${projectDir}/broccoli/broccoli.py --version 2>&1 | sed 's/^.*Broccoli //; s/ .*\$//')
     END_VERSIONS
     """
 }
