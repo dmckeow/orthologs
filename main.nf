@@ -10,11 +10,65 @@ include { CLUSTER_DMND_MCL as CLUSTER_DMND_MCL_BROCCOLI } from './modules/local/
 
 
 workflow {
+    // Initialize variables
+def orthofinder_msg = "🔍 ❌ Will skip OrthoFinder"
+def broccoli_msg = "🥦 ❌ Will skip Broccoli"
+def search_msg = "🔨 ❌ Will skip HMMSEARCH on orthogroups"
+def cluster_msg = "💎🍇 ❌ Will skip DIAMOND and MCL clustering of orthogroups"
+
+if (!params.run.orthofinder && !params.run.broccoli) {
+    log.error """
+    ============================================================
+    Error: Neither OrthoFinder nor Broccoli is set to run!
+    
+    You must set at least one of the following to true:
+    - params.run.orthofinder
+    - params.run.broccoli
+    
+    Exiting the pipeline.
+    ============================================================
+    """
+    exit 1
+}
+
 // Orthofinder and search
-    if (params.run_orthofinder) {
+if (params.run.orthofinder) {
+    orthofinder_msg = "🔍 ✅ Will run OrthoFinder, then:"
+}
+
+if (params.run.broccoli) {
+    broccoli_msg = "🥦 ✅ Will run Broccoli, then:"
+}
+
+    
+if (params.run.search) {
+    search_msg = "🔨 ✅ Will run HMMSEARCH on orthogroups, then:"
+    
+    if (params.run.cluster_dmnd_mcl) {
+        cluster_msg = "💎🍇 ✅ Will run DIAMOND and MCL clustering of orthogroups, ❗ but ONLY on the orthogroups with HMMSEARCH hits ❗"
+    }
+} else if (params.run.cluster_dmnd_mcl) {
+    cluster_msg = "💎🍇 ✅ Will run DIAMOND and MCL clustering of orthogroups, ❗ but on ALL orthogroups identified ❗"
+}
+
+// Print all messages as a single unit
+log.info """
+Pipeline workflow that will be executed:
+---------------------------
+    ${broccoli_msg}
+        ${search_msg}
+            ${cluster_msg}
+
+    ${orthofinder_msg}
+        ${search_msg}
+            ${cluster_msg}
+    """
+
+// Orthofinder and search
+    if (params.run.orthofinder) {
         WF_ORTHOFINDER(
             params.fasta_dir,
-            params.prior_run
+            params.orthofinder.prior_run
         )
         // Set the channel from the orthofinder output
         ch_orthofinder_fastas = WF_ORTHOFINDER.out.orthogroup_sequences
@@ -22,8 +76,7 @@ workflow {
             .flatten()
             .map { file -> [ [id: file.baseName], file ] }
 
-        if (params.run_search) {
-            log.info "Running search as params.run_search is set to true - running clustering on proteins that had search hits and were in orthogroups created by OrthoFinder"
+        if (params.run.search) {
             // Run SEARCH_ORTHOFINDER process
             SEARCH_ORTHOFINDER(
                 ch_orthofinder_fastas,
@@ -33,23 +86,22 @@ workflow {
                 "orthofinder",
                 params.outdir
             )
-        if (params.run_cluster_dmnd_mcl) {
+        if (params.run.cluster_dmnd_mcl) {
             CLUSTER_DMND_MCL_ORTHOFINDER(
                 SEARCH_ORTHOFINDER.out.domfasta,
-                params.cluster_dmnd_mcl.dmnd_params,
-                params.cluster_dmnd_mcl.mcl_params,
-                params.cluster_dmnd_mcl.mcl_inflation,
+                params.cluster.dmnd.args,
+                params.cluster.mcl.args,
+                params.cluster.mcl.inflation,
                 "searches/orthofinder"
                 )
             }
         } else {
-            log.info "Skipping search as params.run_search is set to false - running clustering on all proteins in orthogroups created by OrthoFinder"
-            if (params.run_cluster_dmnd_mcl) {
+            if (params.run.cluster_dmnd_mcl) {
             CLUSTER_DMND_MCL_ORTHOFINDER(
                 ch_orthofinder_fastas,
-                params.cluster_dmnd_mcl.dmnd_params,
-                params.cluster_dmnd_mcl.mcl_params,
-                params.cluster_dmnd_mcl.mcl_inflation,
+                params.cluster.dmnd.args,
+                params.cluster.mcl.args,
+                params.cluster.mcl.inflation,
                 "all/orthofinder"
                 )
             }
@@ -57,8 +109,7 @@ workflow {
     }
 
 // Broccoli and search
-    if (params.run_broccoli) {
-        log.info "Running Broccoli"
+    if (params.run.broccoli) {
         WF_BROCCOLI(
             params.fasta_dir,
             params.broccoli.args
@@ -73,8 +124,7 @@ workflow {
         .flatten()
         .collate(2)
 
-        if (params.run_search) {
-            log.info "Running search as params.run_search is set to true - running clustering on proteins that had search hits and were in orthogroups created by Broccoli"
+        if (params.run.search) {
             // Run SEARCH process
             SEARCH_BROCCOLI(
                 ch_broccoli_fastas,
@@ -84,24 +134,22 @@ workflow {
                 "broccoli",
                 params.outdir
             )
-            if (params.run_cluster_dmnd_mcl) {
-                log.info "Running DIAMOND and MCL based clustering within orthogroups identified by broccoli and then search"
+            if (params.run.cluster_dmnd_mcl) {
                 CLUSTER_DMND_MCL_BROCCOLI(
                     SEARCH_BROCCOLI.out.domfasta,
-                    params.cluster_dmnd_mcl.dmnd_params,
-                    params.cluster_dmnd_mcl.mcl_params,
-                    params.cluster_dmnd_mcl.mcl_inflation,
+                    params.cluster.dmnd.args,
+                    params.cluster.mcl.args,
+                    params.cluster.mcl.inflation,
                     "searches/broccoli"
                     )
                 }
         } else {
-            log.info "Skipping search as params.run_search is set to false - running clustering on all proteins in orthogroups created by Broccoli"
-            if (params.run_cluster_dmnd_mcl) {
+            if (params.run.cluster_dmnd_mcl) {
             CLUSTER_DMND_MCL_BROCCOLI(
                 ch_broccoli_fastas,
-                params.cluster_dmnd_mcl.dmnd_params,
-                params.cluster_dmnd_mcl.mcl_params,
-                params.cluster_dmnd_mcl.mcl_inflation,
+                params.cluster.dmnd.args,
+                params.cluster.mcl.args,
+                params.cluster.mcl.inflation,
                 "all/broccoli"
                 )
             }

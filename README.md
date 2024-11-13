@@ -1,11 +1,13 @@
 # Installation
+First, install conda and nextflow on your system
 ```
 git clone --recurse-submodules https://github.com/dmckeow/crg-bcaortho.git
 ```
 # Usage
 ```
+# You should make symbolic soft links to your protein fastas (one file per genome) and place them all within a single directory as the initial input
 # Running locally
-nextflow run main.nf -profile local
+nextflow run main.nf -profile local,toy
 
 # Running using SLURM
 sbatch submit_nf.sh main.nf -profile slurm
@@ -35,3 +37,8 @@ cd ..
 git add broccoli
 git commit -m "Update Broccoli submodule"
 ```
+### How much resources?
+## OrthoFinder
+
+## Broccoli
+8 threads & 0.1-0.5 Gb per eukaryotic genome (from Broccoli documentation)
