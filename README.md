@@ -6,10 +6,10 @@ git clone --recurse-submodules https://github.com/dmckeow/crg-bcaortho.git
 # Usage
 ```
 # You should make symbolic soft links to your protein fastas (one file per genome) and place them all within a single directory as the initial input
-# Running locally
-nextflow run main.nf -profile local,toy
+# Running locally with example data provided
+nextflow run main.nf -profile local
 
-# Running using SLURM
+# Running using SLURM with example data provided
 sbatch submit_nf.sh main.nf -profile slurm
 ```
 ## Changing parameters, resources, etc
