@@ -1,0 +1,12 @@
+name: cluster_mmseqs
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - python
+  - mmseqs2
+  - bedtools
+  - samtools
+  - seqkit
+  - biopython
