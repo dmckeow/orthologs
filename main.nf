@@ -8,15 +8,17 @@ include { SEARCH as SEARCH_BROCCOLI } from './modules/local/search/search'
 include { CLUSTER_DMND_MCL as CLUSTER_DMND_MCL_ORTHOFINDER } from './modules/local/cluster_dmnd_mcl/cluster_dmnd_mcl'
 include { CLUSTER_DMND_MCL as CLUSTER_DMND_MCL_BROCCOLI } from './modules/local/cluster_dmnd_mcl/cluster_dmnd_mcl'
 include { WF_CLUSTER_MMSEQS as WF_CLUSTER_MMSEQS_BROCCOLI } from './subworkflows/cluster_mmseqs'
+include { WF_CLUSTER_MMSEQS as WF_CLUSTER_MMSEQS_ORTHOFINDER } from './subworkflows/cluster_mmseqs'
 
 
 workflow {
     // Initialize variables
-def orthofinder_msg = "🔍 ❌ Will skip OrthoFinder"
-def broccoli_msg = "🥦 ❌ Will skip Broccoli"
-def search_msg = "🔨 ❌ Will skip HMMSEARCH"
-def cluster_dmnd_mcl_msg = "💎🍇 ❌ Will skip DIAMOND and MCL"
-def cluster_mmseqs_msg = "😺🚀 ❌ Will skip MMSEQS2"
+def orthofinder_msg      = "🔍 OrthoFinder: SKIP ❌"
+def broccoli_msg         = "🥦 Broccoli:    SKIP ❌"
+def search_msg           = "🔨 HMMSEARCH:   SKIP ❌"
+def cluster_dmnd_mcl_msg = "💎 DIAMOND:     SKIP ❌"
+def cluster_mmseqs_msg   = "🚀 MMseqs2:     SKIP ❌"
+def vs_msg   = "⚠️ Clustering ALL orthogroups"
 
 if (!params.run.orthofinder && !params.run.broccoli) {
     log.error """
@@ -35,42 +37,41 @@ if (!params.run.orthofinder && !params.run.broccoli) {
 
 // Orthofinder and search
 if (params.run.orthofinder) {
-    orthofinder_msg = "🔍🔍 ✅ Will run OrthoFinder"
+    orthofinder_msg     = "🔍 OrthoFinder: RUN ✅"
 }
 
 if (params.run.broccoli) {
-    broccoli_msg = "🥦🥦 ✅ Will run Broccoli"
+    broccoli_msg        = "🥦 Broccoli:    RUN ✅"
 }
-
     
 if (params.run.search) {
-    search_msg = "🔨🔨 ✅ Will run HMMSEARCH"
+    vs_msg = "⚠️ Clustering ONLY HMMSEARCH results"
+    search_msg           = "🔨 HMMSEARCH:  RUN ✅"
     
-    if (params.run.cluster_dmnd_mcl) {
-        cluster_dmnd_mcl_msg = "💎🍇 ✅ Will run DIAMOND and MCL clustering of orthogroups, ❗ but ONLY on the orthogroups with HMMSEARCH hits ❗"
-    }
-    if (params.run.cluster_mmseqs) {
-        cluster_mmseqs_msg = "😺🚀 ✅ Will run MMSEQS2 clustering of orthogroups, ❗ but ONLY on the orthogroups with HMMSEARCH hits ❗"
-    }
-} else if (params.run.cluster_dmnd_mcl) {
-    cluster_dmnd_mcl_msg = "💎🍇 ✅ Will run DIAMOND and MCL clustering of orthogroups, ❗ but on ALL orthogroups identified ❗"
+if (params.run.cluster_dmnd_mcl) {
+    cluster_dmnd_mcl_msg = "💎 DIAMOND:    RUN ✅"
 }
 if (params.run.cluster_mmseqs) {
-        cluster_mmseqs_msg = "😺🚀 ✅ Will run MMSEQS2 clustering of orthogroups, ❗ but on ALL orthogroups identified ❗"
-    }
+    cluster_mmseqs_msg   = "🚀 MMseqs2:    RUN ✅"
+}
+}
 
 // Print all messages as a single unit
 log.info """
 Pipeline workflow that will be executed:
 ---------------------------
-Initial orthology:
-${broccoli_msg}    ${orthofinder_msg}
-Gene family search of orthologs:
-          ${search_msg}
-Clustering:
-        ${cluster_dmnd_mcl_msg}
-        ${cluster_mmseqs_msg}
-    """
+🥇 Initial orthology:
+    ${broccoli_msg}
+    ${orthofinder_msg}
+
+👪 Gene family search of orthologs (SEARCH):
+    ${search_msg}
+
+🍇 Clustering:
+    ${vs_msg}
+    ${cluster_dmnd_mcl_msg}
+    ${cluster_mmseqs_msg}
+"""
 
 // Orthofinder and search
     if (params.run.orthofinder) {
@@ -103,6 +104,12 @@ Clustering:
                 "searches/orthofinder"
                 )
             }
+        if (params.run.cluster_mmseqs) {
+            WF_CLUSTER_MMSEQS_ORTHOFINDER(
+                SEARCH_ORTHOFINDER.out.domfasta,
+                "searches/orthofinder"
+                )
+            }
         } else {
             if (params.run.cluster_dmnd_mcl) {
             CLUSTER_DMND_MCL_ORTHOFINDER(
@@ -110,6 +117,12 @@ Clustering:
                 params.cluster.dmnd.args,
                 params.cluster.mcl.args,
                 params.cluster.mcl.inflation,
+                "all/orthofinder"
+                )
+            }
+            if (params.run.cluster_mmseqs) {
+            WF_CLUSTER_MMSEQS_ORTHOFINDER(
+                ch_orthofinder_fastas,
                 "all/orthofinder"
                 )
             }
@@ -152,10 +165,9 @@ Clustering:
                     )
                 }
             if (params.run.cluster_mmseqs) {
-            val_prefix = 'searches_broccoli'
             WF_CLUSTER_MMSEQS_BROCCOLI(
                 SEARCH_BROCCOLI.out.domfasta,
-                val_prefix
+                "searches/broccoli"
                 )
             }
         } else {
@@ -170,10 +182,9 @@ Clustering:
             }
 
             if (params.run.cluster_mmseqs) {
-                val_prefix = 'all_broccoli'
                 WF_CLUSTER_MMSEQS_BROCCOLI(
                     ch_broccoli_fastas,
-                    val_prefix
+                    "all/broccoli"
                     )
                 }
          }

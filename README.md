@@ -5,7 +5,7 @@ git clone --recurse-submodules https://github.com/dmckeow/crg-bcaortho.git
 ```
 # Usage
 ```
-# You should make symbolic soft links to your protein fastas (one file per genome) and place them all within a single directory as the initial input
+# Prepare your input fasta file directory by making symbolic soft links (ln -s) to your protein fastas (one file per genome) and place them all within a single directory
 # Running locally with example data provided
 nextflow run main.nf -profile local
 
@@ -17,6 +17,9 @@ Everything is controlled from within the nextflow.config file.
 You can run the pipeline with a different config.file e.g.:
 ```
 nextflow run main.nf -profile local -c path/to/other/nextflow.config
+
+# You can also provide different parameters using a different params file:
+nextflow run main.nf -profile local -params-file path/to/other/params.json
 ```
 
 # Notes

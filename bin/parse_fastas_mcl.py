@@ -28,6 +28,32 @@ def mcl_input(input_file, output_file):
 		for modified_line in modified_lines:
 			file.write(modified_line + '\n')
 
+def mmseqs_input(input_file, output_file):
+	# Extract the base file name without extension
+	base_filename = input_file.split('/')[-1].replace('.cluster.abc', '')
+	
+	# Initialize an empty list to store the modified lines
+	modified_lines = []
+	
+	# Add the header line
+	modified_lines.append("#placeholder\theader")  # Modify headers as needed
+	
+	# Read the input file and modify the lines
+	with open(input_file, 'r') as file:
+		for index, line in enumerate(file):
+			# Replace all tabs with spaces
+			line = line.replace('\t', ' ')
+			# Create the new identifier
+			new_id = f"{base_filename}.{index + 1}.mmseqs"
+			# Combine the new identifier with the modified line
+			modified_line = f"{new_id}\t{line.strip()}"
+			modified_lines.append(modified_line)
+	
+	# Write the modified lines to the output file
+	with open(output_file, 'w') as file:
+		for modified_line in modified_lines:
+			file.write(modified_line + '\n')
+
 
 def extract_fasta_sequences(og_file, fasta_file, output_dir):
 	# Read the OG to protein names mapping from the input file
@@ -62,5 +88,12 @@ if __name__ == "__main__":
 
 	# use MCL .abc as input to make fasta files for lower granularity clusters within an OG
 	output = f"{args.mcl_ogs}.mcl.tmp"
-	mcl_input(args.mcl_ogs, output)
+
+	# Process input from either MCL or MMSEQS
+	if args.mcl_ogs.endswith('.dmnd.csv.abc'):
+		mcl_input(args.mcl_ogs, output)
+
+	elif args.mcl_ogs.endswith('.cluster.abc'):
+		mmseqs_input(args.mcl_ogs, output)
+
 	extract_fasta_sequences(output, args.fasta, args.outdir)
