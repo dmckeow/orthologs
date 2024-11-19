@@ -3,11 +3,13 @@
 // Include modules
 include { ORTHOFINDER } from '../modules/nf-core/orthofinder/main'
 include { BROCCOLI } from '../modules/local/broccoli/main'
+include { FILTER_ORTHOGROUPS} from '../modules/local/filter_orthogroups'
 
 workflow WF_ORTHOFINDER {
     take:
     fasta_dir
     prior_run
+    min_sequences
 
     main:
     // Create a channel for the FASTA files
@@ -28,12 +30,15 @@ workflow WF_ORTHOFINDER {
             def orthogroup_dir = file("${path}/Orthogroup_Sequences")
             return [meta, orthogroup_dir]
         }
+    
+    // Filter orthogroups by min number sequences
+    FILTER_ORTHOGROUPS(orthogroup_sequences, min_sequences)
 
     emit:
     orthofinder = ORTHOFINDER.out.orthofinder
     working = ORTHOFINDER.out.working
     versions = ORTHOFINDER.out.versions
-    orthogroup_sequences // emit the location for the fastas
+    orthogroup_sequences = FILTER_ORTHOGROUPS.out.filtered_orthogroups
     
 }
 
@@ -41,6 +46,7 @@ workflow WF_BROCCOLI {
     take:
     fasta_dir
     broccoli_args
+    min_sequences
 
     main:
     // Create a channel for the FASTA files
@@ -52,9 +58,18 @@ workflow WF_BROCCOLI {
         fasta_ch,
         broccoli_args
     )
+    
+    // Add metadata to the orthologous_groups_sequences output
+    orthogroups_with_meta = BROCCOLI.out.orthologous_groups_sequences
+        .map { path -> 
+            [[id: "broccoli_orthogroups"], path]
+        }
+
+    // Filter orthogroups by min number sequences
+    FILTER_ORTHOGROUPS(orthogroups_with_meta, min_sequences)
 
     emit:
-    orthologous_groups_sequences = BROCCOLI.out.orthologous_groups_sequences
+    orthologous_groups_sequences = FILTER_ORTHOGROUPS.out.filtered_orthogroups
     broccoli = BROCCOLI.out.broccoli
 
 }

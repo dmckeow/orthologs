@@ -18,7 +18,7 @@ def broccoli_msg         = "🥦 Broccoli:    SKIP ❌"
 def search_msg           = "🔨 HMMSEARCH:   SKIP ❌"
 def cluster_dmnd_mcl_msg = "💎 DIAMOND:     SKIP ❌"
 def cluster_mmseqs_msg   = "🚀 MMseqs2:     SKIP ❌"
-def vs_msg   = "⚠️ Clustering ALL orthogroups"
+def vs_msg   = "⚠️  Clustering ALL orthogroups  ⚠️"
 
 if (!params.run.orthofinder && !params.run.broccoli) {
     log.error """
@@ -45,16 +45,16 @@ if (params.run.broccoli) {
 }
     
 if (params.run.search) {
-    vs_msg = "⚠️ Clustering ONLY HMMSEARCH results"
+    vs_msg = "⚠️  Clustering ONLY HMMSEARCH results  ⚠️"
     search_msg           = "🔨 HMMSEARCH:  RUN ✅"
-    
+}
 if (params.run.cluster_dmnd_mcl) {
     cluster_dmnd_mcl_msg = "💎 DIAMOND:    RUN ✅"
 }
 if (params.run.cluster_mmseqs) {
     cluster_mmseqs_msg   = "🚀 MMseqs2:    RUN ✅"
 }
-}
+
 
 // Print all messages as a single unit
 log.info """
@@ -77,7 +77,8 @@ Pipeline workflow that will be executed:
     if (params.run.orthofinder) {
         WF_ORTHOFINDER(
             params.fasta_dir,
-            params.orthofinder.prior_run
+            params.orthofinder.prior_run,
+            params.orthofinder.min_sequences
         )
         // Set the channel from the orthofinder output
         ch_orthofinder_fastas = WF_ORTHOFINDER.out.orthogroup_sequences
@@ -95,6 +96,7 @@ Pipeline workflow that will be executed:
                 "orthofinder",
                 params.outdir
             )
+        SEARCH_ORTHOFINDER.out.domfasta.view()
         if (params.run.cluster_dmnd_mcl) {
             CLUSTER_DMND_MCL_ORTHOFINDER(
                 SEARCH_ORTHOFINDER.out.domfasta,
@@ -133,17 +135,26 @@ Pipeline workflow that will be executed:
     if (params.run.broccoli) {
         WF_BROCCOLI(
             params.fasta_dir,
-            params.broccoli.args
+            params.broccoli.args,
+            params.broccoli.min_sequences
         )
-    
+
         // Set the channel from the orthofinder output
+        //ch_broccoli_fastas = WF_BROCCOLI.out.orthologous_groups_sequences
+        //.map { dir -> 
+        //    def files = file("${dir}/*.fa")
+        //    files.collect { file -> [ [id: file.baseName], file ] }
+        //}
+        //.flatten()
+        //.collate(2)
+
+        // Set the channel from the broccoli output
         ch_broccoli_fastas = WF_BROCCOLI.out.orthologous_groups_sequences
-        .map { dir -> 
-            def files = file("${dir}/*.fa")
-            files.collect { file -> [ [id: file.baseName], file ] }
-        }
-        .flatten()
-        .collate(2)
+            .map { meta, dir -> file("${dir}/*.fa") }
+            .flatten()
+            .map { file -> [ [id: file.baseName], file ] }
+
+        //ch_broccoli_fastas.view()
 
         if (params.run.search) {
             // Run SEARCH process
@@ -155,9 +166,24 @@ Pipeline workflow that will be executed:
                 "broccoli",
                 params.outdir
             )
+            SEARCH_BROCCOLI.out.domfasta.view()
+            ch_search_broccoli_results = SEARCH_BROCCOLI.out.domfasta
+
             if (params.run.cluster_dmnd_mcl) {
+                ch_search_broccoli_results
+                    .branch {
+                        empty: it.isEmpty()
+                        data: true
+                    }
+                    .set { branched_results }
+
+                branched_results.empty
+                    .ifEmpty { /* do nothing */ }
+                    .subscribe { log.warn "No SEARCH hits vs Broccoli orthogroups. Skipping CLUSTER_DMND_MCL_BROCCOLI." }
+
+
                 CLUSTER_DMND_MCL_BROCCOLI(
-                    SEARCH_BROCCOLI.out.domfasta,
+                    branched_results.data,
                     params.cluster.dmnd.args,
                     params.cluster.mcl.args,
                     params.cluster.mcl.inflation,
@@ -165,9 +191,20 @@ Pipeline workflow that will be executed:
                     )
                 }
             if (params.run.cluster_mmseqs) {
-            WF_CLUSTER_MMSEQS_BROCCOLI(
-                SEARCH_BROCCOLI.out.domfasta,
-                "searches/broccoli"
+                ch_search_broccoli_results
+                    .branch {
+                        empty: it.isEmpty()
+                        data: true
+                    }
+                    .set { branched_results_mmseqs }
+
+                branched_results_mmseqs.empty
+                    .ifEmpty { /* do nothing */ }
+                    .subscribe { log.warn "No SEARCH hits vs Broccoli orthogroups. Skipping WF_CLUSTER_MMSEQS_BROCCOLI and PARSE_MMSEQS_TO_FASTA." }
+
+                WF_CLUSTER_MMSEQS_BROCCOLI(
+                    branched_results_mmseqs.data,
+                    "searches/broccoli"
                 )
             }
         } else {
