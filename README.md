@@ -45,3 +45,14 @@ git commit -m "Update Broccoli submodule"
 
 ## Broccoli
 8 threads & 0.1-0.5 Gb per eukaryotic genome (from Broccoli documentation)
+
+# To do
+## High priority
+* Examine the reportho pipeline html report for comparing ortholog calling tools
+* Begin the whichortho workflow to generate criteria for classifying the runnability of orthogroups
+* Run initortho on real data to assess runtimes and resource requirements
+
+## Med priority
+
+## Low priority
+* Running a successful search that produces no results will cause downstream clustering to fail. Interactively this cancels the main process, but via sbatch this is not a problem

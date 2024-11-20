@@ -96,7 +96,7 @@ Pipeline workflow that will be executed:
                 "orthofinder",
                 params.outdir
             )
-        SEARCH_ORTHOFINDER.out.domfasta.view()
+
         if (params.run.cluster_dmnd_mcl) {
             CLUSTER_DMND_MCL_ORTHOFINDER(
                 SEARCH_ORTHOFINDER.out.domfasta,
@@ -156,7 +156,7 @@ Pipeline workflow that will be executed:
 
         //ch_broccoli_fastas.view()
 
-        if (params.run.search) {
+                if (params.run.search) {
             // Run SEARCH process
             SEARCH_BROCCOLI(
                 ch_broccoli_fastas,
@@ -166,48 +166,27 @@ Pipeline workflow that will be executed:
                 "broccoli",
                 params.outdir
             )
-            SEARCH_BROCCOLI.out.domfasta.view()
-            ch_search_broccoli_results = SEARCH_BROCCOLI.out.domfasta
 
+            // Run CLUSTER_DMND_MCL_BROCCOLI if domfasta is not empty and params.run.cluster_dmnd_mcl is true
             if (params.run.cluster_dmnd_mcl) {
-                ch_search_broccoli_results
-                    .branch {
-                        empty: it.isEmpty()
-                        data: true
-                    }
-                    .set { branched_results }
-
-                branched_results.empty
-                    .ifEmpty { /* do nothing */ }
-                    .subscribe { log.warn "No SEARCH hits vs Broccoli orthogroups. Skipping CLUSTER_DMND_MCL_BROCCOLI." }
-
-
                 CLUSTER_DMND_MCL_BROCCOLI(
-                    branched_results.data,
+                    SEARCH_BROCCOLI.out.domfasta,
                     params.cluster.dmnd.args,
                     params.cluster.mcl.args,
                     params.cluster.mcl.inflation,
                     "searches/broccoli"
-                    )
-                }
+                )
+            }
+
+            // Run WF_CLUSTER_MMSEQS_BROCCOLI if domfasta is not empty and params.run.cluster_mmseqs is true
             if (params.run.cluster_mmseqs) {
-                ch_search_broccoli_results
-                    .branch {
-                        empty: it.isEmpty()
-                        data: true
-                    }
-                    .set { branched_results_mmseqs }
-
-                branched_results_mmseqs.empty
-                    .ifEmpty { /* do nothing */ }
-                    .subscribe { log.warn "No SEARCH hits vs Broccoli orthogroups. Skipping WF_CLUSTER_MMSEQS_BROCCOLI and PARSE_MMSEQS_TO_FASTA." }
-
                 WF_CLUSTER_MMSEQS_BROCCOLI(
-                    branched_results_mmseqs.data,
+                    SEARCH_BROCCOLI.out.domfasta,
                     "searches/broccoli"
                 )
             }
-        } else {
+        }
+        else {
             if (params.run.cluster_dmnd_mcl) {
             CLUSTER_DMND_MCL_BROCCOLI(
                 ch_broccoli_fastas,
