@@ -51,8 +51,12 @@ git commit -m "Update Broccoli submodule"
 * Examine the reportho pipeline html report for comparing ortholog calling tools
 * Begin the whichortho workflow to generate criteria for classifying the runnability of orthogroups
 * Run initortho on real data to assess runtimes and resource requirements
+* Need to refine execution reports for initortho - report and timeline show no time and resource information
+* Restructure pipeline
+    * Main to subworkflow - main just runs the subworkflows - merge current main with init_orthology subworkflow
 
 ## Med priority
 
 ## Low priority
 * Running a successful search that produces no results will cause downstream clustering to fail. Interactively this cancels the main process, but via sbatch this is not a problem
+* Change logic to allow search and all to run simultaneously?

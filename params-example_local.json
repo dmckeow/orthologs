@@ -1,6 +1,6 @@
 {
-    "outdir": "results/test_004",
-    "fasta_dir": "/users/asebe/dmckeown/projects/crg-bcaortho/data/genomes_004",
+    "outdir": "results/example_local",
+    "fasta_dir": "example_data",
     "run": {
         "broccoli": true,
         "orthofinder": true,
@@ -10,10 +10,12 @@
     },
     "orthofinder": {
         "prior_run": null,
-        "args": ""
+        "args": "",
+        "min_sequences": 3
     },
     "broccoli": {
-        "args": "-kmer_size 10000 -phylogenies ml"
+        "args": "",
+        "min_sequences": 1
     },
     "search": {
         "gene_family_info": "/users/asebe/dmckeown/projects/crg-bcaortho/example_data/genefam.tsv",
@@ -27,7 +29,7 @@
             "args": ""
         },
         "dmnd": {
-            "args": "--max-target-seqs 100 --more-sensitive --quiet"
+            "args": "--max-target-seqs 10 --fast --quiet"
         },
         "mmseqs_createdb": {
             "args": ""
