@@ -16,6 +16,20 @@ include { PARSE_MMSEQS_TO_FASTA } from '../modules/local/cluster_mmseqs/parse_mm
 
 // SEARCH FIRST VERSION
 
+process CONCATENATE_FASTAS {
+    input:
+    tuple val(meta), path(fasta_files)
+
+    output:
+    tuple val(meta), path("combined_sequences.fasta"), emit: combined_fasta
+
+    script:
+    """
+    cat ${fasta_files} > combined_sequences.fasta
+    """
+}
+
+
 workflow INITIAL_ORTHOGROUPS {
     take:
     fasta_dir
@@ -77,7 +91,7 @@ workflow INITIAL_ORTHOGROUPS {
                 [[id: "orthofinder"], files]  // Create the structure OrthoFinder expects
             }
 
-        ch_orthofinder_input.view { it -> "ch_orthofinder_input: $it" }
+        //ch_orthofinder_input.view { it -> "ch_orthofinder_input: $it" }
 
         // Create a channel for the optional prior run
         prior_run_ch = orthofinder_prior_run
@@ -98,7 +112,7 @@ workflow INITIAL_ORTHOGROUPS {
         FILTER_ORTHOGROUPS_ORTHOFINDER(orthogroup_sequences, orthofinder_min_sequences)
         ch_orthofinder_results = FILTER_ORTHOGROUPS_ORTHOFINDER.out.filtered_orthogroups
 
-        ch_orthofinder_results.view { it -> "ch_orthofinder_results: $it" }
+        //ch_orthofinder_results.view { it -> "ch_orthofinder_results: $it" }
     }
 
     if (run_broccoli) {
@@ -126,72 +140,70 @@ workflow INITIAL_ORTHOGROUPS {
         FILTER_ORTHOGROUPS_BROCCOLI(orthogroups_with_meta, broccoli_min_sequences)
         ch_broccoli_results = FILTER_ORTHOGROUPS_BROCCOLI.out.filtered_orthogroups
 
-        ch_broccoli_results.view { it -> "ch_broccoli_results: $it" }
+        //ch_broccoli_results.view { it -> "ch_broccoli_results: $it" }
     }
 
     if (run_cluster_dmnd_mcl) {
+        // Group all input fastas for CLUSTER_DMND_MCL
+        ch_dmnd_mcl_input = ch_input_fastas
+            .map { meta, file -> file }  // Extract just the file paths
+            .collect()  // Collect all files into a single list
+            .map { files -> [[id: "combined"], files] }  // Add metadata
+
         CLUSTER_DMND_MCL(
-            ch_input_fastas,
+            ch_dmnd_mcl_input, // multi input
+            //ch_input_fastas, // to test single fasta input
             cluster_dmnd_args,
             cluster_mcl_args,
             cluster_mcl_inflation,
-            "initial/dmnd_mcl"
+            "dmnd_mcl"
         )
-        //ch_versions = ch_versions.mix(CLUSTER_DMND_MCL.out.versions)
         ch_dmnd_mcl_results = CLUSTER_DMND_MCL.out.dmnd_mcl_fastas
     }
 
 // DMND MMSEQS
     if (run_cluster_mmseqs) {
-        // Add the common prefix and .db suffix for CREATEDB, keeping original_id
-        ch_input_for_createdb = ch_input_fastas.map { meta, fasta -> 
-            [ meta + [id: "${meta.id}.db", original_id: meta.id], fasta ]
-        }
+        
+        // Collect all input fastas for concatenation
+        ch_fasta_for_concat = ch_input_fastas
+            .map { meta, file -> file }  // Extract just the file paths
+            .collect()  // Collect all files into a single list
+            .map { files -> 
+                [[id: "combined"], files]
+            }
+        //ch_fasta_for_concat.view { it -> "ch_fasta_for_concat: $it" }
+
+        // Concatenate all FASTA files
+        CONCATENATE_FASTAS(ch_fasta_for_concat)
+
+        CONCATENATE_FASTAS.out.combined_fasta.view { it -> "CONCATENATE_FASTAS.out.combined_fasta: $it" }
 
         // Create MMseqs2 database
-        MMSEQS_CREATEDB(ch_input_for_createdb)
-
-        // Add .cluster suffix for CLUSTER, keeping original_id
-        ch_input_for_cluster = MMSEQS_CREATEDB.out.db.map { meta, db ->
-            [ meta + [id: "${meta.id.replace('.db', '.cluster')}"], db ]
-        }
+        MMSEQS_CREATEDB(CONCATENATE_FASTAS.out.combined_fasta)
 
         // Cluster sequences
-        MMSEQS_CLUSTER(ch_input_for_cluster)
+        MMSEQS_CLUSTER(MMSEQS_CREATEDB.out.db)
 
-        ch_parse_input = MMSEQS_CLUSTER.out.db_cluster
-            .map { meta, db -> [meta.original_id, [meta, db]] }
-            .join(MMSEQS_CREATEDB.out.db.map { meta, db -> [meta.original_id, [meta, db]] })
-            .join(ch_input_fastas.map { meta, fasta -> [meta.id, [meta, fasta]] })
-            .map { original_id, cluster_data, createdb_data, fasta_data ->
-                def cluster_meta = cluster_data[0]
-                def cluster_db = cluster_data[1]
-                def query_db = createdb_data[1]
-                def fasta = fasta_data[1]
-                def result_meta = [id: "${original_id}"]
-            
-            [
-                [meta: [id: original_id], querydb: query_db],
-                [meta: [id: original_id], targetdb: query_db],
-                [meta: result_meta, resultdb: cluster_db],
-                [meta: [id: original_id], fasta: fasta]  // Include the original FASTA file
-            ]
-        }
+        MMSEQS_CLUSTER.out.db_cluster.view { "MMSEQS_CLUSTER output: $it" }
+        MMSEQS_CREATEDB.out.db.view { "MMSEQS_CREATEDB output: $it" }
 
-        
-        // Run PARSE_MMSEQS_TO_FASTA
-        PARSE_MMSEQS_TO_FASTA(
-            ch_parse_input.map { it[0] },  // querydb
-            ch_parse_input.map { it[1] },  // targetdb
-            ch_parse_input.map { it[2] },  // resultdb
-            ch_parse_input.map { it[3] },   // fasta
-            "initial"
+        MMSEQS_CREATETSV(
+            MMSEQS_CLUSTER.out.db_cluster,
+            [[:],[]], //MMSEQS_CREATEDB.out.db,
+            MMSEQS_CREATEDB.out.db
         )
+
+        PARSE_MMSEQS_TO_FASTA(
+            MMSEQS_CREATETSV.out.tsv,
+            CONCATENATE_FASTAS.out.combined_fasta
+        )
+        
+        
 
         ch_versions = ch_versions.mix(MMSEQS_CREATEDB.out.versions)
         ch_versions = ch_versions.mix(MMSEQS_CLUSTER.out.versions)
-        //ch_versions = ch_versions.mix(PARSE_MMSEQS_TO_FASTA.out.versions)
-        ch_mmseqs_results = PARSE_MMSEQS_TO_FASTA.out.fasta
+        
+        //ch_mmseqs_results = PARSE_MMSEQS_TO_FASTA.out.fasta
     }
 
     emit:
@@ -200,5 +212,5 @@ workflow INITIAL_ORTHOGROUPS {
     broccoli_results = ch_broccoli_results
     input_fastas = ch_input_fastas
     dmnd_mcl_results = ch_dmnd_mcl_results // DMND MMSEQS
-    mmseqs_results = ch_mmseqs_results
+    //mmseqs_results = ch_mmseqs_results
 }
