@@ -39,6 +39,12 @@ git pull origin master
 cd ..
 git add broccoli
 git commit -m "Update Broccoli submodule"
+
+
+# If the broccoli module mysteriously disappears
+git config --file=.gitmodules --get-regexp path # check if the submodule still setup
+git submodule init
+git submodule update
 ```
 ### How much resources?
 ## OrthoFinder

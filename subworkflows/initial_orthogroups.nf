@@ -6,6 +6,14 @@ include { FILTER_ORTHOGROUPS as FILTER_ORTHOGROUPS_ORTHOFINDER} from '../modules
 include { FILTER_ORTHOGROUPS as FILTER_ORTHOGROUPS_BROCCOLI} from '../modules/local/filter_orthogroups/filter_orthogroups'
 include { SEARCH } from '../modules/local/search/search'
 
+// DMND MMSEQS
+
+include { CLUSTER_DMND_MCL } from '../modules/local/cluster_dmnd_mcl/cluster_dmnd_mcl'
+include { MMSEQS_CREATEDB } from '../modules/nf-core/mmseqs/createdb/main'
+include { MMSEQS_CLUSTER } from '../modules/nf-core/mmseqs/cluster/main'
+include { MMSEQS_CREATETSV } from '../modules/nf-core/mmseqs/createtsv/main'
+include { PARSE_MMSEQS_TO_FASTA } from '../modules/local/cluster_mmseqs/parse_mmseqs'
+
 // SEARCH FIRST VERSION
 
 workflow INITIAL_ORTHOGROUPS {
@@ -22,12 +30,19 @@ workflow INITIAL_ORTHOGROUPS {
     run_orthofinder
     run_broccoli
     run_search
+    cluster_dmnd_args // DMND MMSEQS
+    cluster_mcl_args
+    cluster_mcl_inflation
+    run_cluster_dmnd_mcl
+    run_cluster_mmseqs
 
     main:
     ch_versions = Channel.empty()
     ch_orthofinder_results = Channel.empty()
     ch_broccoli_results = Channel.empty()
     ch_input_fastas = Channel.empty()
+    ch_dmnd_mcl_results = Channel.empty() // DMND MMSEQS
+    ch_mmseqs_results = Channel.empty()
 
     // Create a channel for the FASTA files
     ch_fasta_files = Channel.fromPath("${fasta_dir}/*.{fa,faa,fasta,fas,pep}")
@@ -114,9 +129,76 @@ workflow INITIAL_ORTHOGROUPS {
         ch_broccoli_results.view { it -> "ch_broccoli_results: $it" }
     }
 
+    if (run_cluster_dmnd_mcl) {
+        CLUSTER_DMND_MCL(
+            ch_input_fastas,
+            cluster_dmnd_args,
+            cluster_mcl_args,
+            cluster_mcl_inflation,
+            "initial/dmnd_mcl"
+        )
+        //ch_versions = ch_versions.mix(CLUSTER_DMND_MCL.out.versions)
+        ch_dmnd_mcl_results = CLUSTER_DMND_MCL.out.dmnd_mcl_fastas
+    }
+
+// DMND MMSEQS
+    if (run_cluster_mmseqs) {
+        // Add the common prefix and .db suffix for CREATEDB, keeping original_id
+        ch_input_for_createdb = ch_input_fastas.map { meta, fasta -> 
+            [ meta + [id: "${meta.id}.db", original_id: meta.id], fasta ]
+        }
+
+        // Create MMseqs2 database
+        MMSEQS_CREATEDB(ch_input_for_createdb)
+
+        // Add .cluster suffix for CLUSTER, keeping original_id
+        ch_input_for_cluster = MMSEQS_CREATEDB.out.db.map { meta, db ->
+            [ meta + [id: "${meta.id.replace('.db', '.cluster')}"], db ]
+        }
+
+        // Cluster sequences
+        MMSEQS_CLUSTER(ch_input_for_cluster)
+
+        ch_parse_input = MMSEQS_CLUSTER.out.db_cluster
+            .map { meta, db -> [meta.original_id, [meta, db]] }
+            .join(MMSEQS_CREATEDB.out.db.map { meta, db -> [meta.original_id, [meta, db]] })
+            .join(ch_input_fastas.map { meta, fasta -> [meta.id, [meta, fasta]] })
+            .map { original_id, cluster_data, createdb_data, fasta_data ->
+                def cluster_meta = cluster_data[0]
+                def cluster_db = cluster_data[1]
+                def query_db = createdb_data[1]
+                def fasta = fasta_data[1]
+                def result_meta = [id: "${original_id}"]
+            
+            [
+                [meta: [id: original_id], querydb: query_db],
+                [meta: [id: original_id], targetdb: query_db],
+                [meta: result_meta, resultdb: cluster_db],
+                [meta: [id: original_id], fasta: fasta]  // Include the original FASTA file
+            ]
+        }
+
+        
+        // Run PARSE_MMSEQS_TO_FASTA
+        PARSE_MMSEQS_TO_FASTA(
+            ch_parse_input.map { it[0] },  // querydb
+            ch_parse_input.map { it[1] },  // targetdb
+            ch_parse_input.map { it[2] },  // resultdb
+            ch_parse_input.map { it[3] },   // fasta
+            "initial"
+        )
+
+        ch_versions = ch_versions.mix(MMSEQS_CREATEDB.out.versions)
+        ch_versions = ch_versions.mix(MMSEQS_CLUSTER.out.versions)
+        //ch_versions = ch_versions.mix(PARSE_MMSEQS_TO_FASTA.out.versions)
+        ch_mmseqs_results = PARSE_MMSEQS_TO_FASTA.out.fasta
+    }
+
     emit:
     versions = ch_versions
     orthofinder_results = ch_orthofinder_results
     broccoli_results = ch_broccoli_results
     input_fastas = ch_input_fastas
+    dmnd_mcl_results = ch_dmnd_mcl_results // DMND MMSEQS
+    mmseqs_results = ch_mmseqs_results
 }

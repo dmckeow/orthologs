@@ -69,18 +69,7 @@ workflow WF_CLUSTERING {
             ]
         }
 
-        // View the contents of ch_parse_input
-        def logFile = file("${params.outdir}/ch_parse_input_logs.txt")
-        ch_parse_input
-        .map { querydb_tuple, targetdb_tuple, resultdb_tuple, fasta_tuple ->
-            "\n\nch_parse_input:\n" +
-            "  Query DB - Meta: ${querydb_tuple.meta}, Path: ${querydb_tuple.querydb}\n" +
-            "  Target DB - Meta: ${targetdb_tuple.meta}, Path: ${targetdb_tuple.targetdb}\n" +
-            "  Result DB - Meta: ${resultdb_tuple.meta}, Path: ${resultdb_tuple.resultdb}\n" +
-            "  FASTA - Meta: ${fasta_tuple.meta}, Path: ${fasta_tuple.fasta}"
-        }
-        .collectFile(name: logFile.getName(), storeDir: logFile.getParent(), newLine: false)
-
+        
         // Run PARSE_MMSEQS_TO_FASTA
         PARSE_MMSEQS_TO_FASTA(
             ch_parse_input.map { it[0] },  // querydb

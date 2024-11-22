@@ -68,7 +68,12 @@ workflow {
         params.outdir,
         params.run.orthofinder,
         params.run.broccoli,
-        params.run.search
+        params.run.search,
+        params.cluster.dmnd.args,
+        params.cluster.mcl.args,
+        params.cluster.mcl.inflation,
+        params.run.cluster_dmnd_mcl,
+        params.run.cluster_mmseqs
     )
 
     // Run the clustering workflow
