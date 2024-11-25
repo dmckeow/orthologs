@@ -33,6 +33,6 @@ if __name__ == "__main__":
 
 	output = os.path.basename(f"{args.input}.abc")
 
-	flatten_clusters({args.input}, output)
+	flatten_clusters(args.input, output)
 	
 

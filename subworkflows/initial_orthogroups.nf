@@ -187,15 +187,24 @@ workflow INITIAL_ORTHOGROUPS {
         MMSEQS_CLUSTER.out.db_cluster.view { "MMSEQS_CLUSTER output: $it" }
         MMSEQS_CREATEDB.out.db.view { "MMSEQS_CREATEDB output: $it" }
 
-        MMSEQS_CREATETSV(
-            MMSEQS_CLUSTER.out.db_cluster,
-            [[:],[]], //MMSEQS_CREATEDB.out.db,
-            MMSEQS_CREATEDB.out.db
-        )
+        //MMSEQS_CREATETSV(
+        //    MMSEQS_CLUSTER.out.db_cluster,
+        //    [[:],[]], //MMSEQS_CREATEDB.out.db,
+        //    MMSEQS_CREATEDB.out.db
+        //)
+
+        
+
+        //PARSE_MMSEQS_TO_FASTA(
+        //    MMSEQS_CREATETSV.out.tsv,
+        //    CONCATENATE_FASTAS.out.combined_fasta
+        //)
 
         PARSE_MMSEQS_TO_FASTA(
-            MMSEQS_CREATETSV.out.tsv,
-            CONCATENATE_FASTAS.out.combined_fasta
+            MMSEQS_CREATEDB.out.db,
+            MMSEQS_CLUSTER.out.db_cluster,
+            CONCATENATE_FASTAS.out.combined_fasta,
+            "mmseqs"
         )
         
         

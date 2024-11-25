@@ -1,0 +1,36 @@
+{
+    "outdir": "results/genomes_004_all",
+    "fasta_dir": "data/genomes_004",
+    "run": {
+        "search": false,
+        "broccoli": false,
+        "orthofinder": false,
+        "cluster_dmnd_mcl": false,
+        "cluster_mmseqs": true
+    },
+    "orthofinder": {
+        "prior_run": null,
+        "args": "",
+        "min_sequences": 1
+    },
+    "broccoli": {
+        "args": "",
+        "min_sequences": 1
+    },
+    "cluster": {
+        "mcl": {
+            "inflation": 1.5,
+            "fasta_outdir": ".",
+            "args": ""
+        },
+        "dmnd": {
+            "args": "--max-target-seqs 20 --fast --quiet"
+        },
+        "mmseqs_createdb": {
+            "args": ""
+        },
+        "mmseqs_cluster": {
+            "args": ""
+        }
+    }
+}
