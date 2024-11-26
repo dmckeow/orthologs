@@ -156,7 +156,7 @@ workflow INITIAL_ORTHOGROUPS {
             cluster_dmnd_args,
             cluster_mcl_args,
             cluster_mcl_inflation,
-            "dmnd_mcl"
+            "mcl"
         )
         ch_dmnd_mcl_results = CLUSTER_DMND_MCL.out.dmnd_mcl_fastas
     }
@@ -187,19 +187,6 @@ workflow INITIAL_ORTHOGROUPS {
         MMSEQS_CLUSTER.out.db_cluster.view { "MMSEQS_CLUSTER output: $it" }
         MMSEQS_CREATEDB.out.db.view { "MMSEQS_CREATEDB output: $it" }
 
-        //MMSEQS_CREATETSV(
-        //    MMSEQS_CLUSTER.out.db_cluster,
-        //    [[:],[]], //MMSEQS_CREATEDB.out.db,
-        //    MMSEQS_CREATEDB.out.db
-        //)
-
-        
-
-        //PARSE_MMSEQS_TO_FASTA(
-        //    MMSEQS_CREATETSV.out.tsv,
-        //    CONCATENATE_FASTAS.out.combined_fasta
-        //)
-
         PARSE_MMSEQS_TO_FASTA(
             MMSEQS_CREATEDB.out.db,
             MMSEQS_CLUSTER.out.db_cluster,
@@ -212,7 +199,7 @@ workflow INITIAL_ORTHOGROUPS {
         ch_versions = ch_versions.mix(MMSEQS_CREATEDB.out.versions)
         ch_versions = ch_versions.mix(MMSEQS_CLUSTER.out.versions)
         
-        //ch_mmseqs_results = PARSE_MMSEQS_TO_FASTA.out.fasta
+        ch_mmseqs_results = PARSE_MMSEQS_TO_FASTA.out.fasta
     }
 
     emit:
@@ -220,6 +207,6 @@ workflow INITIAL_ORTHOGROUPS {
     orthofinder_results = ch_orthofinder_results
     broccoli_results = ch_broccoli_results
     input_fastas = ch_input_fastas
-    dmnd_mcl_results = ch_dmnd_mcl_results // DMND MMSEQS
-    //mmseqs_results = ch_mmseqs_results
+    dmnd_mcl_results = ch_dmnd_mcl_results
+    mmseqs_results = ch_mmseqs_results
 }
