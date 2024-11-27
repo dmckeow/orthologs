@@ -1,0 +1,40 @@
+{
+    "outdir": "results/example_data_fullhmms",
+    "run": {
+        "search": true,
+        "broccoli": true,
+        "orthofinder": true,
+        "cluster_dmnd_mcl": true,
+        "cluster_mmseqs": true
+    },
+    "orthofinder": {
+        "prior_run": null,
+        "args": "",
+        "min_sequences": 1
+    },
+    "broccoli": {
+        "args": "",
+        "min_sequences": 1
+    },
+    "search": {
+        "gene_family_info": "/users/asebe/xgraubove/climate-adaptation-corals-ops/results_annotation/data/gene_families_searchinfo.csv",
+        "gene_family_name": "Myosin",
+        "hmm_dir": "/users/asebe/xgraubove/climate-adaptation-corals-ops/results_annotation/data/hmms"
+    },
+    "cluster": {
+        "mcl": {
+            "inflation": 1.1,
+            "fasta_outdir": ".",
+            "args": ""
+        },
+        "dmnd": {
+            "args": "--max-target-seqs 10 --fast --quiet"
+        },
+        "mmseqs_createdb": {
+            "args": ""
+        },
+        "mmseqs_cluster": {
+            "args": ""
+        }
+    }
+}

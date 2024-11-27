@@ -1,7 +1,6 @@
 #!/usr/bin/env nextflow
 
-include { INITIAL_ORTHOGROUPS } from './subworkflows/initial_orthogroups'
-//include { WF_CLUSTERING } from './subworkflows/wf_clustering'
+include { INIT_ORTHO } from './subworkflows/init_ortho'
 
 workflow {
     // Initialize variables for messages
@@ -57,9 +56,17 @@ workflow {
         ${cluster_mmseqs_msg}
     """
 
+    params.samplesheet = null
+
+    // SASH
+    if (params.samplesheet == null) {
+        error "Please provide a samplesheet with the '--samplesheet' option."
+    }
+
     // Run the orthology workflow
-    INITIAL_ORTHOGROUPS(
-        params.fasta_dir,
+    INIT_ORTHO(
+        //params.fasta_dir, // not needed with SASH
+        params.samplesheet,  // SASH
         params.orthofinder.prior_run,
         params.orthofinder.min_sequences,
         params.broccoli.args,
