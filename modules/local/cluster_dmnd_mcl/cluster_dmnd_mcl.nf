@@ -11,8 +11,8 @@ process CLUSTER_DMND_MCL {
     output:
     tuple val(meta), path("*.dmnd.csv"), emit: dmnd_csv
     tuple val(meta), path("*.dmnd.csv.abc"), emit: mcl_abc
-    tuple val(meta), path("*.cluster.fa"), optional: true, emit: dmnd_mcl_fastas
-    tuple val(meta), path("*.orthogroups.txt"), optional: true, emit: dmnd_mcl_orthogroups
+    tuple val(meta), path("*.fa"), optional: true, emit: dmnd_mcl_fastas
+    tuple val(meta), path("dmnd_mcl.orthogroups.txt"), optional: true, emit: dmnd_mcl_orthogroups
 
     script:
     def input_fasta = fasta_files instanceof List ? "combined_input.fasta" : fasta_files
@@ -38,7 +38,7 @@ process CLUSTER_DMND_MCL {
         -o ./ \
         --source ${source}
     
-    mv ${output_prefix}.dmnd.csv.abc.tmp ${output_prefix}.orthogroups.txt
+    mv clusters.abc.tmp dmnd_mcl.orthogroups.txt
     
     """
 }

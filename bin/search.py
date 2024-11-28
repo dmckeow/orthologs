@@ -118,7 +118,7 @@ def parse_gene_family_info(gene_family_info):
 			}
 	return gene_families
 
-def search(fasta_file, gene_family_info, gene_family_name, hmm_dir, threads, output_dir, sample_name):
+def search(fasta_file, gene_family_info, gene_family_name, hmm_dir, threads, output_dir):
 	logging.info(f"# {fasta_file}: {gene_family_name} | HMM search")
 	gene_families = parse_gene_family_info(gene_family_info)
    # if verbose: 
@@ -137,8 +137,9 @@ def search(fasta_file, gene_family_info, gene_family_name, hmm_dir, threads, out
 			base_name = base_name[:-len(ext)]
 			break
 
-	prefix = f"{sample_name}.{base_name}.{gene_family['pref2']}"
-	#prefix = gene_family["pref2"]
+	#prefix = f"{sample_name}.{base_name}.{gene_family['pref2']}"
+	prefix = f"{base_name}.{gene_family['pref2']}"
+	
 	
 	hmms = gene_family["hmms"]
 	threshold = gene_family["threshold"]
@@ -183,10 +184,10 @@ if __name__ == "__main__":
 	parser.add_argument('-i', '--input_source', required=True, help='A meaningful name indicating where your input fastas came from - will be used as subdirectory name in results_annotations/searches')
 	parser.add_argument('-o', '--output_dir', required=True, help='Directory for outputs in which a directory <input_source> will be created')
 	parser.add_argument('gene_family_name', help='Name of the gene family to search')
-	parser.add_argument('-s', '--sample-name', required=True, help='Sample name for output files')
+	#parser.add_argument('-s', '--sample-name', required=True, help='Sample name for output files')
 
 	args = parser.parse_args()
 
 	verbose = True
 
-	search(args.fasta, args.gene_family_info, args.gene_family_name, args.hmm, args.threads, args.output_dir, args.sample_name)
+	search(args.fasta, args.gene_family_info, args.gene_family_name, args.hmm, args.threads, args.output_dir)

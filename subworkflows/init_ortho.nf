@@ -31,8 +31,7 @@ process CONCATENATE_FASTAS {
 
 // Processes to gather fasta names, sample name per fasta defline for later mapping
 process EXTRACT_DEFLINES {
-    publishDir "${params.outdir}/deflines", mode: 'copy'
-
+    
     input:
     tuple val(meta), path(fasta)
 
@@ -45,14 +44,14 @@ process EXTRACT_DEFLINES {
     while read -r line; do
         if [[ \$line == ">"* ]]; then
             defline=\${line#>}
-            echo "${meta.id} ${fasta.getName()} \$defline" >> ${meta.id}_deflines.txt
+            echo "${meta.id}\t${fasta.getName()}\t\$defline" >> ${meta.id}_deflines.txt
         fi
     done < $fasta
     """
 }
 
 process COMBINE_DEFLINES {
-    publishDir "${params.outdir}", mode: 'copy'
+    publishDir "${params.outdir}/deflines", mode: 'copy'
 
     input:
     path '*_deflines.txt'
@@ -63,7 +62,7 @@ process COMBINE_DEFLINES {
     script:
     """
     #!/bin/bash
-    echo "sample fasta defline" > deflines_combined.txt
+    echo "sample\tfasta\tdefline" > deflines_combined.txt
     cat *_deflines.txt >> deflines_combined.txt
     """
 }
@@ -131,9 +130,9 @@ workflow INIT_ORTHO {
         ch_input_fastas = ch_fasta_files // SASH, replaces part above
     }
 
-    //ch_input_fastas.view { it -> "ch_input_fastas: $it\nExpected example: [[id:sample], /path/fasta]" }
+    ch_input_fastas.view { it -> "ch_input_fastas: $it\nExpected example: [[id:sample], /path/fasta]" }
 
-    EXTRACT_DEFLINES(ch_fasta_files)
+    EXTRACT_DEFLINES(ch_input_fastas)
     COMBINE_DEFLINES(EXTRACT_DEFLINES.out.collect())
 
     if (run_orthofinder) {

@@ -9,8 +9,8 @@ process PARSE_MMSEQS_TO_FASTA {
     val(source)
     
     output:
-    tuple val(meta), path("*.cluster.fa"), emit: fasta
-    tuple val(meta), path("clusters.orthogroups.txt"), emit: orthogroups
+    tuple val(meta), path("*.fa"), emit: fasta
+    tuple val(meta), path("mmseqs.orthogroups.txt"), emit: orthogroups
 
     script:
     def createseqfiledb_args = task.ext.createseqfiledb_args ?: ''
@@ -40,7 +40,7 @@ process PARSE_MMSEQS_TO_FASTA {
         -o ./ \
         --source ${source}
     
-    mv clusters.tsv.abc.tmp clusters.orthogroups.txt
+    mv clusters.abc.tmp mmseqs.orthogroups.txt
 
     """
 }
