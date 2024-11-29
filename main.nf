@@ -19,7 +19,7 @@ workflow {
         ) {
         log.error """
         ============================================================
-        Error: No initial orthogroup method is set to run! Interesting choice...
+        Error: No initial orthogroup method is set to run! I am afraid you must choose at least one...
         
         You must set at least one of the following to true:
         - params.run.orthofinder

@@ -14,8 +14,6 @@ include { MMSEQS_CLUSTER } from '../modules/nf-core/mmseqs/cluster/main'
 include { MMSEQS_CREATETSV } from '../modules/nf-core/mmseqs/createtsv/main'
 include { PARSE_MMSEQS_TO_FASTA } from '../modules/local/cluster_mmseqs/parse_mmseqs'
 
-// SEARCH FIRST VERSION
-
 process CONCATENATE_FASTAS {
     input:
     tuple val(meta), path(fasta_files)
@@ -102,6 +100,7 @@ workflow INIT_ORTHO {
 
     //ch_fasta_files.view { it -> "ch_fasta_files: $it" }
 
+
     // SASH: (replaced part above)
     ch_fasta_files = Channel.fromPath(samplesheet)
         .splitCsv(header:true, sep:',')
@@ -114,6 +113,7 @@ workflow INIT_ORTHO {
     // Search
 
     if (run_search) {
+
         SEARCH(
             ch_fasta_files,
             search_gene_family_info,
@@ -123,6 +123,7 @@ workflow INIT_ORTHO {
             outdir
         )
         ch_input_fastas = SEARCH.out.domfasta
+
     } else {
         //ch_input_fastas = Channel.fromPath("${fasta_dir}/*.{fa,faa,fasta,fas,pep}")
             //.map { file -> [ [id: file.baseName], file ] }
@@ -260,7 +261,7 @@ workflow INIT_ORTHO {
         //CLUSTER_DMND_MCL.out.dmnd_mcl_orthogroups.view { it -> "CLUSTER_DMND_MCL.out.dmnd_mcl_orthogroups: $it" }
         //PARSE_MMSEQS_TO_FASTA.out.orthogroups.view { it -> "PARSE_MMSEQS_TO_FASTA.out.orthogroups: $it" }
     }
-
+        
     emit:
     versions = ch_versions
     orthofinder_results_filt = ch_orthofinder_results // With cluster min cluster size filter applied

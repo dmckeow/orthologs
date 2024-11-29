@@ -1,0 +1,17 @@
+SUBMISSION_TIME	SLURM_JOB_ID	SLURM_LOG	SLURM_ERR	COMMAND
+2024-11-29 15:27:08	1999159	logs/slurm-nf.1999159.out	logs/slurm-nf.1999159.err	main.nf -profile slurm -params-file params-example_data.json
+2024-11-29 15:30:30	1999161	logs/slurm-nf.1999161.out	logs/slurm-nf.1999161.err	main.nf -profile slurm -params-file params-example_data.json
+2024-11-29 15:33:35	1999162	logs/slurm-nf.1999162.out	logs/slurm-nf.1999162.err	main.nf -profile slurm -params-file params-example_data.json
+2024-11-29 15:38:25	1999182	logs/slurm-nf.1999182.out	logs/slurm-nf.1999182.err	main.nf -profile slurm -params-file params-example_data.json -resume
+2024-11-29 15:40:36	1999184	logs/slurm-nf.1999184.out	logs/slurm-nf.1999184.err	main.nf -profile slurm_heavy -params-file params-metazoans_test-Homeodomains.json -resume
+2024-11-29 15:46:05	1999504	logs/slurm-nf.1999504.out	logs/slurm-nf.1999504.err	main.nf -profile slurm -params-file params-example_data.json
+2024-11-29 15:47:09	1999510	logs/slurm-nf.1999510.out	logs/slurm-nf.1999510.err	main.nf -profile slurm -params-file params-example_data.json
+2024-11-29 15:53:00	1999616	logs/slurm-nf.1999616.out	logs/slurm-nf.1999616.err	main.nf -profile slurm -params-file params-example_data.json
+2024-11-29 15:55:42	1999620	logs/slurm-nf.1999620.out	logs/slurm-nf.1999620.err	main.nf -profile slurm -params-file params-example_data.json
+2024-11-29 16:01:19	1999626	logs/slurm-nf.1999626.out	logs/slurm-nf.1999626.err	main.nf -profile slurm -params-file params-example_data.json
+2024-11-29 16:03:50	1999638	logs/slurm-nf.1999638.out	logs/slurm-nf.1999638.err	main.nf -profile slurm -params-file params-example_data.json
+2024-11-29 16:34:32	1999760	logs/slurm-nf.1999760.out	logs/slurm-nf.1999760.err	main.nf -profile slurm -params-file params-example_data.json
+2024-11-29 16:41:03	1999767	logs/slurm-nf.1999767.out	logs/slurm-nf.1999767.err	main.nf -profile slurm -params-file params-example_data.json
+2024-11-29 16:49:17	1999779	logs/slurm-nf.1999779.out	logs/slurm-nf.1999779.err	main.nf -profile slurm -params-file params-example_data.json
+2024-11-29 16:52:58	1999786	logs/slurm-nf.1999786.out	logs/slurm-nf.1999786.err	main.nf -profile slurm -params-file params-example_data.json
+2024-11-29 16:55:51	1999790	logs/slurm-nf.1999790.out	logs/slurm-nf.1999790.err	main.nf -profile slurm -params-file params-example_data.json

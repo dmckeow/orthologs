@@ -1,4 +1,3 @@
-// SEARCH process with SASH:
 process SEARCH {
     conda "${projectDir}/modules/local/search/environment.yml"
     
