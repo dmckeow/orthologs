@@ -53,6 +53,27 @@ git submodule update
 8 threads & 0.1-0.5 Gb per eukaryotic genome (from Broccoli documentation)
 
 
+# Running with test dataset
+
+* Target gene families:
+    * Homeodomains
+    * Ets
+    * TFs
+    * zf-met
+    * zf-c2h2
+
+* Target genomes:
+    * **List of genomes to include:** /users/asebe/gzolotarov/projects/2021_TFevol/metazoan_tf_evol_2022/030523_phylogenies/species_list_annotation.txt
+    * **Genomes:** /users/asebe/xgraubove/genomes/data/*long.pep.fasta
+
+* HMM profies:
+    * From Grisha (has an extra field for domain name):
+        * **gene_family_info:** /users/asebe/gzolotarov/projects/2021_TFevol/metazoan_tf_evol_2022/results_phylogenies/gene_families_searchinfo.csv
+        * **hmm_dir:** /users/asebe/gzolotarov/projects/2021_TFevol/metazoan_tf_evol_2022/results_phylogenies/hmms
+    * From Xavi (larger and newer dataset):
+        * **gene_family_info:** /users/asebe/xgraubove/climate-adaptation-corals-ops/results_annotation/data/gene_families_searchinfo.csv
+        * **hmm_dir:** /users/asebe/xgraubove/climate-adaptation-corals-ops/results_annotation/data/hmms
+
 
 # Propagating sample names across init_ortho
 

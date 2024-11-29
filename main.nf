@@ -1,6 +1,7 @@
 #!/usr/bin/env nextflow
 
 include { INIT_ORTHO } from './subworkflows/init_ortho'
+include { WHICH_ORTHO } from './subworkflows/which_ortho'
 
 workflow {
     // Initialize variables for messages
@@ -58,15 +59,13 @@ workflow {
 
     params.samplesheet = null
 
-    // SASH
     if (params.samplesheet == null) {
         error "Please provide a samplesheet with the '--samplesheet' option."
     }
 
     // Run the orthology workflow
-    INIT_ORTHO(
-        //params.fasta_dir, // not needed with SASH
-        params.samplesheet,  // SASH
+    INIT_ORTHO (
+        params.samplesheet,
         params.orthofinder.prior_run,
         params.orthofinder.min_sequences,
         params.broccoli.args,
@@ -83,5 +82,15 @@ workflow {
         params.cluster.mcl.inflation,
         params.run.cluster_dmnd_mcl,
         params.run.cluster_mmseqs
+    )
+
+    // Gather orthogroup info to generate reports and assess which OGs are the best for phylogeny
+    WHICH_ORTHO (
+        INIT_ORTHO.out.combined_deflines,
+        INIT_ORTHO.out.orthofinder_results,
+        INIT_ORTHO.out.broccoli_og_prot_names,
+        INIT_ORTHO.out.dmnd_mcl_cl_prot_names,
+        INIT_ORTHO.out.mmseqs_cl_prot_names,
+        params.run.search
     )
 }

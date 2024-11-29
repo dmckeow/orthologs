@@ -1,7 +1,7 @@
 {
-    "samplesheet": "example_data/samplesheet.csv",
-    "outdir": "results/example_data_fullhmms_SEARCH",
-    "runName": "example_data_fullhmms_SEARCH",
+    "samplesheet": "data/metazoans_test/samplesheet.csv",
+    "outdir": "results/metazoans_test",
+    "runName": "metazoans_test",
     "run": {
         "search": true,
         "broccoli": true,
@@ -12,15 +12,15 @@
     "orthofinder": {
         "prior_run": null,
         "args": "",
-        "min_sequences": 1
+        "min_sequences": 2
     },
     "broccoli": {
-        "args": "",
-        "min_sequences": 1
+        "args": "-phylogenies ml -kmer_size 10000",
+        "min_sequences": 2
     },
     "search": {
         "gene_family_info": "/users/asebe/xgraubove/climate-adaptation-corals-ops/results_annotation/data/gene_families_searchinfo.csv",
-        "gene_family_name": "Myosin",
+        "gene_family_name": "Homeodomains",
         "hmm_dir": "/users/asebe/xgraubove/climate-adaptation-corals-ops/results_annotation/data/hmms"
     },
     "cluster": {
@@ -30,7 +30,7 @@
             "args": ""
         },
         "dmnd": {
-            "args": "--max-target-seqs 10 --fast --quiet"
+            "args": "--max-target-seqs 100 --more-sensitive --quiet"
         },
         "mmseqs_createdb": {
             "args": ""
@@ -39,7 +39,7 @@
             "args": ""
         },
         "createseqfiledb": {
-            "args": ""
+            "args": "--min-sequences 2"
         }
         
     }

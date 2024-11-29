@@ -1,7 +1,9 @@
 {
-    "outdir": "results/example_data_fullhmms",
+    "samplesheet": "example_data/samplesheet.csv",
+    "outdir": "results/example_data_fullhmms_ALL",
+    "runName": "example_data_fullhmms_ALL",
     "run": {
-        "search": true,
+        "search": false,
         "broccoli": true,
         "orthofinder": true,
         "cluster_dmnd_mcl": true,
@@ -34,6 +36,9 @@
             "args": ""
         },
         "mmseqs_cluster": {
+            "args": ""
+        },
+        "createseqfiledb": {
             "args": ""
         }
     }

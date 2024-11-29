@@ -10,6 +10,7 @@ process BROCCOLI {
     
     output:
     path("dir_step3/orthologous_groups.txt"), emit: orthologous_groups
+    path("dir_step3/table_OGs_protein_names.txt"), emit: table_OGs_protein_names
     path("**"), emit: broccoli
     path("dir_step3/orthologous_groups_sequences"), emit: orthologous_groups_sequences
     path("dir_step4/orthologous_pairs.txt"), emit: orthologous_pairs

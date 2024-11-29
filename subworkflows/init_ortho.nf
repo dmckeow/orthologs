@@ -57,7 +57,7 @@ process COMBINE_DEFLINES {
     path '*_deflines.txt'
 
     output:
-    path 'deflines_combined.txt'
+    path 'deflines_combined.txt', emit: combined_deflines
 
     script:
     """
@@ -70,8 +70,7 @@ process COMBINE_DEFLINES {
 
 workflow INIT_ORTHO {
     take:
-    //fasta_dir // not needed with SASH
-    samplesheet // SASH
+    samplesheet
     orthofinder_prior_run
     orthofinder_min_sequences
     broccoli_args
@@ -130,7 +129,7 @@ workflow INIT_ORTHO {
         ch_input_fastas = ch_fasta_files // SASH, replaces part above
     }
 
-    ch_input_fastas.view { it -> "ch_input_fastas: $it\nExpected example: [[id:sample], /path/fasta]" }
+    //ch_input_fastas.view { it -> "ch_input_fastas: $it\nExpected example: [[id:sample], /path/fasta]" }
 
     EXTRACT_DEFLINES(ch_input_fastas)
     COMBINE_DEFLINES(EXTRACT_DEFLINES.out.collect())
@@ -229,7 +228,7 @@ workflow INIT_ORTHO {
         // Concatenate all FASTA files
         CONCATENATE_FASTAS(ch_fasta_for_concat)
 
-        CONCATENATE_FASTAS.out.combined_fasta.view { it -> "CONCATENATE_FASTAS.out.combined_fasta: $it" }
+        //CONCATENATE_FASTAS.out.combined_fasta.view { it -> "CONCATENATE_FASTAS.out.combined_fasta: $it" }
 
         // Create MMseqs2 database
         MMSEQS_CREATEDB(CONCATENATE_FASTAS.out.combined_fasta)
@@ -237,8 +236,8 @@ workflow INIT_ORTHO {
         // Cluster sequences
         MMSEQS_CLUSTER(MMSEQS_CREATEDB.out.db)
 
-        MMSEQS_CLUSTER.out.db_cluster.view { "MMSEQS_CLUSTER output: $it" }
-        MMSEQS_CREATEDB.out.db.view { "MMSEQS_CREATEDB output: $it" }
+        //MMSEQS_CLUSTER.out.db_cluster.view { "MMSEQS_CLUSTER output: $it" }
+        //MMSEQS_CREATEDB.out.db.view { "MMSEQS_CREATEDB output: $it" }
 
         PARSE_MMSEQS_TO_FASTA(
             MMSEQS_CREATEDB.out.db,
@@ -253,13 +252,25 @@ workflow INIT_ORTHO {
         ch_versions = ch_versions.mix(MMSEQS_CLUSTER.out.versions)
         
         ch_mmseqs_results = PARSE_MMSEQS_TO_FASTA.out.fasta
+
+    // Check emits for which_ortho
+        //COMBINE_DEFLINES.out.combined_deflines.view { it -> "COMBINE_DEFLINES.out.combined_deflines: $it" }
+        //ORTHOFINDER.out.orthofinder.view { it -> "ORTHOFINDER.out.orthofinder: $it" }
+        //BROCCOLI.out.table_OGs_protein_names.view { it -> "BROCCOLI.out.table_OGs_protein_names: $it" }
+        //CLUSTER_DMND_MCL.out.dmnd_mcl_orthogroups.view { it -> "CLUSTER_DMND_MCL.out.dmnd_mcl_orthogroups: $it" }
+        //PARSE_MMSEQS_TO_FASTA.out.orthogroups.view { it -> "PARSE_MMSEQS_TO_FASTA.out.orthogroups: $it" }
     }
 
     emit:
     versions = ch_versions
-    orthofinder_results = ch_orthofinder_results
-    broccoli_results = ch_broccoli_results
+    orthofinder_results_filt = ch_orthofinder_results // With cluster min cluster size filter applied
+    broccoli_results = ch_broccoli_results // With cluster min cluster size filter applied
     input_fastas = ch_input_fastas
-    dmnd_mcl_results = ch_dmnd_mcl_results
-    mmseqs_results = ch_mmseqs_results
+    dmnd_mcl_results = ch_dmnd_mcl_results // With cluster min cluster size filter applied
+    mmseqs_results = ch_mmseqs_results // With cluster min cluster size filter applied
+    combined_deflines = COMBINE_DEFLINES.out.combined_deflines
+    orthofinder_results = ORTHOFINDER.out.orthofinder
+    broccoli_og_prot_names = BROCCOLI.out.table_OGs_protein_names
+    dmnd_mcl_cl_prot_names = CLUSTER_DMND_MCL.out.dmnd_mcl_orthogroups
+    mmseqs_cl_prot_names = PARSE_MMSEQS_TO_FASTA.out.orthogroups
 }
