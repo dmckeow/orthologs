@@ -1,6 +1,8 @@
 process CLUSTER_DMND_MCL {
     conda "${moduleDir}/environment.yml"
-    container 'community.wave.seqera.io/library/biopython_diamond_mcl_python:babf799e599f4f74'
+    //container 'community.wave.seqera.io/library/biopython_diamond_mcl_python:babf799e599f4f74'
+    //container 'oras://community.wave.seqera.io/library/biopython_diamond_mcl_python:7a0dd2d66fbb321d'
+    container 'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/31/314ed81fa1c23bc3db25f16df3f5ebf688deee3b47cf00459968b5b81f45c83c/data'
 
     input:
     tuple val(meta), path(fasta_files)

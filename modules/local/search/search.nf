@@ -1,6 +1,8 @@
 process SEARCH {
     conda "${moduleDir}/environment.yml"
-    container 'community.wave.seqera.io/library/bedtools_biopython_hmmer_samtools_python:c2a5749688500b49'
+    //container 'community.wave.seqera.io/library/bedtools_biopython_hmmer_samtools_python:c2a5749688500b49'
+    //container 'oras://community.wave.seqera.io/library/bedtools_biopython_hmmer_samtools_python:6ff18068cb3833ec'
+    container 'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/d0/d06f9c1b929618ccc24024d4d13768bd9196a05416f9dcad078853ecbf40efa9/data'
 
     input:
     tuple val(meta), path(fasta)

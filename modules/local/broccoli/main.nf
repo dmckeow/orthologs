@@ -2,7 +2,10 @@ process BROCCOLI {
     tag "$meta.id"
     label 'process_medium'
 
-    conda "${projectDir}/modules/local/broccoli/environment.yml"
+    conda "${moduleDir}/environment.yml"
+    //container 'community.wave.seqera.io/library/biopython_diamond_fasttree_ete3_python:c345017048f04a9c'
+    //container 'oras://community.wave.seqera.io/library/biopython_diamond_fasttree_ete3_python:50a4e9ceccbb9484'
+    container 'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/3d/3dd76a137e4bfd2df8b00d8e07e5ffc355dc680adccf94bfbfbc2b5bbdef9efe/data'
 
     input:
     tuple val(meta), path(fastas, stageAs: 'input/')

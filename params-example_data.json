@@ -4,10 +4,10 @@
     "runName": "example_data_fullhmms_SEARCH",
     "run": {
         "search": true,
-        "broccoli": false,
-        "orthofinder": false,
+        "broccoli": true,
+        "orthofinder": true,
         "cluster_dmnd_mcl": true,
-        "cluster_mmseqs": false
+        "cluster_mmseqs": true
     },
     "orthofinder": {
         "prior_run": null,

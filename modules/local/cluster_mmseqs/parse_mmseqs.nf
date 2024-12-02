@@ -1,6 +1,9 @@
 process PARSE_MMSEQS_TO_FASTA {
 
-    conda "${projectDir}/modules/local/cluster_mmseqs/environment.yml"
+    conda "${moduleDir}/environment.yml"
+    
+    //container 'oras://community.wave.seqera.io/library/mmseqs2_biopython_python:362838f7a003ac69'
+    container 'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/f5/f5898f2f43274c4fbcff3e891df7295540f40cece35428b5762b0ac35f6ea955/data'
 
     input:
     tuple val(meta), path(sequenceDB)
