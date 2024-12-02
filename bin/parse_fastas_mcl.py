@@ -14,13 +14,15 @@ def process_input_file(input_file, output_file):
 		
 		for index, line in enumerate(infile, 1):
 			#new_id = f"{base_filename}.{index}.{source}"
-			new_id = f"CL_{index}"
-			modified_line = f"{new_id}\t{line.replace('\t', ' ').strip()}\n"
+			#new_id = f"CL_{index}" # this is only valid in python 3.6 and over
+			new_id = "CL_" + str(index)
+			#modified_line = f"{new_id}\t{line.replace('\t', ' ').strip()}\n"
+			modified_line = new_id + "\t" + line.replace('\t', ' ').strip() + "\n"
 			outfile.write(modified_line)
 
 def extract_fasta_sequences(args):
 	og_name, proteins, fasta_file, output_dir = args
-	output_file = os.path.join(output_dir, f"{og_name}.fa")
+	output_file = os.path.join(output_dir, og_name + ".fa")
 	
 	protein_set = set(proteins.split())
 	
@@ -50,7 +52,7 @@ def main(args):
 	with Pool() as pool:
 		pool.map(extract_fasta_sequences, extract_args)
 
-	print(f"parse_fastas_{args.source}.py: Fasta extraction complete.")
+	print("parse_fastas_" + args.source + ".py: Fasta extraction complete.")
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()

@@ -23,7 +23,7 @@ process GET_ORTHOGROUP_INFO {
     def mmseqs = mmseqs_clusters ? "--mmseqs ${mmseqs_clusters}" : ''
     def search = search_status ? "--search" : ''
     """
-    python ${projectDir}/bin/get_og_deflines.py \
+    python3 ${projectDir}/bin/get_og_deflines.py \
         --input ${combined_deflines} \
         ${orthofinder} \
         ${broccoli} \

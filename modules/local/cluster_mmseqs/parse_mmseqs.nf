@@ -31,10 +31,10 @@ process PARSE_MMSEQS_TO_FASTA {
     --threads ${task.cpus} \
     $createseqfiledb_args
 
-    python ${projectDir}/bin/parse_mmseqs.py \
+    python3 ${projectDir}/bin/parse_mmseqs.py \
         -i clusters.tsv
     
-    python ${projectDir}/bin/parse_fastas_mcl.py \
+    python3 ${projectDir}/bin/parse_fastas_mcl.py \
         -m clusters.tsv.abc \
         -f ${fasta_file} \
         -o ./ \

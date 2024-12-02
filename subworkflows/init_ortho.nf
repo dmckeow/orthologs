@@ -1,6 +1,6 @@
 #!/usr/bin/env nextflow
 
-include { ORTHOFINDER } from '../modules/nf-core/orthofinder/main'
+include { ORTHOFINDER } from '../modules/local/orthofinder/main' // using modified local copy of nf-core module
 include { BROCCOLI } from '../modules/local/broccoli/main'
 include { FILTER_ORTHOGROUPS as FILTER_ORTHOGROUPS_ORTHOFINDER} from '../modules/local/filter_orthogroups/filter_orthogroups'
 include { FILTER_ORTHOGROUPS as FILTER_ORTHOGROUPS_BROCCOLI} from '../modules/local/filter_orthogroups/filter_orthogroups'
@@ -93,6 +93,10 @@ workflow INIT_ORTHO {
     ch_input_fastas = Channel.empty()
     ch_dmnd_mcl_results = Channel.empty()
     ch_mmseqs_results = Channel.empty()
+    ch_orthofinder_out = Channel.empty()
+    ch_broccoli_out = Channel.empty()
+    ch_dmnd_mcl_out = Channel.empty()
+    ch_mmseqs_out = Channel.empty()
 
     // Create a channel for the FASTA files
     //ch_fasta_files = Channel.fromPath("${fasta_dir}/*.{fa,faa,fasta,fas,pep}")
@@ -153,6 +157,7 @@ workflow INIT_ORTHO {
 
         ORTHOFINDER(ch_orthofinder_input, prior_run_ch)
         ch_versions = ch_versions.mix(ORTHOFINDER.out.versions)
+        ch_orthofinder_out = ORTHOFINDER.out.orthofinder
 
         // Create a channel for the Orthogroup_Sequences folder
         orthogroup_sequences = ORTHOFINDER.out.orthofinder
@@ -182,6 +187,7 @@ workflow INIT_ORTHO {
             broccoli_args
         )
         ch_versions = ch_versions.mix(BROCCOLI.out.versions)
+        ch_broccoli_out = BROCCOLI.out.table_OGs_protein_names
         
         // Add metadata to the orthologous_groups_sequences output
         orthogroups_with_meta = BROCCOLI.out.orthologous_groups_sequences
@@ -212,6 +218,7 @@ workflow INIT_ORTHO {
             "mcl"
         )
         ch_dmnd_mcl_results = CLUSTER_DMND_MCL.out.dmnd_mcl_fastas
+        ch_dmnd_mcl_out = CLUSTER_DMND_MCL.out.dmnd_mcl_orthogroups
     }
 
 // DMND MMSEQS
@@ -253,25 +260,20 @@ workflow INIT_ORTHO {
         ch_versions = ch_versions.mix(MMSEQS_CLUSTER.out.versions)
         
         ch_mmseqs_results = PARSE_MMSEQS_TO_FASTA.out.fasta
+        ch_mmseqs_out = PARSE_MMSEQS_TO_FASTA.out.orthogroups
 
-    // Check emits for which_ortho
-        //COMBINE_DEFLINES.out.combined_deflines.view { it -> "COMBINE_DEFLINES.out.combined_deflines: $it" }
-        //ORTHOFINDER.out.orthofinder.view { it -> "ORTHOFINDER.out.orthofinder: $it" }
-        //BROCCOLI.out.table_OGs_protein_names.view { it -> "BROCCOLI.out.table_OGs_protein_names: $it" }
-        //CLUSTER_DMND_MCL.out.dmnd_mcl_orthogroups.view { it -> "CLUSTER_DMND_MCL.out.dmnd_mcl_orthogroups: $it" }
-        //PARSE_MMSEQS_TO_FASTA.out.orthogroups.view { it -> "PARSE_MMSEQS_TO_FASTA.out.orthogroups: $it" }
     }
         
     emit:
-    versions = ch_versions
-    orthofinder_results_filt = ch_orthofinder_results // With cluster min cluster size filter applied
-    broccoli_results = ch_broccoli_results // With cluster min cluster size filter applied
-    input_fastas = ch_input_fastas
-    dmnd_mcl_results = ch_dmnd_mcl_results // With cluster min cluster size filter applied
-    mmseqs_results = ch_mmseqs_results // With cluster min cluster size filter applied
-    combined_deflines = COMBINE_DEFLINES.out.combined_deflines
-    orthofinder_results = ORTHOFINDER.out.orthofinder
-    broccoli_og_prot_names = BROCCOLI.out.table_OGs_protein_names
-    dmnd_mcl_cl_prot_names = CLUSTER_DMND_MCL.out.dmnd_mcl_orthogroups
-    mmseqs_cl_prot_names = PARSE_MMSEQS_TO_FASTA.out.orthogroups
+        versions = ch_versions
+        orthofinder_results_filt = ch_orthofinder_results // With cluster min cluster size filter applied
+        broccoli_results = ch_broccoli_results // With cluster min cluster size filter applied
+        input_fastas = ch_input_fastas
+        dmnd_mcl_results = ch_dmnd_mcl_results // With cluster min cluster size filter applied
+        mmseqs_results = ch_mmseqs_results // With cluster min cluster size filter applied
+        combined_deflines = COMBINE_DEFLINES.out.combined_deflines
+        orthofinder_results = ch_orthofinder_out 
+        broccoli_og_prot_names = ch_broccoli_out
+        dmnd_mcl_cl_prot_names = ch_dmnd_mcl_out
+        mmseqs_cl_prot_names = ch_mmseqs_out
 }

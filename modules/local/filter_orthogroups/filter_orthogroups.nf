@@ -15,7 +15,7 @@ process FILTER_ORTHOGROUPS {
 
     script:
     """
-    python ${projectDir}/bin/filter_orthogroups.py ${orthogroup_dir} ${min_sequences}
+    python3 ${projectDir}/bin/filter_orthogroups.py ${orthogroup_dir} ${min_sequences}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

@@ -1,5 +1,6 @@
 process CLUSTER_DMND_MCL {
-    conda "${projectDir}/modules/local/cluster_dmnd_mcl/environment.yml"
+    conda "${moduleDir}/environment.yml"
+    container 'community.wave.seqera.io/library/biopython_diamond_mcl_python:babf799e599f4f74'
 
     input:
     tuple val(meta), path(fasta_files)
@@ -32,13 +33,13 @@ process CLUSTER_DMND_MCL {
     
     mcl ${output_prefix}.dmnd.csv ${mcl_params} -I ${mcl_inflation} -o ${output_prefix}.dmnd.csv.abc --abc
     
-    python ${projectDir}/bin/parse_fastas_mcl.py \
+    python3 ${projectDir}/bin/parse_fastas_mcl.py \
         -m ${output_prefix}.dmnd.csv.abc \
         -f ${input_fasta} \
         -o ./ \
         --source ${source}
     
     mv clusters.abc.tmp dmnd_mcl.orthogroups.txt
-    
+
     """
 }

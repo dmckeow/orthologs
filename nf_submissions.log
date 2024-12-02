@@ -15,3 +15,31 @@ SUBMISSION_TIME	SLURM_JOB_ID	SLURM_LOG	SLURM_ERR	COMMAND
 2024-11-29 16:49:17	1999779	logs/slurm-nf.1999779.out	logs/slurm-nf.1999779.err	main.nf -profile slurm -params-file params-example_data.json
 2024-11-29 16:52:58	1999786	logs/slurm-nf.1999786.out	logs/slurm-nf.1999786.err	main.nf -profile slurm -params-file params-example_data.json
 2024-11-29 16:55:51	1999790	logs/slurm-nf.1999790.out	logs/slurm-nf.1999790.err	main.nf -profile slurm -params-file params-example_data.json
+2024-12-02 11:09:21	2072642	logs/slurm-nf.2072642.out	logs/slurm-nf.2072642.err	main.nf -profile slurm_heavy -params-file params-metazoans_test-Homeodomains.json -resume --orthofinder.prior_run /users/asebe/dmckeown/projects/crg-bcaortho/work/c9/a77cd239d2802c061ea8e32b833459/input/OrthoFinder/Results_orthofinder/WorkingDirectory
+2024-12-02 11:11:56	2073143	logs/slurm-nf.2073143.out	logs/slurm-nf.2073143.err	main.nf -profile slurm_heavy -params-file params-metazoans_test-Homeodomains.json -resume
+2024-12-02 11:19:02	2073963	logs/slurm-nf.2073963.out	logs/slurm-nf.2073963.err	main.nf -profile slurm_heavy -params-file params-metazoans_test-Homeodomains.json
+2024-12-02 11:23:59	2074665	logs/slurm-nf.2074665.out	logs/slurm-nf.2074665.err	main.nf -profile slurm -params-file params-example_data.json
+2024-12-02 11:24:44	2074796	logs/slurm-nf.2074796.out	logs/slurm-nf.2074796.err	main.nf -profile slurm -params-file params-example_data.json
+2024-12-02 11:34:20	2075474	logs/slurm-nf.2075474.out	logs/slurm-nf.2075474.err	main.nf -profile slurm -params-file params-example_data.json
+2024-12-02 11:34:57	2075487	logs/slurm-nf.2075487.out	logs/slurm-nf.2075487.err	main.nf -profile slurm_heavy -params-file params-metazoans_test-Homeodomains.json -resume --orthofinder.prior_run /users/asebe/dmckeown/projects/crg-bcaortho/work/c9/a77cd239d2802c061ea8e32b833459/input/OrthoFinder/Results_orthofinder/WorkingDirectory
+2024-12-02 11:51:07	2075884	logs/slurm-nf.2075884.out	logs/slurm-nf.2075884.err	main.nf -profile slurm -params-file params-example_data.json
+2024-12-02 12:18:10	2077749	logs/slurm-nf.2077749.out	logs/slurm-nf.2077749.err	main.nf -profile slurm -params-file params-example_data.json
+2024-12-02 12:35:17	2080306	logs/slurm-nf.2080306.out	logs/slurm-nf.2080306.err	main.nf -profile slurm -params-file params-example_data.json
+2024-12-02 12:44:38	2081546	logs/slurm-nf.2081546.out	logs/slurm-nf.2081546.err	main.nf -profile slurm -params-file params-example_data.json
+2024-12-02 12:45:50	2081791	logs/slurm-nf.2081791.out	logs/slurm-nf.2081791.err	main.nf -profile slurm -params-file params-example_data.json
+2024-12-02 12:48:21	2082392	logs/slurm-nf.2082392.out	logs/slurm-nf.2082392.err	main.nf -profile slurm -params-file params-example_data.json
+2024-12-02 12:51:36	2082554	logs/slurm-nf.2082554.out	logs/slurm-nf.2082554.err	main.nf -profile slurm -params-file params-example_data.json
+2024-12-02 12:53:15	2082800	logs/slurm-nf.2082800.out	logs/slurm-nf.2082800.err	main.nf -profile slurm -params-file params-example_data.json
+2024-12-02 13:04:03	2083718	logs/slurm-nf.2083718.out	logs/slurm-nf.2083718.err	main.nf -profile slurm -params-file params-example_data.json
+2024-12-02 14:13:04	2090076	logs/slurm-nf.2090076.out	logs/slurm-nf.2090076.err	main.nf -profile slurm -params-file params-example_data.json
+2024-12-02 14:15:58	2090079	logs/slurm-nf.2090079.out	logs/slurm-nf.2090079.err	main.nf -profile slurm -params-file params-example_data.json
+2024-12-02 14:28:21	2090118	logs/slurm-nf.2090118.out	logs/slurm-nf.2090118.err	main.nf -profile slurm -params-file params-example_data.json -resume
+2024-12-02 14:36:25	2090183	logs/slurm-nf.2090183.out	logs/slurm-nf.2090183.err	main.nf -profile slurm -params-file params-example_data.json -resume
+2024-12-02 14:37:34	2090185	logs/slurm-nf.2090185.out	logs/slurm-nf.2090185.err	main.nf -profile slurm -params-file params-example_data.json -resume
+2024-12-02 14:38:20	2090191	logs/slurm-nf.2090191.out	logs/slurm-nf.2090191.err	main.nf -profile slurm -params-file params-example_data.json -resume
+2024-12-02 14:40:29	2090195	logs/slurm-nf.2090195.out	logs/slurm-nf.2090195.err	main.nf -profile slurm -params-file params-example_data.json -resume
+2024-12-02 14:42:35	2090207	logs/slurm-nf.2090207.out	logs/slurm-nf.2090207.err	main.nf -profile slurm -params-file params-example_data.json -resume
+2024-12-02 14:48:55	2090231	logs/slurm-nf.2090231.out	logs/slurm-nf.2090231.err	main.nf -profile slurm -params-file params-example_data.json -resume
+2024-12-02 14:50:52	2090245	logs/slurm-nf.2090245.out	logs/slurm-nf.2090245.err	main.nf -profile slurm -params-file params-example_data.json -resume
+2024-12-02 15:01:31	2090318	logs/slurm-nf.2090318.out	logs/slurm-nf.2090318.err	main.nf -profile slurm -params-file params-example_data.json
+2024-12-02 15:08:30	2090389	logs/slurm-nf.2090389.out	logs/slurm-nf.2090389.err	main.nf -profile slurm -params-file params-example_data.json

@@ -1,6 +1,7 @@
 process SEARCH {
-    conda "${projectDir}/modules/local/search/environment.yml"
-    
+    conda "${moduleDir}/environment.yml"
+    container 'community.wave.seqera.io/library/bedtools_biopython_hmmer_samtools_python:c2a5749688500b49'
+
     input:
     tuple val(meta), path(fasta)
     val(gene_family_info)
@@ -16,7 +17,7 @@ process SEARCH {
     
     script:
     """
-    python ${projectDir}/bin/search.py \
+    python3 ${projectDir}/bin/search.py \
         -f ${fasta} \
         -g ${gene_family_info} \
         -t ${task.cpus} \

@@ -131,7 +131,7 @@ def search(fasta_file, gene_family_info, gene_family_name, hmm_dir, threads, out
 
 	base_name = os.path.basename(os.path.splitext(fasta_file)[0])
 
-    # If you want to handle multiple extensions
+	# If you want to handle multiple extensions
 	for ext in [".fasta", ".fas", ".fa", ".fna", ".ffn", ".faa", ".mpfa", ".frn"]:
 		if base_name.endswith(ext):
 			base_name = base_name[:-len(ext)]
