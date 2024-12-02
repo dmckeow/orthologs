@@ -1,3 +1,4 @@
 SUBMISSION_TIME	SLURM_JOB_ID	SLURM_LOG	SLURM_ERR	COMMAND
 2024-12-02 16:15:35	2090841	logs/slurm-nf.2090841.out	logs/slurm-nf.2090841.err	main.nf -profile slurm -params-file params-example_data.json
 2024-12-02 16:25:17	2090941	logs/slurm-nf.2090941.out	logs/slurm-nf.2090941.err	main.nf -profile slurm_heavy -params-file params-metazoans_test-Homeodomains.json
+2024-12-02 17:49:04	2094212	logs/slurm-nf.2094212.out	logs/slurm-nf.2094212.err	main.nf -profile slurm_heavy -params-file params-metazoans_test-Homeodomains.json -resume
