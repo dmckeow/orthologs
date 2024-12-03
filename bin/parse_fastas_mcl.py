@@ -34,7 +34,7 @@ def extract_fasta_sequences(args):
 def main(args):
 	os.makedirs(args.outdir, exist_ok=True)
 	#output = os.path.splitext(os.path.basename(args.mcl_ogs))[0] + ".abc.tmp"
-	output = os.path.join(args.outdir, "clusters.abc.tmp")
+	output = "clusters.abc.tmp"
 
 	# Process input file
 	#process_input_file(args.mcl_ogs, output, args.source)

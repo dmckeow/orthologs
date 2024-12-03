@@ -11,11 +11,11 @@
 # Logging job submission
 
 # Add logging functionality
-LOG_FILE="nf_submissions.log"
+LOG_FILE="joblog"
 
 # Create the log file with headers if it doesn't exist
 if [ ! -f "$LOG_FILE" ]; then
-    echo -e "SUBMISSION_TIME\tSLURM_JOB_ID\tSLURM_LOG\tSLURM_ERR\tCOMMAND" > "$LOG_FILE"
+    echo -e "SUBMISSION_TIME\tSLURM_JOB_ID\tSLURM_LOG\tSLURM_ERR\tCOMMAND\tNOTE" > "$LOG_FILE"
 fi
 
 SLURM_LOG="logs/slurm-nf.${SLURM_JOB_ID}.out"
@@ -23,7 +23,7 @@ SLURM_ERR="logs/slurm-nf.${SLURM_JOB_ID}.err"
 SUBMISSION_TIME=$(date '+%Y-%m-%d %H:%M:%S')
 
 # Log the submission
-echo -e "${SUBMISSION_TIME}\t${SLURM_JOB_ID}\t${SLURM_LOG}\t${SLURM_ERR}\t$@" >> "$LOG_FILE"
+echo -e "${SUBMISSION_TIME}\t${SLURM_JOB_ID}\t${SLURM_LOG}\t${SLURM_ERR}\tsbatch submit_nf.sh $@\t" >> "$LOG_FILE"
 
 ############################################
 

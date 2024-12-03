@@ -12,10 +12,11 @@ process CLUSTER_DMND_MCL {
     val(source)
     
     output:
-    tuple val(meta), path("*.dmnd.csv"), emit: dmnd_csv
-    tuple val(meta), path("*.dmnd.csv.abc"), emit: mcl_abc
-    tuple val(meta), path("*.fa"), optional: true, emit: dmnd_mcl_fastas
-    tuple val(meta), path("dmnd_mcl.orthogroups.txt"), optional: true, emit: dmnd_mcl_orthogroups
+    tuple val(meta), path("diamond/*.dmnd.csv"), emit: dmnd_csv
+    tuple val(meta), path("mcl/*.dmnd.csv.abc"), emit: mcl_abc
+    tuple val(meta), path("cluster_sequences/*.fa"), optional: true, emit: fasta_files
+    tuple val(meta), path("cluster_sequences"), optional: true, emit: fasta_dir
+    tuple val(meta), path("dmnd_mcl.orthogroups.txt"), optional: true, emit: orthogroup_list
 
     script:
     def input_fasta = fasta_files instanceof List ? "combined_input.fasta" : fasta_files
@@ -28,17 +29,19 @@ process CLUSTER_DMND_MCL {
         cat ${fasta_files} > ${input_fasta}
     fi
     
-    diamond blastp ${diamond_params} -d ${input_fasta} -q ${input_fasta} -o ${output_prefix}.dmnd.csv --threads ${task.cpus}
+    mkdir -p diamond mcl
+
+    diamond blastp ${diamond_params} -d ${input_fasta} -q ${input_fasta} -o diamond/${output_prefix}.dmnd.csv --threads ${task.cpus}
     
-    awk '{ print \$1,\$2,\$12 }' ${output_prefix}.dmnd.csv > ${output_prefix}.dmnd.csv.tmp
-    mv ${output_prefix}.dmnd.csv.tmp ${output_prefix}.dmnd.csv
+    awk '{ print \$1,\$2,\$12 }' diamond/${output_prefix}.dmnd.csv > diamond/${output_prefix}.dmnd.csv.tmp
+    mv diamond/${output_prefix}.dmnd.csv.tmp diamond/${output_prefix}.dmnd.csv
     
-    mcl ${output_prefix}.dmnd.csv ${mcl_params} -I ${mcl_inflation} -o ${output_prefix}.dmnd.csv.abc --abc
+    mcl diamond/${output_prefix}.dmnd.csv ${mcl_params} -I ${mcl_inflation} -o mcl/${output_prefix}.dmnd.csv.abc --abc
     
     python3 ${projectDir}/bin/parse_fastas_mcl.py \
-        -m ${output_prefix}.dmnd.csv.abc \
+        -m mcl/${output_prefix}.dmnd.csv.abc \
         -f ${input_fasta} \
-        -o ./ \
+        -o cluster_sequences/ \
         --source ${source}
     
     mv clusters.abc.tmp dmnd_mcl.orthogroups.txt

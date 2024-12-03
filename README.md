@@ -13,13 +13,15 @@ nextflow run main.nf -profile local
 sbatch submit_nf.sh main.nf -profile slurm
 ```
 ## Changing parameters, resources, etc
-Everything is controlled from within the nextflow.config file.  
+The following files control the paramters for the pipeline:
+    * nextflow.config - parameters unlikely to be changed. If you change anything in this it will be the memory and cpu paramaters
+        Recommendation - create new profiles in this file (see local, slurm for examples) and load them from the command line to change memory and cpus (see below)
+    * params.config - parameters that are likely to be changed frequently, such as arguments for software, etc. It is loaded by the nextflow.config by default
+        Recommendation - copy this file with a memorable name and change the parameters within, then provide to command line with -c
 You can run the pipeline with a different config.file e.g.:
 ```
-nextflow run main.nf -profile local -c path/to/other/nextflow.config
+sbatch submit_nf.sh main.nf -profile slurm -c params-fullhmms.config
 
-# You can also provide different parameters using a different params file:
-nextflow run main.nf -profile local -params-file path/to/other/params.json
 ```
 
 # Notes

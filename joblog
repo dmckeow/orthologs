@@ -1,0 +1,15 @@
+SUBMISSION_TIME	SLURM_JOB_ID	SLURM_LOG	SLURM_ERR	COMMAND	NOTE
+2024-12-03 15:20:39	2300628	logs/slurm-nf.2300628.out	logs/slurm-nf.2300628.err	sbatch submit_nf.sh main.nf -profile slurm -c params-fullhmms.config	
+2024-12-03 15:25:46	2301230	logs/slurm-nf.2301230.out	logs/slurm-nf.2301230.err	sbatch submit_nf.sh main.nf -profile slurm -c params-fullhmms.config	
+2024-12-03 15:29:04	2301596	logs/slurm-nf.2301596.out	logs/slurm-nf.2301596.err	sbatch submit_nf.sh main.nf -profile slurm -c params-fullhmms.config	
+2024-12-03 15:31:50	2301891	logs/slurm-nf.2301891.out	logs/slurm-nf.2301891.err	sbatch submit_nf.sh main.nf -profile slurm -c params-fullhmms.config	
+2024-12-03 15:44:28	2303403	logs/slurm-nf.2303403.out	logs/slurm-nf.2303403.err	sbatch submit_nf.sh main.nf -profile slurm -c params-fullhmms.config	
+2024-12-03 15:48:26	2303839	logs/slurm-nf.2303839.out	logs/slurm-nf.2303839.err	sbatch submit_nf.sh main.nf -profile slurm -c params-fullhmms.config	
+2024-12-03 16:03:35	2305344	logs/slurm-nf.2305344.out	logs/slurm-nf.2305344.err	sbatch submit_nf.sh main.nf -profile slurm -c params-fullhmms.config	
+2024-12-03 16:06:04	2305696	logs/slurm-nf.2305696.out	logs/slurm-nf.2305696.err	sbatch submit_nf.sh main.nf -profile slurm -c params-fullhmms.config	
+2024-12-03 16:08:21	2305884	logs/slurm-nf.2305884.out	logs/slurm-nf.2305884.err	sbatch submit_nf.sh main.nf -profile slurm -c params-fullhmms.config	
+2024-12-03 16:12:16	2306245	logs/slurm-nf.2306245.out	logs/slurm-nf.2306245.err	sbatch submit_nf.sh main.nf -profile slurm -c params-fullhmms.config	
+2024-12-03 16:19:36	2306945	logs/slurm-nf.2306945.out	logs/slurm-nf.2306945.err	sbatch submit_nf.sh main.nf -profile slurm -c params.config	
+2024-12-03 16:27:32	2307653	logs/slurm-nf.2307653.out	logs/slurm-nf.2307653.err	sbatch submit_nf.sh main.nf -profile slurm	
+2024-12-03 16:36:51	2308479	logs/slurm-nf.2308479.out	logs/slurm-nf.2308479.err	sbatch submit_nf.sh main.nf -profile slurm	
+2024-12-03 16:38:49	2308660	logs/slurm-nf.2308660.out	logs/slurm-nf.2308660.err	sbatch submit_nf.sh main.nf -profile slurm	

@@ -12,8 +12,9 @@ process PARSE_MMSEQS_TO_FASTA {
     val(source)
     
     output:
-    tuple val(meta), path("*.fa"),                      emit: fasta
-    tuple val(meta), path("mmseqs.orthogroups.txt"),    emit: orthogroups
+    tuple val(meta), path("cluster_sequences/*.fa"),     optional: true,           emit: fasta_files
+    tuple val(meta), path("cluster_sequences"), optional: true,                    emit: fasta_dir
+    tuple val(meta), path("mmseqs.orthogroups.txt"),     optional: true,           emit: orthogroup_list
 
     script:
     def createseqfiledb_args = task.ext.createseqfiledb_args ?: ''
@@ -40,7 +41,7 @@ process PARSE_MMSEQS_TO_FASTA {
     python3 ${projectDir}/bin/parse_fastas_mcl.py \
         -m clusters.tsv.abc \
         -f ${fasta_file} \
-        -o ./ \
+        -o cluster_sequences/ \
         --source ${source}
     
     mv clusters.abc.tmp mmseqs.orthogroups.txt
