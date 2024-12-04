@@ -13,3 +13,12 @@ SUBMISSION_TIME	SLURM_JOB_ID	SLURM_LOG	SLURM_ERR	COMMAND	NOTE
 2024-12-04 13:56:39	2345108	logs/slurm-nf.2345108.out	logs/slurm-nf.2345108.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-fullhmms.json -resume	
 2024-12-04 14:15:19	2345616	logs/slurm-nf.2345616.out	logs/slurm-nf.2345616.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-fullhmms.json -resume	
 2024-12-04 14:23:43	2346020	logs/slurm-nf.2346020.out	logs/slurm-nf.2346020.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-fullhmms.json -resume	
+2024-12-04 16:15:42	2348400	logs/slurm-nf.2348400.out	logs/slurm-nf.2348400.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-test_copy_genomes.json	do duplicated successfuly test genomes cause same orthofinder error
+2024-12-04 16:37:43	2348561	logs/slurm-nf.2348561.out	logs/slurm-nf.2348561.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-test_min_len_short.json	successful
+2024-12-04 16:37:43	2348562	logs/slurm-nf.2348562.out	logs/slurm-nf.2348562.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-test_min_len_long.json	failed
+2024-12-04 17:22:44	2349072	logs/slurm-nf.2349072.out	logs/slurm-nf.2349072.err	sbatch submit_nf.sh main.nf -profile slurm_heavy -params-file params-MetazoansTest_Homeodomains-part1.json	Does splitting up the 150 set id if specific genome is problem?
+2024-12-04 17:22:44	2349074	logs/slurm-nf.2349074.out	logs/slurm-nf.2349074.err	sbatch submit_nf.sh main.nf -profile slurm_heavy -params-file params-MetazoansTest_Homeodomains-part3.json	Does splitting up the 150 set id if specific genome is problem?
+2024-12-04 17:22:44	2349073	logs/slurm-nf.2349073.out	logs/slurm-nf.2349073.err	sbatch submit_nf.sh main.nf -profile slurm_heavy -params-file params-MetazoansTest_Homeodomains-part2.json	Does splitting up the 150 set id if specific genome is problem?
+2024-12-04 17:26:44	2349414	logs/slurm-nf.2349414.out	logs/slurm-nf.2349414.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part1.json	
+2024-12-04 17:27:45	2349415	logs/slurm-nf.2349415.out	logs/slurm-nf.2349415.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part2.json	
+2024-12-04 17:27:45	2349416	logs/slurm-nf.2349416.out	logs/slurm-nf.2349416.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part3.json	
