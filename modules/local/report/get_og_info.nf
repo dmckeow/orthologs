@@ -13,7 +13,8 @@ process GET_ORTHOGROUP_INFO {
     val(search_status)
     
     output:
-    path("combined_orthogroups.csv"), emit: combined_orthogroups
+    path("orthogroups_deflines.csv"), emit: orthogroups_deflines
+    path("orthogroups.csv"), emit: orthogroups
     
     script:
     
