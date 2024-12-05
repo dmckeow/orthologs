@@ -13,6 +13,8 @@ include { MMSEQS_CLUSTER } from '../modules/nf-core/mmseqs/cluster/main'
 include { MMSEQS_CREATETSV } from '../modules/nf-core/mmseqs/createtsv/main'
 include { PARSE_MMSEQS_TO_FASTA } from '../modules/local/cluster_mmseqs/parse_mmseqs'
 
+include { ORTHOFINDER as ORTHOFINDER_INITIAL } from '../modules/local/orthofinder/main' // OVLP
+
 process CONCATENATE_FASTAS {
     input:
     tuple val(meta), path(fasta_files)
@@ -61,6 +63,22 @@ process COMBINE_DEFLINES {
     #!/bin/bash
     echo "sample\tfasta\tdefline" > deflines_combined.txt
     cat *_deflines.txt >> deflines_combined.txt
+    """
+}
+
+
+// OVLP
+
+process ID_NO_OVERLAPS {
+    input:
+    path overlap_matrix
+    
+    output:
+    path "no_overlaps.txt", emit: no_overlaps
+    
+    script:
+    """
+    python ${projectDir}/bin/id_orthofinder_no_overlap.py -i $overlap_matrix
     """
 }
 
@@ -138,40 +156,96 @@ workflow INIT_ORTHO {
     EXTRACT_DEFLINES(ch_input_fastas)
     COMBINE_DEFLINES(EXTRACT_DEFLINES.out.collect())
 
-    if (run_orthofinder) {
+// Basic OrthoFINDER:
+//    if (run_orthofinder) {
         // Collect all input fastas for OrthoFinder
-        ch_orthofinder_input = ch_input_fastas
-            .map { meta, file -> file }  // Extract just the file paths
-            .collect()  // Collect all files into a single list
-            .map { files -> 
-                [[id: "orthofinder"], files]  // Create the structure OrthoFinder expects
-            }
-
-        //ch_orthofinder_input.view { it -> "ch_orthofinder_input: $it" }
+//        ch_orthofinder_input = ch_input_fastas
+//            .map { meta, file -> file }  // Extract just the file paths
+//            .collect()  // Collect all files into a single list
+//            .map { files -> 
+//                [[id: "orthofinder"], files]  // Create the structure OrthoFinder expects
+//            }
 
         // Create a channel for the optional prior run
-        prior_run_ch = orthofinder_prior_run
-            ? Channel.value([[id: 'prior_run'], file(orthofinder_prior_run)])
-            : Channel.value([[],[]])
+//        prior_run_ch = orthofinder_prior_run
+//            ? Channel.value([[id: 'prior_run'], file(orthofinder_prior_run)])
+//            : Channel.value([[],[]])
 
-        ORTHOFINDER(ch_orthofinder_input, prior_run_ch)
+//        ORTHOFINDER(ch_orthofinder_input, prior_run_ch)
+//        ch_versions = ch_versions.mix(ORTHOFINDER.out.versions)
+//        ch_orthofinder_out = ORTHOFINDER.out.orthofinder
+
+        // Create a channel for the Orthogroup_Sequences folder
+//        ch_orthofinder_og_fa_dir = ORTHOFINDER.out.orthofinder
+//            .map { meta, path -> 
+//                def orthogroup_dir = file("${path}/Orthogroup_Sequences")
+//                return [meta, orthogroup_dir]
+//            }
+//    }
+
+// Orthofinder OVLP:
+    if (run_orthofinder) {
+        // Run initial OrthoFinder step
+
+        // Collect all input fastas for OrthoFinder
+                ch_orthofinder_input = ch_input_fastas
+                    .map { meta, file -> file }  // Extract just the file paths
+                    .collect()  // Collect all files into a single list
+                    .map { files -> 
+                        [[id: "orthofinder"], files]  // Create the structure OrthoFinder expects
+                    }
+
+                // Create a channel for the optional prior run
+                prior_run_ch = orthofinder_prior_run
+                    ? Channel.value([[id: 'prior_run'], file(orthofinder_prior_run)])
+                    : Channel.value([[],[]])
+
+        ORTHOFINDER_INITIAL(ch_orthofinder_input, prior_run_ch)
+        
+        // Extract the SpeciesOverlap.tsv file
+        ch_overlap_matrix = ORTHOFINDER_INITIAL.out.orthofinder
+            .map { meta, path -> 
+                def overlap_file = file("${path}/Comparative_Genomics_Statistics/Orthogroups_SpeciesOverlaps.tsv")
+                return overlap_file
+            }
+        
+        // Run genome elimination script
+        ID_NO_OVERLAPS(ch_overlap_matrix)
+        
+        // Read the genomes to eliminate
+        no_overlaps = ID_NO_OVERLAPS.out.no_overlaps
+            .splitText()
+            .map { it.trim() }
+            .collect()
+        
+        // Filter out the eliminated genomes from the input channel
+        ch_filtered_input = ch_input_fastas
+            .filter { meta, file -> 
+                !no_overlaps.contains(meta.id)
+            }
+            .collect()
+            .map { files -> 
+                [[id: "orthofinder"], files]
+            }
+        
+        //ch_overlap_matrix.view { it -> "ch_overlap_matrix: $it" }
+        no_overlaps.view { it -> "no_overlaps: $it" } // []
+        ch_filtered_input.view { it -> "ch_filtered_input: $it" }
+        
+        // Run final OrthoFinder with filtered input
+        ORTHOFINDER(ch_filtered_input, prior_run_ch)
+        
         ch_versions = ch_versions.mix(ORTHOFINDER.out.versions)
         ch_orthofinder_out = ORTHOFINDER.out.orthofinder
-
+        
         // Create a channel for the Orthogroup_Sequences folder
         ch_orthofinder_og_fa_dir = ORTHOFINDER.out.orthofinder
             .map { meta, path -> 
                 def orthogroup_dir = file("${path}/Orthogroup_Sequences")
                 return [meta, orthogroup_dir]
             }
-        
-
-        // Filter orthogroups by min number sequences
-        //FILTER_ORTHOGROUPS_ORTHOFINDER(orthogroup_sequences, orthofinder_min_sequences)
-        //ch_orthofinder_results = FILTER_ORTHOGROUPS_ORTHOFINDER.out.filtered_orthogroups
-
-        //ch_orthofinder_results.view { it -> "ch_orthofinder_results: $it" }
     }
+
 
     if (run_broccoli) {
         // Collect all input fastas for Broccoli

@@ -1,7 +1,7 @@
 {
-  "samplesheet": "data/MetazoansTest/samplesheet-noSrosMbre.csv",
-  "outdir": "results/MetazoansTest_Homeodomains",
-  "runName": "MetazoansTest_Homeodomains",
+  "samplesheet": "data/MetazoansTest/samplesheet-part1_3.csv",
+  "outdir": "results/MetazoansTest_Homeodomains-part1_3",
+  "runName": "MetazoansTest_Homeodomains-part1_3",
   "run": {
     "init_ortho": true,
     "which_ortho": false,
