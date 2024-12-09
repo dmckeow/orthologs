@@ -30,5 +30,5 @@ splitting up the 150 set id if specific genome is problem?
 2024-12-09 11:20:26	2406660	logs/slurm-nf.2406660.out	logs/slurm-nf.2406660.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part2-3.json -resume	
 2024-12-09 13:17:06	2407205	logs/slurm-nf.2407205.out	logs/slurm-nf.2407205.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part2-3.json	
 2024-12-09 13:55:01	2408030	logs/slurm-nf.2408030.out	logs/slurm-nf.2408030.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part2-3.json	
-2024-12-09 14:20:26	2408223	logs/slurm-nf.2408223.out	logs/slurm-nf.2408223.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part2-3.json -resume	
-2024-12-09 14:54:57	2408751	logs/slurm-nf.2408751.out	logs/slurm-nf.2408751.err	sbatch submit_nf.sh main.nf -profile slurm_big -params-file params-MetazoansTest_Homeodomains.json	Retrying full with auto removal for OF if no overlap
+2024-12-09 14:20:26	2408223	logs/slurm-nf.2408223.out	logs/slurm-nf.2408223.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part2-3.json -resume	must work with auto overlap remove (1)
+2024-12-09 15:33:44	2409354	logs/slurm-nf.2409354.out	logs/slurm-nf.2409354.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json	Running smaller subset from Grisha to test which_ortho must work with auto overlap remove (2)

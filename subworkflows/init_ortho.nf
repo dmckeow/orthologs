@@ -210,6 +210,7 @@ workflow INIT_ORTHO {
             }
 
         ch_overlap_matrix.view { it -> "ch_overlap_matrix: $it" }
+        
         ID_NO_OVERLAPS(ch_overlap_matrix)
 
         // Read the genomes to eliminate
@@ -218,11 +219,12 @@ workflow INIT_ORTHO {
             .map { it.trim() }
             .collect()
 
-        no_overlaps_ch.view { it -> "no_overlaps: $it" }
+        no_overlaps_ch.view { it -> "no_overlaps_ch: $it" }
 
-        ch_orthofinder_input.view { it -> "ch_orthofinder_input: $it" }
+        // Debug: View the contents of ch_orthofinder_input
+        ch_orthofinder_input.view { it -> "ch_orthofinder_input before filtering: $it" }
 
-        // Filter out the eliminated genomes from the input channel, allowing partial matches
+        // Filter out the eliminated genomes from the input channel, using exact filename matching
         ch_filtered_input = ch_orthofinder_input
             .combine(no_overlaps_ch)
             .map { meta, files, no_overlaps -> 
@@ -242,9 +244,8 @@ workflow INIT_ORTHO {
                 return keep
             }
 
-
-
-        ch_filtered_input.view { it -> "ch_filtered_input: $it" }
+        // Debug: View the contents of ch_filtered_input
+        ch_filtered_input.view { it -> "ch_filtered_input after filtering: $it" }
         
         // Run final OrthoFinder with filtered input
         ORTHOFINDER(ch_filtered_input, prior_run_ch)

@@ -1,5 +1,24 @@
-library(cogeqc)
-library(dplyr)
+suppressMessages(library(cogeqc))
+suppressMessages(library(dplyr))
+
+# Inputs needed:
+# orthogroup tsvs for all callers:
+# orthogroups_deflines.csv, GET_ORTHOGROUP_INFO.orthogroups.deflines
+# annotations from interproscan for all proteins
+
+# Command line arguments
+args <- commandArgs(trailingOnly = TRUE)
+if (length(args) < 2) {
+  print("Usage: Rscript assess_ogs.R <input_file> <prefix>")
+  quit(status = 1)
+}
+
+og <- tryCatch(
+        read.csv(
+            args[1],
+            header = TRUE,
+            stringsAsFactors = FALSE),
+        error = empty_plots)
 
 # Load test data
 data(og)
