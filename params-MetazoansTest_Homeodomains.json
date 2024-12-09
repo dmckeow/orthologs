@@ -1,5 +1,5 @@
 {
-  "samplesheet": "data/MetazoansTest/samplesheet-noSrosMbre.csv",
+  "samplesheet": "data/MetazoansTest/samplesheet.csv",
   "outdir": "results/MetazoansTest_Homeodomains",
   "runName": "MetazoansTest_Homeodomains",
   "run": {

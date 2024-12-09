@@ -19,3 +19,16 @@ splitting up the 150 set id if specific genome is problem?
 2024-12-05 15:29:36	2384797	logs/slurm-nf.2384797.out	logs/slurm-nf.2384797.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains.json	Does removing Sros and Mbre which share no overlaps with other genomes fix everything?
 2024-12-05 16:28:28	2388867	logs/slurm-nf.2388867.out	logs/slurm-nf.2388867.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part2-2.json	
 2024-12-05 16:39:28	2388990	logs/slurm-nf.2388990.out	logs/slurm-nf.2388990.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part2-2.json -resume	testing the no overlaps ID stuff
+2024-12-09 10:26:31	2405877	logs/slurm-nf.2405877.out	logs/slurm-nf.2405877.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part2-3.json	
+2024-12-09 10:35:00	2406126	logs/slurm-nf.2406126.out	logs/slurm-nf.2406126.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part2-3.json -resume	
+2024-12-09 10:36:43	2406177	logs/slurm-nf.2406177.out	logs/slurm-nf.2406177.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part2-3.json -resume	
+2024-12-09 10:39:36	2406233	logs/slurm-nf.2406233.out	logs/slurm-nf.2406233.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part2-3.json	
+2024-12-09 10:43:41	2406326	logs/slurm-nf.2406326.out	logs/slurm-nf.2406326.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part2-3.json	
+2024-12-09 10:55:13	2406449	logs/slurm-nf.2406449.out	logs/slurm-nf.2406449.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part2-3.json	
+2024-12-09 10:57:25	2406462	logs/slurm-nf.2406462.out	logs/slurm-nf.2406462.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part2-3.json	
+2024-12-09 11:11:25	2406604	logs/slurm-nf.2406604.out	logs/slurm-nf.2406604.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part2-3.json -resume	
+2024-12-09 11:20:26	2406660	logs/slurm-nf.2406660.out	logs/slurm-nf.2406660.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part2-3.json -resume	
+2024-12-09 13:17:06	2407205	logs/slurm-nf.2407205.out	logs/slurm-nf.2407205.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part2-3.json	
+2024-12-09 13:55:01	2408030	logs/slurm-nf.2408030.out	logs/slurm-nf.2408030.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part2-3.json	
+2024-12-09 14:20:26	2408223	logs/slurm-nf.2408223.out	logs/slurm-nf.2408223.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part2-3.json -resume	
+2024-12-09 14:54:57	2408751	logs/slurm-nf.2408751.out	logs/slurm-nf.2408751.err	sbatch submit_nf.sh main.nf -profile slurm_big -params-file params-MetazoansTest_Homeodomains.json	Retrying full with auto removal for OF if no overlap

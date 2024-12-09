@@ -1,6 +1,6 @@
 #!/usr/bin/env nextflow
 
-include { ORTHOFINDER } from '../modules/local/orthofinder/main' // using modified local copy of nf-core module
+include { ORTHOFINDER } from '../modules/nf-core/orthofinder/main' //
 include { BROCCOLI } from '../modules/local/broccoli/main'
 include { SEARCH } from '../modules/local/search/search'
 
@@ -13,7 +13,7 @@ include { MMSEQS_CLUSTER } from '../modules/nf-core/mmseqs/cluster/main'
 include { MMSEQS_CREATETSV } from '../modules/nf-core/mmseqs/createtsv/main'
 include { PARSE_MMSEQS_TO_FASTA } from '../modules/local/cluster_mmseqs/parse_mmseqs'
 
-include { ORTHOFINDER as ORTHOFINDER_INITIAL } from '../modules/local/orthofinder/main' // OVLP
+include { ORTHOFINDER as ORTHOFINDER_INITIAL } from '../modules/nf-core/orthofinder/main' // OVLP
 
 process CONCATENATE_FASTAS {
     input:
@@ -208,28 +208,42 @@ workflow INIT_ORTHO {
                 def overlap_file = file("${path}/Comparative_Genomics_Statistics/Orthogroups_SpeciesOverlaps.tsv")
                 return overlap_file
             }
-        
-        // Run genome elimination script
+
+        ch_overlap_matrix.view { it -> "ch_overlap_matrix: $it" }
         ID_NO_OVERLAPS(ch_overlap_matrix)
-        
+
         // Read the genomes to eliminate
-        no_overlaps = ID_NO_OVERLAPS.out.no_overlaps
+        no_overlaps_ch = ID_NO_OVERLAPS.out.no_overlaps
             .splitText()
             .map { it.trim() }
             .collect()
-        
-        // Filter out the eliminated genomes from the input channel
-        ch_filtered_input = ch_input_fastas
-            .filter { meta, file -> 
-                !no_overlaps.contains(meta.id)
+
+        no_overlaps_ch.view { it -> "no_overlaps: $it" }
+
+        ch_orthofinder_input.view { it -> "ch_orthofinder_input: $it" }
+
+        // Filter out the eliminated genomes from the input channel, allowing partial matches
+        ch_filtered_input = ch_orthofinder_input
+            .combine(no_overlaps_ch)
+            .map { meta, files, no_overlaps -> 
+                println "Debug: Processing meta=$meta, files=${files.size()}, no_overlaps=${no_overlaps.size()}"
+                def filtered_files = files.findAll { file ->
+                    def fileNameWithoutExtension = file.name.replaceFirst(/\.fasta$/, '')
+                    def keep = !no_overlaps.contains(fileNameWithoutExtension)
+                    println "Debug: ${file.name} - keep? $keep"
+                    return keep
+                }
+                println "Debug: Kept ${filtered_files.size()} out of ${files.size()} files"
+                [meta, filtered_files]
             }
-            .collect()
-            .map { files -> 
-                [[id: "orthofinder"], files]
+            .filter { meta, files -> 
+                def keep = !files.isEmpty()
+                println "Debug: After filter - meta=$meta, files=${files.size()}, keep? $keep"
+                return keep
             }
-        
-        //ch_overlap_matrix.view { it -> "ch_overlap_matrix: $it" }
-        no_overlaps.view { it -> "no_overlaps: $it" } // []
+
+
+
         ch_filtered_input.view { it -> "ch_filtered_input: $it" }
         
         // Run final OrthoFinder with filtered input
@@ -285,14 +299,12 @@ workflow INIT_ORTHO {
 
         CLUSTER_DMND_MCL(
             ch_dmnd_mcl_input, // multi input
-            //ch_input_fastas, // to test single fasta input
             cluster_dmnd_args,
             cluster_mcl_args,
             cluster_mcl_inflation,
             "mcl"
         )
 
-        //ch_dmnd_mcl_og_fa_list = CLUSTER_DMND_MCL.out.dmnd_mcl_fastas
         ch_dmnd_mcl_og_fa_dir = CLUSTER_DMND_MCL.out.fasta_dir
         ch_dmnd_mcl_og_table = CLUSTER_DMND_MCL.out.orthogroup_list
     }
@@ -337,10 +349,10 @@ workflow INIT_ORTHO {
 
     }
 
-        ch_orthofinder_og_fa_dir.view { it -> "ch_orthofinder_og_fa_dir: $it" }
-        ch_broccoli_og_fa_dir.view { it -> "ch_broccoli_og_fa_dir: $it" }
-        ch_dmnd_mcl_og_fa_dir.view { it -> "ch_dmnd_mcl_og_fa_dir: $it" }
-        ch_mmseqs_og_fa_dir.view { it -> "ch_mmseqs_og_fa_dir: $it" }
+        //ch_orthofinder_og_fa_dir.view { it -> "ch_orthofinder_og_fa_dir: $it" }
+        //ch_broccoli_og_fa_dir.view { it -> "ch_broccoli_og_fa_dir: $it" }
+        //ch_dmnd_mcl_og_fa_dir.view { it -> "ch_dmnd_mcl_og_fa_dir: $it" }
+        //ch_mmseqs_og_fa_dir.view { it -> "ch_mmseqs_og_fa_dir: $it" }
         
     emit:
         versions = ch_versions

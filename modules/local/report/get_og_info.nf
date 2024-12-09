@@ -18,15 +18,17 @@ process GET_ORTHOGROUP_INFO {
     
     script:
     
-    def orthofinder = orthofinder_orthogroups ? "--orthofinder ${orthofinder_orthogroups}/Orthogroups/Orthogroups.tsv" : ''
+    def orthofinder = orthofinder_orthogroups ? "--orthofinder ${orthofinder_orthogroups}/Phylogenetic_Hierarchical_Orthogroups/N0.tsv" : ''
     def broccoli = broccoli_orthogroups ? "--broccoli ${broccoli_orthogroups}" : ''
     def diamond_mcl = dmnd_mcl_clusters ? "--diamond_mcl ${dmnd_mcl_clusters}" : ''
     def mmseqs = mmseqs_clusters ? "--mmseqs ${mmseqs_clusters}" : ''
     def search = search_status ? "--search" : ''
     """
+    cut --complement -f 1,3,4,5,6 ${orthofinder} > N0.tsv.tmp
+
     python3 ${projectDir}/bin/get_og_deflines.py \
         --input ${combined_deflines} \
-        ${orthofinder} \
+        N0.tsv.tmp \
         ${broccoli} \
         ${diamond_mcl} \
         ${mmseqs} \
