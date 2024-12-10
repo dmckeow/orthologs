@@ -122,7 +122,9 @@ workflow {
             INIT_ORTHO.out.ch_orthofinder_og_fa_dir,
             INIT_ORTHO.out.ch_broccoli_og_fa_dir,
             INIT_ORTHO.out.ch_dmnd_mcl_og_fa_dir,
-            INIT_ORTHO.out.ch_mmseqs_og_fa_dir
+            INIT_ORTHO.out.ch_mmseqs_og_fa_dir,
+            INIT_ORTHO.out.combined_fasta,
+            params.interproscan.db
         )
     }
 }

@@ -24,7 +24,8 @@ process CONCATENATE_FASTAS {
 
     script:
     """
-    cat ${fasta_files} > combined_sequences.fasta
+    cat ${fasta_files} | sed 's/\\*/X/g' > combined_sequences.fasta
+    # asterisks removed because of interproscan later
     """
 }
 
@@ -378,6 +379,7 @@ ORTHOFINDER(ch_filtered_input, prior_run_ch)
         versions = ch_versions
         input_fastas = ch_input_fastas
         combined_deflines = COMBINE_DEFLINES.out.combined_deflines
+        combined_fasta = CONCATENATE_FASTAS.out.combined_fasta
         ch_orthofinder_og_fa_dir = ch_orthofinder_og_fa_dir
         ch_orthofinder_out = ch_orthofinder_out
         ch_broccoli_og_fa_dir = ch_broccoli_og_fa_dir

@@ -1,5 +1,4 @@
 process CALCULATE_JACCARD {
-    
     conda "${moduleDir}/calc_jaccard.yml"
     
     publishDir "${params.outdir}/report/jaccard_analysis", mode: 'copy'

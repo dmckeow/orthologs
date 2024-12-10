@@ -1,47 +1,14 @@
 SUBMISSION_TIME	SLURM_JOB_ID	SLURM_LOG	SLURM_ERR	COMMAND	NOTE
-2024-12-04 11:43:58	2339936	logs/slurm-nf.2339936.out	logs/slurm-nf.2339936.err	sbatch submit_nf.sh main.nf -profile slurm_heavy -params-file params-MetazoansTest_Homeodomains.json	Need to test why orthofinder is failing
-2024-12-04 12:22:41	2341603	logs/slurm-nf.2341603.out	logs/slurm-nf.2341603.err	sbatch submit_nf.sh main.nf -profile slurm_heavy -params-file params-WhichTest.json	Need to test why orthofinder is failing	
-2024-12-04 16:15:42	2348400	logs/slurm-nf.2348400.out	logs/slurm-nf.2348400.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-test_copy_genomes.json	do duplicated successfuly test genomes cause same orthofinder error
-2024-12-04 16:37:43	2348561	logs/slurm-nf.2348561.out	logs/slurm-nf.2348561.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-test_min_len_short.json	successful
-2024-12-04 16:37:43	2348562	logs/slurm-nf.2348562.out	logs/slurm-nf.2348562.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-test_min_len_long.json	failed
-2024-12-04 17:22:44	2349072	logs/slurm-nf.2349072.out	logs/slurm-nf.2349072.err	sbatch submit_nf.sh main.nf -profile slurm_heavy -params-file params-MetazoansTest_Homeodomains-part1.json	Does splitting up the 150 set id if specific genome is problem?
-2024-12-04 17:22:44	2349074	logs/slurm-nf.2349074.out	logs/slurm-nf.2349074.err	sbatch submit_nf.sh main.nf -profile slurm_heavy -params-file params-MetazoansTest_Homeodomains-part3.json	Does splitting up the 150 set id if specific genome is problem?
-2024-12-04 17:22:44	2349073	logs/slurm-nf.2349073.out	logs/slurm-nf.2349073.err	sbatch submit_nf.sh main.nf -profile slurm_heavy -params-file params-MetazoansTest_Homeodomains-part2.json	Does 
-splitting up the 150 set id if specific genome is problem?
-2024-12-04 17:26:44	2349414	logs/slurm-nf.2349414.out	logs/slurm-nf.2349414.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part1.json	Success
-2024-12-04 17:27:45	2349415	logs/slurm-nf.2349415.out	logs/slurm-nf.2349415.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part2.json	Failed
-2024-12-04 18:28:20	2350943	logs/slurm-nf.2350943.out	logs/slurm-nf.2350943.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part3.json	Success
-2024-12-05 09:12:02	2373711	logs/slurm-nf.2373711.out	logs/slurm-nf.2373711.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part1_3.json	Failed
-2024-12-05 09:12:12	2373712	logs/slurm-nf.2373712.out	logs/slurm-nf.2373712.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part2-1.json	Success
-2024-12-05 09:12:16	2373716	logs/slurm-nf.2373716.out	logs/slurm-nf.2373716.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part2-2.json	Failed
-2024-12-05 09:12:18	2373720	logs/slurm-nf.2373720.out	logs/slurm-nf.2373720.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part2-3.json	Failed
-2024-12-05 13:31:49	2380324	logs/slurm-nf.2380324.out	logs/slurm-nf.2380324.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part1_3.json	Success after removing Sros
-2024-12-05 15:29:36	2384797	logs/slurm-nf.2384797.out	logs/slurm-nf.2384797.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains.json	Does removing Sros and Mbre which share no overlaps with other genomes fix everything?
-2024-12-05 16:28:28	2388867	logs/slurm-nf.2388867.out	logs/slurm-nf.2388867.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part2-2.json	
-2024-12-05 16:39:28	2388990	logs/slurm-nf.2388990.out	logs/slurm-nf.2388990.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part2-2.json -resume	testing the no overlaps ID stuff
-2024-12-09 10:26:31	2405877	logs/slurm-nf.2405877.out	logs/slurm-nf.2405877.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part2-3.json	
-2024-12-09 10:35:00	2406126	logs/slurm-nf.2406126.out	logs/slurm-nf.2406126.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part2-3.json -resume	
-2024-12-09 10:36:43	2406177	logs/slurm-nf.2406177.out	logs/slurm-nf.2406177.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part2-3.json -resume	
-2024-12-09 10:39:36	2406233	logs/slurm-nf.2406233.out	logs/slurm-nf.2406233.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part2-3.json	
-2024-12-09 10:43:41	2406326	logs/slurm-nf.2406326.out	logs/slurm-nf.2406326.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part2-3.json	
-2024-12-09 10:55:13	2406449	logs/slurm-nf.2406449.out	logs/slurm-nf.2406449.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part2-3.json	
-2024-12-09 10:57:25	2406462	logs/slurm-nf.2406462.out	logs/slurm-nf.2406462.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part2-3.json	
-2024-12-09 11:11:25	2406604	logs/slurm-nf.2406604.out	logs/slurm-nf.2406604.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part2-3.json -resume	
-2024-12-09 11:20:26	2406660	logs/slurm-nf.2406660.out	logs/slurm-nf.2406660.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part2-3.json -resume	
-2024-12-09 13:17:06	2407205	logs/slurm-nf.2407205.out	logs/slurm-nf.2407205.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part2-3.json	
-2024-12-09 13:55:01	2408030	logs/slurm-nf.2408030.out	logs/slurm-nf.2408030.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part2-3.json	
-2024-12-09 14:20:26	2408223	logs/slurm-nf.2408223.out	logs/slurm-nf.2408223.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part2-3.json -resume	must work with auto overlap remove (1)
-2024-12-09 15:33:44	2409354	logs/slurm-nf.2409354.out	logs/slurm-nf.2409354.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json	Running smaller subset from Grisha to test which_ortho must work with auto overlap remove (2)
+# Fixing OrthoFinder overlap problem
 2024-12-09 21:35:47	2410745	logs/slurm-nf.2410745.out	logs/slurm-nf.2410745.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json	Failed
 2024-12-09 21:35:47	2410744	logs/slurm-nf.2410744.out	logs/slurm-nf.2410744.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part2-3.json	Success
-2024-12-10 11:27:48	2416630	logs/slurm-nf.2416630.out	logs/slurm-nf.2416630.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json	
-2024-12-10 11:36:45	2416731	logs/slurm-nf.2416731.out	logs/slurm-nf.2416731.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json -resume	
-2024-12-10 11:39:29	2416759	logs/slurm-nf.2416759.out	logs/slurm-nf.2416759.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json -resume	
-2024-12-10 11:43:07	2416813	logs/slurm-nf.2416813.out	logs/slurm-nf.2416813.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json -resume	
-2024-12-10 11:45:52	2416825	logs/slurm-nf.2416825.out	logs/slurm-nf.2416825.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json -resume	
+2024-12-10 11:27:48	2416630	logs/slurm-nf.2416630.out	logs/slurm-nf.2416630.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json	Success
 2024-12-10 12:00:53	2417017	logs/slurm-nf.2417017.out	logs/slurm-nf.2417017.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json	
 2024-12-10 12:10:32	2417129	logs/slurm-nf.2417129.out	logs/slurm-nf.2417129.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json	
 2024-12-10 12:24:52	2417258	logs/slurm-nf.2417258.out	logs/slurm-nf.2417258.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part2-3.json	
 2024-12-10 12:39:47	2417531	logs/slurm-nf.2417531.out	logs/slurm-nf.2417531.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part2-3.json -resume	
 2024-12-10 12:44:37	2417566	logs/slurm-nf.2417566.out	logs/slurm-nf.2417566.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-MetazoansTest_Homeodomains-part2-3.json -resume	Success auto overlap with single bad genomes
-2024-12-10 12:48:09	2417579	logs/slurm-nf.2417579.out	logs/slurm-nf.2417579.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json -resume	
+# Moving on to WhichOrtho	
+2024-12-10 15:40:26	2418253	logs/slurm-nf.2418253.out	logs/slurm-nf.2418253.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json	Fresh run because added init_ortho emit combined fasta	
+2024-12-10 16:12:00	2422892	logs/slurm-nf.2422892.out	logs/slurm-nf.2422892.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json -resume	
+2024-12-10 16:24:10	2423172	logs/slurm-nf.2423172.out	logs/slurm-nf.2423172.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json -resume	Something wrong with interproscan and hmmpress??

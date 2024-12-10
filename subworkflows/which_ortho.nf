@@ -14,6 +14,8 @@ workflow WHICH_ORTHO {
     broccoli_og_fa_dir
     dmnd_mcl_og_fa_dir
     mmseqs_og_fa_dir
+    all_input_fastas
+    interproscan_db
 
     main:
 
@@ -30,10 +32,15 @@ workflow WHICH_ORTHO {
     
     
     orthogroups_file = GET_ORTHOGROUP_INFO.out.orthogroups
-    
-    CALCULATE_JACCARD(orthogroups_file)
+    // Calculate overall average jaccard score between tools for og membership by deflines
+    CALCULATE_JACCARD (
+        orthogroups_file
+        )
 
-    INTERPROSCAN()
+    INTERPROSCAN (
+        all_input_fastas,
+        interproscan_db
+        )
 
     
     //emit:
