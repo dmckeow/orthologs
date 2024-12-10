@@ -82,6 +82,43 @@ process ID_NO_OVERLAPS {
     """
 }
 
+process FILTER_INPUTS_ORTHOFINDER {
+    input:
+    tuple val(meta), path(files)
+    path no_overlaps
+
+    output:
+    tuple val(meta), path('filtered_files/*'), emit: filtered_input
+    path 'filter_summary.txt', emit: summary
+
+    script:
+    """
+    echo "FILTER_INPUTS_ORTHOFINDER:\nThe input fastas were assessed by their DIAMOND all-vs-all overlaps," > filter_summary.txt
+    echo "to identify genomes sharing 0 overlaps with any other genome," >> filter_summary.txt
+    echo "When two genomes shared an overlap of 0, the genomes with less total overlaps with all genomes was marked for removal" >> filter_summary.txt
+    echo "Number of input files before filtering: \$(ls ${files} | wc -l)" >> filter_summary.txt
+    echo "Genomes filtered out from OrthoFinder input:" >> filter_summary.txt
+
+    mkdir filtered_files
+    filtered_out=0
+    for file in ${files}; do
+        basename=\$(basename \$file .fasta)
+        basename=\${basename%.domains}
+        if grep -q "\$basename" $no_overlaps; then
+            echo "\$file" >> filter_summary.txt
+            filtered_out=\$((filtered_out+1))
+        else
+            cp \$file filtered_files/
+        fi
+    done
+
+    echo "" >> filter_summary.txt
+    echo "Number of files filtered out: \$filtered_out" >> filter_summary.txt
+    echo "Number of files after filtering: \$(ls filtered_files | wc -l)" >> filter_summary.txt
+
+    """
+}
+
 
 workflow INIT_ORTHO {
     take:
@@ -209,46 +246,28 @@ workflow INIT_ORTHO {
                 return overlap_file
             }
 
-        ch_overlap_matrix.view { it -> "ch_overlap_matrix: $it" }
+        ch_overlap_matrix.view { it -> "OrthoFinder's DIAMOND all-vs-all ortholog overlap matrix is here: $it" }
         
-        ID_NO_OVERLAPS(ch_overlap_matrix)
+ID_NO_OVERLAPS(ch_overlap_matrix)
 
-        // Read the genomes to eliminate
-        no_overlaps_ch = ID_NO_OVERLAPS.out.no_overlaps
-            .splitText()
-            .map { it.trim() }
-            .collect()
+// Debug: View the contents of ch_orthofinder_input
+//ch_orthofinder_input.view { it -> "ch_orthofinder_input before filtering: $it" }
 
-        no_overlaps_ch.view { it -> "no_overlaps_ch: $it" }
+// Run the filtering process
+    FILTER_INPUTS_ORTHOFINDER(ch_orthofinder_input, ID_NO_OVERLAPS.out.no_overlaps)
 
-        // Debug: View the contents of ch_orthofinder_input
-        ch_orthofinder_input.view { it -> "ch_orthofinder_input before filtering: $it" }
+    FILTER_INPUTS_ORTHOFINDER.out.summary.view()
 
-        // Filter out the eliminated genomes from the input channel, using exact filename matching
-        ch_filtered_input = ch_orthofinder_input
-            .combine(no_overlaps_ch)
-            .map { meta, files, no_overlaps -> 
-                println "Debug: Processing meta=$meta, files=${files.size()}, no_overlaps=${no_overlaps.size()}"
-                def filtered_files = files.findAll { file ->
-                    def fileNameWithoutExtension = file.name.replaceFirst(/\.fasta$/, '')
-                    def keep = !no_overlaps.contains(fileNameWithoutExtension)
-                    println "Debug: ${file.name} - keep? $keep"
-                    return keep
-                }
-                println "Debug: Kept ${filtered_files.size()} out of ${files.size()} files"
-                [meta, filtered_files]
-            }
-            .filter { meta, files -> 
-                def keep = !files.isEmpty()
-                println "Debug: After filter - meta=$meta, files=${files.size()}, keep? $keep"
-                return keep
-            }
+    // Use the filtered output
+    ch_filtered_input = FILTER_INPUTS_ORTHOFINDER.out.filtered_input
 
-        // Debug: View the contents of ch_filtered_input
-        ch_filtered_input.view { it -> "ch_filtered_input after filtering: $it" }
-        
-        // Run final OrthoFinder with filtered input
-        ORTHOFINDER(ch_filtered_input, prior_run_ch)
+    // Debug: View the contents of ch_filtered_input
+    ch_filtered_input.view { meta, files -> 
+        "ch_filtered_input after filtering: meta=$meta, files=${files.size()}"
+    }
+
+// Run final OrthoFinder with filtered input
+ORTHOFINDER(ch_filtered_input, prior_run_ch)
         
         ch_versions = ch_versions.mix(ORTHOFINDER.out.versions)
         ch_orthofinder_out = ORTHOFINDER.out.orthofinder
