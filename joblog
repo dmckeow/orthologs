@@ -12,3 +12,4 @@ SUBMISSION_TIME	SLURM_JOB_ID	SLURM_LOG	SLURM_ERR	COMMAND	NOTE
 2024-12-10 15:40:26	2418253	logs/slurm-nf.2418253.out	logs/slurm-nf.2418253.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json	Fresh run because added init_ortho emit combined fasta	
 2024-12-10 16:12:00	2422892	logs/slurm-nf.2422892.out	logs/slurm-nf.2422892.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json -resume	
 2024-12-10 16:24:10	2423172	logs/slurm-nf.2423172.out	logs/slurm-nf.2423172.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json -resume	Something wrong with interproscan and hmmpress??
+2024-12-11 16:14:44	2432783	logs/slurm-nf.2432783.out	logs/slurm-nf.2432783.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json	

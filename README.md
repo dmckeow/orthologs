@@ -49,20 +49,7 @@ git submodule init
 git submodule update
 ```
 
-### Interproscan
-https://interproscan-docs.readthedocs.io/en/latest/UserDocs.html#obtaining-a-copy-of-interproscan
-A path to the database for interproscan must be provided by the user via config to use it in nextflow
-Get a specific version of the database for the nf-core module:
-```
-wget https://ftp.ebi.ac.uk/pub/software/unix/iprscan/5/5.59-91.0/interproscan-5.59-91.0-64-bit.tar.gz
-wget https://ftp.ebi.ac.uk/pub/software/unix/iprscan/5/5.59-91.0/interproscan-5.59-91.0-64-bit.tar.gz.md5
 
-md5sum -c https://ftp.ebi.ac.uk/pub/software/unix/iprscan/5/5.59-91.0/interproscan-5.59-91.0-64-bit.tar.gz.md5
-
-tar -pxvzf interproscan-5.59-91.0-64-bit.tar.gz
-cd interproscan-5.59-91.0
-python3 setup.py -f interproscan.properties
-```
 ### How much resources?
 ## OrthoFinder
 
@@ -93,3 +80,18 @@ python3 setup.py -f interproscan.properties
 
 
 
+# OrthoFinder problem continues...
+
+.command.log
+
+WARNING: Too few hits between species 21 and species 35 to normalise the scores, these hits will be ignored
+WARNING: Too few hits between species 35 and species 10 to normalise the scores, these hits will be ignored
+WARNING: Too few hits between species 35 and species 21 to normalise the scores, these hits will be ignored
+
+input/OrthoFinder/Results_orthofinder/WorkingDirectory/SpeciesIDs.txt
+
+10: Coeast_long.pep.None.Homeodomains.domains.fasta
+21: Mertsp_long.pep.None.Homeodomains.domains.fasta
+35: Sros_long.pep.None.Homeodomains.domains.fasta
+
+then add file name to no_overlaps file

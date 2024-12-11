@@ -9,16 +9,61 @@ suppressMessages(library(dplyr))
 # Command line arguments
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) < 2) {
-  print("Usage: Rscript assess_ogs.R <input_file> <prefix>")
+  print("Usage: Rscript assess_ogs.R 
+  <orthogroups_file> <samplesheet_file> ")
   quit(status = 1)
 }
 
+orthogroups_file <- args[1]
+samplesheet_file <- args[2]
+
+
+# Load orthogroups
 og <- tryCatch(
-        read.csv(
-            args[1],
-            header = TRUE,
-            stringsAsFactors = FALSE),
-        error = empty_plots)
+  read.csv(orthogroups_file, header = TRUE, stringsAsFactors = FALSE),
+  error = function(e) {
+    print(paste("Error reading orthogroups file:", e))
+    quit(status = 1)
+  }
+)
+
+# Load samplesheet
+samplesheet <- tryCatch(
+  read_csv(samplesheet_file),
+  error = function(e) {
+    print(paste("Error reading samplesheet file:", e))
+    quit(status = 1)
+  }
+)
+
+# Function to load annotation file
+load_annotation <- function(file_path) {
+  tryCatch(
+    read_csv(file_path, col_names = c("Gene", "Annotation")),
+    error = function(e) {
+      print(paste("Error reading annotation file:", file_path, "-", e))
+      return(NULL)
+    }
+  )
+}
+
+# Load annotations and create a list of data frames
+annotation <- list()
+for (i in 1:nrow(samplesheet)) {
+  sample_id <- samplesheet$id[i]
+  annotation_file <- samplesheet$annotation[i]
+  
+  df <- load_annotation(annotation_file)
+  if (!is.null(df)) {
+    annotation[[sample_id]] <- df
+  }
+}
+
+# Print summary of loaded data
+print(paste("Loaded", length(annotation), "annotation files"))
+print("Samples:")
+print(names(annotation))
+
 
 # Load test data
 data(og)
@@ -26,12 +71,12 @@ data(og)
 #> 1 HOM05D000001     Ath AT1G02310
 #> 2 HOM05D000001     Ath AT1G03510
 
-data(interpro_ath)
+##data(interpro_ath)
 #>        Gene Annotation
 #> 1 AT1G01010  IPR036093
 #> 2 AT1G01010  IPR003441
 
-data(interpro_bol)
+##data(interpro_bol)
 #>           Gene Annotation
 #> 1 BolC1t00001H  IPR014710
 #> 2 BolC1t00001H  IPR018490
@@ -39,10 +84,10 @@ data(interpro_bol)
 # Assess orthogroups (homogeneity score) - compare species
 
 # Create a list of annotation data frames
-annotation <- list(
-  Ath = interpro_ath,
-  Bol = interpro_bol
-)
+##annotation <- list(
+##  Ath = interpro_ath,
+##  Bol = interpro_bol
+##)
 #> List of 2
 #>  $ Ath:'data.frame': 131661 obs. of  2 variables:
 #Gene      : chr [1:131661] "AT1G01010" "AT1G01010" "AT1G01010" "AT1G01020" ...
@@ -80,24 +125,24 @@ og_assessment <- calculate_H(orthogroup_df)
 # Visualisation
 
 #    Specific OrthoFinder results import
-stats_dir <- system.file("extdata", package = "cogeqc")
-ortho_stats <- read_orthofinder_stats(stats_dir)
+#stats_dir <- system.file("extdata", package = "cogeqc")
+#ortho_stats <- read_orthofinder_stats(stats_dir)
 
 #    Species tree
-data(tree)
+#data(tree)
 #    Four summary plots for OrthoFinder:
-plot_species_tree(tree, stats_list = ortho_stats)
-plot_duplications(ortho_stats)
-plot_genes_in_ogs(ortho_stats)
-plot_species_specific_ogs(ortho_stats)
+#plot_species_tree(tree, stats_list = ortho_stats)
+#plot_duplications(ortho_stats)
+#plot_genes_in_ogs(ortho_stats)
+#plot_species_specific_ogs(ortho_stats)
 #    To plot all these four together:
-plot_orthofinder_stats(
-  tree,
-  xlim = c(-0.1, 2),
-  stats_list = ortho_stats
-)
+#plot_orthofinder_stats(
+#  tree,
+#  xlim = c(-0.1, 2),
+#  stats_list = ortho_stats
+#)
 
-plot_og_overlap(ortho_stats)
+#plot_og_overlap(ortho_stats)
 
-plot_og_sizes(og)
-plot_og_sizes(og, log = TRUE) # Or with Natural log
+#plot_og_sizes(og)
+#plot_og_sizes(og, log = TRUE) # Or with Natural log

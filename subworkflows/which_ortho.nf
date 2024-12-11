@@ -1,6 +1,5 @@
 include { GET_ORTHOGROUP_INFO } from '../modules/local/report/get_og_info'
 include { CALCULATE_JACCARD } from '../modules/local/report/calc_jaccard'
-include { INTERPROSCAN } from '../modules/nf-core/interproscan/main'
 
 workflow WHICH_ORTHO {
     take:
@@ -15,7 +14,6 @@ workflow WHICH_ORTHO {
     dmnd_mcl_og_fa_dir
     mmseqs_og_fa_dir
     all_input_fastas
-    interproscan_db
 
     main:
 
@@ -37,10 +35,7 @@ workflow WHICH_ORTHO {
         orthogroups_file
         )
 
-    INTERPROSCAN (
-        all_input_fastas,
-        interproscan_db
-        )
+    
 
     
     //emit:

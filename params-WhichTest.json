@@ -1,5 +1,5 @@
 {
-    "samplesheet": "example_data/samplesheet-WhichTest.csv",
+    "samplesheet": "example_data/samplesheet-WhichTestAnnot.csv",
     "outdir": "results/WhichTest",
     "runName": "WhichTest",
     "run": {
