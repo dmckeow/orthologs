@@ -13,3 +13,12 @@ SUBMISSION_TIME	SLURM_JOB_ID	SLURM_LOG	SLURM_ERR	COMMAND	NOTE
 2024-12-10 16:12:00	2422892	logs/slurm-nf.2422892.out	logs/slurm-nf.2422892.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json -resume	
 2024-12-10 16:24:10	2423172	logs/slurm-nf.2423172.out	logs/slurm-nf.2423172.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json -resume	Something wrong with interproscan and hmmpress??
 2024-12-11 16:14:44	2432783	logs/slurm-nf.2432783.out	logs/slurm-nf.2432783.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json	
+2024-12-12 10:45:18	2451202	logs/slurm-nf.2451202.out	logs/slurm-nf.2451202.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json	
+2024-12-12 10:48:25	2451207	logs/slurm-nf.2451207.out	logs/slurm-nf.2451207.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json	
+2024-12-12 10:56:46	2451212	logs/slurm-nf.2451212.out	logs/slurm-nf.2451212.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json	
+2024-12-12 11:13:31	2451313	logs/slurm-nf.2451313.out	logs/slurm-nf.2451313.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json	
+2024-12-12 12:30:15	2452961	logs/slurm-nf.2452961.out	logs/slurm-nf.2452961.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json -resume	
+2024-12-12 12:36:44	2452980	logs/slurm-nf.2452980.out	logs/slurm-nf.2452980.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json -resume	
+2024-12-12 12:47:30	2453064	logs/slurm-nf.2453064.out	logs/slurm-nf.2453064.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json -resume	
+2024-12-12 12:48:15	2453079	logs/slurm-nf.2453079.out	logs/slurm-nf.2453079.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json -resume	
+2024-12-12 14:43:15	2459651	logs/slurm-nf.2459651.out	logs/slurm-nf.2459651.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json -resume	

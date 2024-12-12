@@ -72,14 +72,16 @@ process COMBINE_DEFLINES {
 
 process ID_NO_OVERLAPS {
     input:
-    path overlap_matrix
+    tuple val(meta), path(orthofinder_output, stageAs: "orthofinder_parent/*")
     
     output:
     path "no_overlaps.txt", emit: no_overlaps
     
     script:
     """
-    python ${projectDir}/bin/id_orthofinder_no_overlap.py -i $overlap_matrix
+    python ${projectDir}/bin/id_orthofinder_no_overlap.py \
+        -l orthofinder_parent \
+        -o no_overlaps.txt
     """
 }
 
@@ -240,21 +242,12 @@ workflow INIT_ORTHO {
 
         ORTHOFINDER_INITIAL(ch_orthofinder_input, prior_run_ch)
         
-        // Extract the SpeciesOverlap.tsv file
-        ch_overlap_matrix = ORTHOFINDER_INITIAL.out.orthofinder
-            .map { meta, path -> 
-                def overlap_file = file("${path}/Comparative_Genomics_Statistics/Orthogroups_SpeciesOverlaps.tsv")
-                return overlap_file
-            }
 
-        ch_overlap_matrix.view { it -> "OrthoFinder's DIAMOND all-vs-all ortholog overlap matrix is here: $it" }
-        
-ID_NO_OVERLAPS(ch_overlap_matrix)
 
-// Debug: View the contents of ch_orthofinder_input
-//ch_orthofinder_input.view { it -> "ch_orthofinder_input before filtering: $it" }
 
-// Run the filtering process
+ID_NO_OVERLAPS(ORTHOFINDER_INITIAL.out.orthofinder.map { meta, path -> [meta, path.parent] })
+
+    // Run the filtering process
     FILTER_INPUTS_ORTHOFINDER(ch_orthofinder_input, ID_NO_OVERLAPS.out.no_overlaps)
 
     FILTER_INPUTS_ORTHOFINDER.out.summary.view()
@@ -266,6 +259,7 @@ ID_NO_OVERLAPS(ch_overlap_matrix)
     ch_filtered_input.view { meta, files -> 
         "ch_filtered_input after filtering: meta=$meta, files=${files.size()}"
     }
+
 
 // Run final OrthoFinder with filtered input
 ORTHOFINDER(ch_filtered_input, prior_run_ch)

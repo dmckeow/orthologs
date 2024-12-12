@@ -4,7 +4,7 @@
     "runName": "WhichTest",
     "run": {
         "init_ortho": true,
-        "which_ortho": true,
+        "which_ortho": false,
         "search": true,
         "broccoli": true,
         "orthofinder": true,
