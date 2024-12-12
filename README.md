@@ -96,11 +96,11 @@ WARNING: Too few hits between species 22 and species to normalise the scores, th
 WARNING: Too few hits between species and species to normalise the scores, these hits will be ignored
 WARNING: Too few hits between species and species 22 to normalise the scores, these hits will be ignored
 
-10 and species 21
-21 and species 10
-22 and species 36
-36 and species 10
-36 and species 22
+10 and species 
+ and species 10
+22 and species 
+ and species 10
+ and species 22
 
 input/OrthoFinder/Results_orthofinder/WorkingDirectory/SpeciesIDs.txt
 

@@ -22,3 +22,4 @@ SUBMISSION_TIME	SLURM_JOB_ID	SLURM_LOG	SLURM_ERR	COMMAND	NOTE
 2024-12-12 12:47:30	2453064	logs/slurm-nf.2453064.out	logs/slurm-nf.2453064.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json -resume	
 2024-12-12 12:48:15	2453079	logs/slurm-nf.2453079.out	logs/slurm-nf.2453079.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json -resume	
 2024-12-12 14:43:15	2459651	logs/slurm-nf.2459651.out	logs/slurm-nf.2459651.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json -resume	
+2024-12-12 15:00:42	2462246	logs/slurm-nf.2462246.out	logs/slurm-nf.2462246.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json -resume	

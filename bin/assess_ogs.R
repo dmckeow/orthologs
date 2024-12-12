@@ -1,5 +1,5 @@
 suppressMessages(library(cogeqc))
-suppressMessages(library(dplyr))
+suppressMessages(library(tidyverse))
 
 # Inputs needed:
 # orthogroup tsvs for all callers:
@@ -27,6 +27,27 @@ og <- tryCatch(
   }
 )
 
+head(og)
+
+# Define the function
+process_og <- function(data, variable_chosen) {
+  # Rename variables
+  data$Orthogroup <- data[[variable_chosen]]
+  data$Species <- data$sample
+  data$Gene <- data$original_defline
+  # Select the columns
+  output_data <- data.frame(
+    Orthogroup = data$Orthogroup,
+    Species = data$Species,
+    Gene = data$Gene
+  )
+  # Return the output data frame
+  return(output_data)
+}
+
+og_orthofinder <- process_og(og, "orthofinder_og")
+head(og_orthofinder)
+
 # Load samplesheet
 samplesheet <- tryCatch(
   read_csv(samplesheet_file),
@@ -39,7 +60,11 @@ samplesheet <- tryCatch(
 # Function to load annotation file
 load_annotation <- function(file_path) {
   tryCatch(
-    read_csv(file_path, col_names = c("Gene", "Annotation")),
+    {
+      # Read the file, skipping the header if necessary
+      df <- read_tsv(file_path, skip = 1, col_names = c("Gene", "Annotation"))
+      return(df)
+    },
     error = function(e) {
       print(paste("Error reading annotation file:", file_path, "-", e))
       return(NULL)
@@ -47,17 +72,18 @@ load_annotation <- function(file_path) {
   )
 }
 
+
 # Load annotations and create a list of data frames
 annotation <- list()
 for (i in 1:nrow(samplesheet)) {
   sample_id <- samplesheet$id[i]
   annotation_file <- samplesheet$annotation[i]
-  
   df <- load_annotation(annotation_file)
   if (!is.null(df)) {
     annotation[[sample_id]] <- df
   }
 }
+
 
 # Print summary of loaded data
 print(paste("Loaded", length(annotation), "annotation files"))
@@ -66,15 +92,28 @@ print(names(annotation))
 
 
 # Load test data
-data(og)
+#data(og)
 #>     Orthogroup Species      Gene
 #> 1 HOM05D000001     Ath AT1G02310
 #> 2 HOM05D000001     Ath AT1G03510
+
+#str(og)
+#'data.frame':   88934 obs. of  3 variables:
+# $ Orthogroup: chr  "HOM05D000001" "HOM05D000001" "HOM05D000001" "HOM05D000001" ...
+# $ Species   : chr  "Ath" "Ath" "Ath" "Ath" ...
+# $ Gene      : chr  "AT1G02310" "AT1G03510" "AT1G03540" "AT1G04020" ...
+
 
 ##data(interpro_ath)
 #>        Gene Annotation
 #> 1 AT1G01010  IPR036093
 #> 2 AT1G01010  IPR003441
+
+#str(interpro_ath)
+#data.frame':   131661 obs. of  2 variables:
+# $ Gene      : chr  "AT1G01010" "AT1G01010" "AT1G01010" "AT1G01020" ...
+# $ Annotation: chr  "IPR036093" "IPR003441" "IPR036093" "IPR007290" ...
+
 
 ##data(interpro_bol)
 #>           Gene Annotation
@@ -88,17 +127,19 @@ data(og)
 ##  Ath = interpro_ath,
 ##  Bol = interpro_bol
 ##)
+#str(annotation)
 #> List of 2
 #>  $ Ath:'data.frame': 131661 obs. of  2 variables:
 #Gene      : chr [1:131661] "AT1G01010" "AT1G01010" "AT1G01010" "AT1G01020" ...
 #Annotation: chr [1:131661] "IPR036093" "IPR003441" "IPR036093" "IPR007290" ...
-
-og_assessment <- assess_orthogroups(og, annotation)
+str(og_orthofinder)
+str(annotation)
+og_assessment_orthofinder <- assess_orthogroups(og_orthofinder, annotation)
 #>    Orthogroups    Ath_score Bol_score Mean_score Median_score
 #> 1 HOM05D000002  0.143273487 0.5167253  0.3299994    0.3299994
 #> 2 HOM05D000003  1.006908255        NA  1.0069083    1.0069083
 
-mean(og_assessment$Mean_score)
+mean(og_assessment_orthofinder$Mean_score)
 #> [1] 1.797598
 
 
