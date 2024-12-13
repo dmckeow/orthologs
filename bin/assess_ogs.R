@@ -7,11 +7,16 @@ suppressMessages(library(tidyverse))
 # annotations from interproscan for all proteins
 
 # Command line arguments
-args <- commandArgs(trailingOnly = TRUE)
-if (length(args) < 2) {
-  print("Usage: Rscript assess_ogs.R 
-  <orthogroups_file> <samplesheet_file> ")
-  quit(status = 1)
+args <- if (interactive()) {
+  c("results/WhichTest/report/orthogroups_deflines.csv",
+    "example_data/samplesheet-WhichTestAnnot.csv")
+} else {
+  commandArgs(trailingOnly = TRUE)
+  if (length(args) < 2) {
+    print("Usage: Rscript assess_ogs.R 
+    <orthogroups_file> <samplesheet_file> ")
+    quit(status = 1)
+  }
 }
 
 orthogroups_file <- args[1]
@@ -27,14 +32,15 @@ og <- tryCatch(
   }
 )
 
-head(og)
-
-# Define the function
+# DFunction for parsing differene orthogroup callers results
 process_og <- function(data, variable_chosen) {
   # Rename variables
   data$Orthogroup <- data[[variable_chosen]]
   data$Species <- data$sample
-  data$Gene <- data$original_defline
+  data$Gene <- data$cleaned_defline
+  data <- subset(data, !is.na(Orthogroup) & Orthogroup != "")
+  data <- data %>%
+    distinct(Orthogroup, Species, Gene, .keep_all = TRUE)
   # Select the columns
   output_data <- data.frame(
     Orthogroup = data$Orthogroup,
@@ -44,9 +50,6 @@ process_og <- function(data, variable_chosen) {
   # Return the output data frame
   return(output_data)
 }
-
-og_orthofinder <- process_og(og, "orthofinder_og")
-head(og_orthofinder)
 
 # Load samplesheet
 samplesheet <- tryCatch(
@@ -90,78 +93,116 @@ print(paste("Loaded", length(annotation), "annotation files"))
 print("Samples:")
 print(names(annotation))
 
+og$cleaned_defline <- sub(":[0-9]+-[0-9]+$", "", og$original_defline)
 
-# Load test data
-#data(og)
-#>     Orthogroup Species      Gene
-#> 1 HOM05D000001     Ath AT1G02310
-#> 2 HOM05D000001     Ath AT1G03510
+# Identify protein names that do not match between orthologs and annotations
+# Remove those with no matches from og and list those that were removed
 
-#str(og)
-#'data.frame':   88934 obs. of  3 variables:
-# $ Orthogroup: chr  "HOM05D000001" "HOM05D000001" "HOM05D000001" "HOM05D000001" ...
-# $ Species   : chr  "Ath" "Ath" "Ath" "Ath" ...
-# $ Gene      : chr  "AT1G02310" "AT1G03510" "AT1G03540" "AT1G04020" ...
-
-
-##data(interpro_ath)
-#>        Gene Annotation
-#> 1 AT1G01010  IPR036093
-#> 2 AT1G01010  IPR003441
-
-#str(interpro_ath)
-#data.frame':   131661 obs. of  2 variables:
-# $ Gene      : chr  "AT1G01010" "AT1G01010" "AT1G01010" "AT1G01020" ...
-# $ Annotation: chr  "IPR036093" "IPR003441" "IPR036093" "IPR007290" ...
-
-
-##data(interpro_bol)
-#>           Gene Annotation
-#> 1 BolC1t00001H  IPR014710
-#> 2 BolC1t00001H  IPR018490
-
-# Assess orthogroups (homogeneity score) - compare species
-
-# Create a list of annotation data frames
-##annotation <- list(
-##  Ath = interpro_ath,
-##  Bol = interpro_bol
-##)
-#str(annotation)
-#> List of 2
-#>  $ Ath:'data.frame': 131661 obs. of  2 variables:
-#Gene      : chr [1:131661] "AT1G01010" "AT1G01010" "AT1G01010" "AT1G01020" ...
-#Annotation: chr [1:131661] "IPR036093" "IPR003441" "IPR036093" "IPR007290" ...
-str(og_orthofinder)
-str(annotation)
-og_assessment_orthofinder <- assess_orthogroups(og_orthofinder, annotation)
-#>    Orthogroups    Ath_score Bol_score Mean_score Median_score
-#> 1 HOM05D000002  0.143273487 0.5167253  0.3299994    0.3299994
-#> 2 HOM05D000003  1.006908255        NA  1.0069083    1.0069083
-
-mean(og_assessment_orthofinder$Mean_score)
-#> [1] 1.797598
-
-
-# Assess orthogroups (homogeneity score) - without species
-#     Merge og with annotations
-result_list <- lapply(names(annotation), function(species) {
-  # Select the species-specific annotation data
-  species_annotation <- annotation[[species]]
-  # Merge with the og data for that species
-  merged_data <- og %>%
-    filter(Species == species) %>%
-    left_join(species_annotation, by = "Gene")
-
-  merged_data <- merged_data %>%
-    select(Gene, Orthogroup, Annotation)
-  merged_data # This returns it
+og_cleaned_and_unmatched <- lapply(names(annotation), function(species) {
+  # Extract species-specific genes from annotation
+  species_genes <- annotation[[species]]$Gene
+  
+  # Filter og for the given species
+  species_og <- og %>%
+    filter(sample == species)
+  
+  # Find rows in og where cleaned_defline does not match any Gene in annotation
+  unmatched_rows <- species_og %>%
+    filter(!cleaned_defline %in% species_genes)
+  
+  # If unmatched rows exist, print them
+  if (nrow(unmatched_rows) > 0) {
+    cat("Species:", species, "- Unmatched entries:", nrow(unmatched_rows), "\n")
+    print(unmatched_rows)
+  }
+  
+  # Remove the unmatched rows from the species_og data
+  species_og_cleaned <- species_og %>%
+    filter(cleaned_defline %in% species_genes)  # Keep only matched rows
+  
+  # Return both the cleaned data and unmatched rows
+  list(cleaned_data = species_og_cleaned, unmatched_data = unmatched_rows)
 })
 
-# Combine the individual species data frames into one
-orthogroup_df <- bind_rows(result_list)
-# DO the homoengeity scores
-og_assessment <- calculate_H(orthogroup_df)
+# Combine all cleaned species data frames
+og <- bind_rows(lapply(og_cleaned_and_unmatched, function(x) x$cleaned_data))
+
+# Combine all unmatched rows into a single data frame for review
+og_unmatched <- bind_rows(lapply(og_cleaned_and_unmatched, function(x) x$unmatched_data))
+
+
+
+
+
+# Extract ortholog table for each source tool
+og_orthofinder <- process_og(og, "orthofinder_og")
+og_broccoli <- process_og(og, "broccoli_og")
+og_dmndmcl <- process_og(og, "diamond_mcl_cluster")
+og_mmseqs <- process_og(og, "mmseqs_cluster")
+
+# Generate homogeneity by species
+cat("Starting assessment for og_orthofinder...\n")
+og_assessment_orthofinder <- assess_orthogroups(og_orthofinder, annotation)
+
+cat("Starting assessment for og_broccoli...\n")
+og_assessment_broccoli <- assess_orthogroups(og_broccoli, annotation)
+
+cat("Starting assessment for og_dmndmcl...\n")
+og_assessment_dmndmcl <- assess_orthogroups(og_dmndmcl, annotation)
+
+cat("Starting assessment for og_mmseqs...\n")
+og_assessment_mmseqs <- assess_orthogroups(og_mmseqs, annotation)
+
+
+#mean(og_assessment_orthofinder$Mean_score)
+
+
+process_annotations <- function(og_data, annotation) {
+  # Process each species
+  result_list <- lapply(names(annotation), function(species) {
+    # Select the species-specific annotation data
+    species_annotation <- annotation[[species]]
+    
+    # Merge with the og data for that species
+    merged_data <- og_data %>%
+      filter(Species == species) %>%
+      left_join(species_annotation, by = "Gene")
+    
+    # Identify unmatched rows 
+    unmatched_rows <- merged_data %>%
+      filter(is.na(Orthogroups))
+    
+    # Print information only if there are unmatched rows
+    if (nrow(unmatched_rows) > 0) {
+      cat("Species:", species, "- Unmatched rows:", nrow(unmatched_rows), "\n")
+      print(unmatched_rows)
+    }
+    
+    # Select desired columns
+    merged_data <- merged_data %>%
+      filter(!is.na(Annotation)) %>%
+      select(Gene, Orthogroup, Annotation)
+    
+    merged_data # Return species-specific merged data
+  })
+  
+  # Combine all species data frames
+  combined_df <- bind_rows(result_list)
+  
+  # Calculate homogeneity scores
+  homogeneity_scores <- calculate_H(combined_df)
+  
+  return(homogeneity_scores)
+}
+
+
+# Generate homogeneity scores for each Orthogroup across all species
+# not the same as mean score across species from assess_orthorgoups
+hscores_allspecies_orthofinder <- process_annotations(og_orthofinder, annotation)
+hscores_allspecies_broccoli <- process_annotations(og_broccoli, annotation)
+hscores_allspecies_dmndmcl <- process_annotations(og_dmndmcl, annotation)
+hscores_allspecies_mmseqs <- process_annotations(og_mmseqs, annotation)
+
 
 # Visualisation
 
