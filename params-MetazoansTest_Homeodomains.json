@@ -4,7 +4,7 @@
   "runName": "MetazoansTest_Homeodomains",
   "run": {
     "init_ortho": true,
-    "which_ortho": false,
+    "which_ortho": true,
     "search": true,
     "broccoli": true,
     "orthofinder": true,

@@ -1,10 +1,10 @@
 {
-  "samplesheet": "data/MetazoansTest/samplesheet-part2-1.csv",
-  "outdir": "results/MetazoansTest_Homeodomains-part2-1",
-  "runName": "MetazoansTest_Homeodomains-part2-1",
+  "samplesheet": "data/MetazoansTest/samplesheet.csv",
+  "outdir": "results/MetazoansTest_zfmet",
+  "runName": "MetazoansTest_zfmet",
   "run": {
     "init_ortho": true,
-    "which_ortho": false,
+    "which_ortho": true,
     "search": true,
     "broccoli": true,
     "orthofinder": true,
@@ -13,7 +13,7 @@
   },
   "search": {
     "gene_family_info": "/users/asebe/xgraubove/climate-adaptation-corals-ops/results_annotation/data/gene_families_searchinfo.csv",
-    "gene_family_name": "Homeodomains",
+    "gene_family_name": "zf-met",
     "hmm_dir": "/users/asebe/xgraubove/climate-adaptation-corals-ops/results_annotation/data/hmms"
   },
   "broccoli": {
@@ -21,7 +21,7 @@
   },
   "cluster": {
     "mcl": {
-      "inflation": 1.1
+      "inflation": 1.6
     },
     "dmnd": {
       "args": "--max-target-seqs 100 --more-sensitive --quiet"
