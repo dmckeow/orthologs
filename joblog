@@ -23,8 +23,9 @@ SUBMISSION_TIME	SLURM_JOB_ID	SLURM_LOG	SLURM_ERR	COMMAND	NOTE
 2024-12-12 12:48:15	2453079	logs/slurm-nf.2453079.out	logs/slurm-nf.2453079.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json -resume	
 2024-12-12 14:43:15	2459651	logs/slurm-nf.2459651.out	logs/slurm-nf.2459651.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json -resume	
 2024-12-12 15:00:42	2462246	logs/slurm-nf.2462246.out	logs/slurm-nf.2462246.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json -resume	
-# Running the four test gene families with full test set of genomes
+# Running the four test gene families with full test set of genomes AND one run without search
 2024-12-16 11:59:31	2571016	logs/slurm-nf.2571016.out	logs/slurm-nf.2571016.err	sbatch submit_nf.sh main.nf -profile slurm_big -params-file params-MetazoansTest_Homeodomains.json	Complete
 2024-12-16 12:06:39	2571344	logs/slurm-nf.2571344.out	logs/slurm-nf.2571344.err	sbatch submit_nf.sh main.nf -profile slurm_big -params-file params-MetazoansTest_Ets.json	Complete
-2024-12-16 12:06:49	2571345	logs/slurm-nf.2571345.out	logs/slurm-nf.2571345.err	sbatch submit_nf.sh main.nf -profile slurm_big -params-file params-MetazoansTest_zfC2H2.json	
+2024-12-16 12:06:49	2571345	logs/slurm-nf.2571345.out	logs/slurm-nf.2571345.err	sbatch submit_nf.sh main.nf -profile slurm_big -params-file params-MetazoansTest_zfC2H2.json	Complete
 2024-12-16 12:06:55	2571346	logs/slurm-nf.2571346.out	logs/slurm-nf.2571346.err	sbatch submit_nf.sh main.nf -profile slurm_big -params-file params-MetazoansTest_zfmet.json	Complete
+2024-12-17 15:52:45	2609645	logs/slurm-nf.2609645.out	logs/slurm-nf.2609645.err	sbatch submit_nf.sh main.nf -profile slurm_big -params-file params-MetazoansTest.json	Re-run with more memory

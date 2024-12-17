@@ -1,0 +1,25 @@
+{
+  "samplesheet": "data/MetazoansTest/samplesheet.csv",
+  "outdir": "results/MetazoansTest",
+  "runName": "MetazoansTest",
+  "run": {
+    "init_ortho": true,
+    "which_ortho": true,
+    "search": false,
+    "broccoli": true,
+    "orthofinder": true,
+    "cluster_dmnd_mcl": true,
+    "cluster_mmseqs": true
+  },
+  "broccoli": {
+    "args": "-phylogenies ml -kmer_size 10000"
+  },
+  "cluster": {
+    "mcl": {
+      "inflation": 1.0
+    },
+    "dmnd": {
+      "args": "--max-target-seqs 100 --more-sensitive --quiet"
+    }
+  }
+}
