@@ -29,3 +29,7 @@ SUBMISSION_TIME	SLURM_JOB_ID	SLURM_LOG	SLURM_ERR	COMMAND	NOTE
 2024-12-16 12:06:49	2571345	logs/slurm-nf.2571345.out	logs/slurm-nf.2571345.err	sbatch submit_nf.sh main.nf -profile slurm_big -params-file params-MetazoansTest_zfC2H2.json	Complete
 2024-12-16 12:06:55	2571346	logs/slurm-nf.2571346.out	logs/slurm-nf.2571346.err	sbatch submit_nf.sh main.nf -profile slurm_big -params-file params-MetazoansTest_zfmet.json	Complete
 2024-12-17 15:52:45	2609645	logs/slurm-nf.2609645.out	logs/slurm-nf.2609645.err	sbatch submit_nf.sh main.nf -profile slurm_big -params-file params-MetazoansTest.json	Re-run with more memory
+2025-01-07 12:59:03	3285037	logs/slurm-nf.3285037.out	logs/slurm-nf.3285037.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json	
+2025-01-07 13:01:06	3285078	logs/slurm-nf.3285078.out	logs/slurm-nf.3285078.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json	
+2025-01-07 13:12:13	3286321	logs/slurm-nf.3286321.out	logs/slurm-nf.3286321.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json -resume	
+2025-01-07 14:35:21	3294260	logs/slurm-nf.3294260.out	logs/slurm-nf.3294260.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json -resume	

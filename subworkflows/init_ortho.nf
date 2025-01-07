@@ -12,8 +12,9 @@ include { MMSEQS_CREATEDB } from '../modules/nf-core/mmseqs/createdb/main'
 include { MMSEQS_CLUSTER } from '../modules/nf-core/mmseqs/cluster/main'
 include { MMSEQS_CREATETSV } from '../modules/nf-core/mmseqs/createtsv/main'
 include { PARSE_MMSEQS_TO_FASTA } from '../modules/local/cluster_mmseqs/parse_mmseqs'
-
+// Other
 include { ORTHOFINDER as ORTHOFINDER_INITIAL } from '../modules/nf-core/orthofinder/main' // OVLP
+include { PARSE_FASTAS as ORTHOFINDER_PARSE_FASTAS } from '../modules/local/parse_fastas/main'
 
 process CONCATENATE_FASTAS {
     input:
@@ -96,9 +97,7 @@ process FILTER_INPUTS_ORTHOFINDER {
 
     script:
     """
-    echo "FILTER_INPUTS_ORTHOFINDER:\nThe input fastas were assessed by their DIAMOND all-vs-all overlaps," > filter_summary.txt
-    echo "to identify genomes sharing 0 overlaps with any other genome," >> filter_summary.txt
-    echo "When two genomes shared an overlap of 0, the genomes with less total overlaps with all genomes was marked for removal" >> filter_summary.txt
+    echo "FILTER_INPUTS_ORTHOFINDER:\nWhenever OrthoFinder flagged pairs of genomes not sharing enough overlaps in DIAMOND all-vs-all, the problematic genomes were removed," > filter_summary.txt
     echo "Number of input files before filtering: \$(ls ${files} | wc -l)" >> filter_summary.txt
     echo "Genomes filtered out from OrthoFinder input:" >> filter_summary.txt
 
@@ -273,6 +272,18 @@ ORTHOFINDER(ch_filtered_input, prior_run_ch)
                 def orthogroup_dir = file("${path}/Orthogroup_Sequences")
                 return [meta, orthogroup_dir]
             }
+        // Create a channel for the Phylogenetic_Hierarchical_Orthogroups folder
+        ch_orthofinder_hog_tsv = ORTHOFINDER.out.orthofinder
+            .map { meta, path -> 
+                def orthogroup_dir = file("${path}/Phylogenetic_Hierarchical_Orthogroups/N0.tsv")
+                return [meta, orthogroup_dir]
+            }
+        // Parse fastas for the hierarchical OGs of orthofinder
+        ORTHOFINDER_PARSE_FASTAS(
+            ch_filtered_input,
+            ch_orthofinder_hog_tsv,
+            'Phylogenetic_Hierarchical_Orthogroups_Sequences'
+        )
     }
 
 

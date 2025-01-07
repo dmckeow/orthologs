@@ -31,8 +31,8 @@ process BROCCOLI {
         -threads ${task.cpus} \\
         $args
     
-    python3 ${projectDir}/bin/parse_fastas_broccoli.py \\
-        -b dir_step3/orthologous_groups.txt \\
+    python3 ${projectDir}/bin/parse_fastas.py \\
+        -i dir_step3/orthologous_groups.txt \\
         -f input \\
         -o dir_step3/orthologous_groups_sequences
 

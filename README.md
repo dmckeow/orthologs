@@ -48,6 +48,10 @@ git config --file=.gitmodules --get-regexp path # check if the submodule still s
 git submodule init
 git submodule update
 ```
+### Same for novel tree
+```
+git submodule add https://github.com/Arcadia-Science/noveltree.git noveltree
+```
 
 
 ### How much resources?

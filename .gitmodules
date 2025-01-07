@@ -1,3 +1,6 @@
 [submodule "broccoli"]
 	path = broccoli
 	url = https://github.com/rderelle/Broccoli.git
+[submodule "noveltree"]
+	path = noveltree
+	url = https://github.com/Arcadia-Science/noveltree.git

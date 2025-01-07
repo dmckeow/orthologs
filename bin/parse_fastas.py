@@ -23,7 +23,19 @@ def extract_fasta_sequences(og_file, fasta_dir, output_dir):
 							if record.id in protein_list:
 								SeqIO.write(record, out_fasta, "fasta")
 
-	print("parse_fastas_broccoli.py: Fasta extraction complete.")
+	print("parse_fastas.py: Fasta extraction complete.")
+
+def process_of_hogs(input_file, output_file):
+	with open(input_file, 'r') as infile, open (output_file, 'w') as outfile:
+		header = infile.readline() # skip header by reading the first line to header
+		for line in infile:
+			columns = line.split('\t')
+			columns = [column for i, column in enumerate(columns) if i not in [1, 2]] # remove columns 2 and 3
+			first_column = columns[0]
+			other_columns = ' '.join(columns[1:])
+			result = first_column + '\t' + other_columns
+			result = result.replace('N0.', '', 1)
+			outfile.write(result + '\n')
 
 
 if __name__ == "__main__":
@@ -31,12 +43,16 @@ if __name__ == "__main__":
 
 	# Search 
 	parser.add_argument('-f','--fasta', required=True, help='Path to the input fasta file directory containing .fa or .fasta files')
-	parser.add_argument('-b', '--broccoli_ogs', required=True, help='Path to the Broccoli output dir_step3/orthologous_groups.txt')
-	parser.add_argument('-o', '--outdir', required=True, help='Path to the directory where broccoli orthogroup fastas will be put')
+	parser.add_argument('-i', '--input', required=True, help='Path to dir_step3/orthologous_groups.txt (Broccoli) OR orthofinder/Phylogenetic_Hierarchical_Orthogroups/N0.tsv (OrthoFinder)')
+	parser.add_argument('-o', '--outdir', required=True, help='Path to the directory where fastas will be put')
 	
 	args = parser.parse_args()
 
 	os.makedirs(args.outdir, exist_ok=True)
 
-	# Just extract using Broccoli's dir_step3/orthologous_groups.txt to make fastas for OGs which Broccoli should ALREADY FUCKING DO
-	extract_fasta_sequences(args.broccoli_ogs, args.fasta, args.outdir)
+	if os.path.basename(args.input) == "N0.tsv":
+		processed_n0 = os.path.join(args.outdir, "N0.txt")
+		process_of_hogs(args.input, processed_n0)
+		extract_fasta_sequences(processed_n0, args.fasta, args.outdir)
+	else:
+		extract_fasta_sequences(args.input, args.fasta, args.outdir)
