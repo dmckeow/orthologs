@@ -49,10 +49,11 @@ git submodule init
 git submodule update
 ```
 ### Novel tree
+* First, I **forked** the repository of noveltree v1.0.2 https://github.com/Arcadia-Science/noveltree.git to https://github.com/dmckeow/noveltree.git
 ```
-git submodule add https://github.com/Arcadia-Science/noveltree.git noveltree
-cd noveltree
-git checkout v1.0.2
+git submodule add https://github.com/dmckeow/noveltree.git noveltree
+git submodule sync
+git submodule update --init --recursive --remote
 ```
 #### Noveltree changes
 * Added apptainer profile with
