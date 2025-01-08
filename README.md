@@ -48,11 +48,40 @@ git config --file=.gitmodules --get-regexp path # check if the submodule still s
 git submodule init
 git submodule update
 ```
-### Same for novel tree
+### Novel tree
 ```
 git submodule add https://github.com/Arcadia-Science/noveltree.git noveltree
 cd noveltree
 git checkout v1.0.2
+```
+#### Noveltree changes
+* Added apptainer profile with
+```
+apptainer.enabled      = true
+apptainer.autoMounts   = true
+```
+* Added specific apptainer workflow setting for apptainer e.g.
+    * This was done for:
+        * all modules in modules/local
+
+```
+container "${ workflow.containerEngine == 'apptainer' ? 'arcadiascience/bioservices_1.10.0:1.0.0' : 
+    '' }"
+
+    to
+
+container "${ workflow.containerEngine == 'apptainer' ? 'arcadiascience/bioservices_1.10.0:1.0.0' : 
+                workflow.containerEngine == 'docker' ? 'arcadiascience/bioservices_1.10.0:1.0.0' :
+    '' }"
+```
+* Commented out a line in modules/local/witch.nf that was intended to fix root permissions problem with docker, which is fixed by simply using apptainer
+```
+//containerOptions = "--user root"
+```
+
+#### Running Noveltree
+```
+nextflow run . -profile apptainer -params-file https://github.com/Arcadia-Science/test-datasets/raw/main/noveltree/tsar_downsamp_test_parameters.json  --max_cpus 8 --max_memory 30GB
 ```
 
 
