@@ -51,6 +51,8 @@ git submodule update
 ### Same for novel tree
 ```
 git submodule add https://github.com/Arcadia-Science/noveltree.git noveltree
+cd noveltree
+git checkout v1.0.2
 ```
 
 
