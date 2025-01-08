@@ -49,41 +49,13 @@ git submodule init
 git submodule update
 ```
 ### Novel tree
-* First, I **forked** the repository of noveltree v1.0.2 https://github.com/Arcadia-Science/noveltree.git to https://github.com/dmckeow/noveltree.git
+First, I **forked** the repository of noveltree v1.0.2 https://github.com/Arcadia-Science/noveltree.git to https://github.com/dmckeow/noveltree.git then:
 ```
 git submodule add https://github.com/dmckeow/noveltree.git noveltree
 git submodule sync
 git submodule update --init --recursive --remote
 ```
-#### Noveltree changes
-* Added apptainer profile with
-```
-apptainer.enabled      = true
-apptainer.autoMounts   = true
-```
-* Added specific apptainer workflow setting for apptainer e.g.
-    * This was done for:
-        * all modules in modules/local
-
-```
-container "${ workflow.containerEngine == 'apptainer' ? 'arcadiascience/bioservices_1.10.0:1.0.0' : 
-    '' }"
-
-    to
-
-container "${ workflow.containerEngine == 'apptainer' ? 'arcadiascience/bioservices_1.10.0:1.0.0' : 
-                workflow.containerEngine == 'docker' ? 'arcadiascience/bioservices_1.10.0:1.0.0' :
-    '' }"
-```
-* Commented out a line in modules/local/witch.nf that was intended to fix root permissions problem with docker, which is fixed by simply using apptainer
-```
-//containerOptions = "--user root"
-```
-
-#### Running Noveltree
-```
-nextflow run . -profile apptainer -params-file https://github.com/Arcadia-Science/test-datasets/raw/main/noveltree/tsar_downsamp_test_parameters.json  --max_cpus 8 --max_memory 30GB
-```
+See changelog within the submodule for changes I have made
 
 
 ### How much resources?
