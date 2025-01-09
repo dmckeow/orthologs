@@ -88,34 +88,11 @@ See changelog within the submodule for changes I have made
 
 
 
-# OrthoFinder problem continues...
-
-.command.log
-
-WARNING: Too few hits between species 10 and species 21 to normalise the scores, these hits will be ignored
-WARNING: Too few hits between species 21 and species 10 to normalise the scores, these hits will be ignored
-WARNING: Too few hits between species 22 and species 36 to normalise the scores, these hits will be ignored
-WARNING: Too few hits between species 36 and species 10 to normalise the scores, these hits will be ignored
-WARNING: Too few hits between species 36 and species 22 to normalise the scores, these hits will be ignored
-
-WARNING: Too few hits between species and species 21 to normalise the scores, these hits will be ignored
-WARNING: Too few hits between species 21 and species to normalise the scores, these hits will be ignored
-WARNING: Too few hits between species 22 and species to normalise the scores, these hits will be ignored
-WARNING: Too few hits between species and species to normalise the scores, these hits will be ignored
-WARNING: Too few hits between species and species 22 to normalise the scores, these hits will be ignored
-
-10 and species 
- and species 10
-22 and species 
- and species 10
- and species 22
-
-input/OrthoFinder/Results_orthofinder/WorkingDirectory/SpeciesIDs.txt
-
-10: Coeast_long.pep.None.Homeodomains.domains.fasta
-21: Mbre_long.pep.None.Homeodomains.domains.fasta    REMOVED
-22: Mertsp_long.pep.None.Homeodomains.domains.fasta  REMOVED
-36: Sros_long.pep.None.Homeodomains.domains.fasta
-
-
-then add file name to no_overlaps file
+# New ioo pipeline
+Many goals:
+* Use modules inspired by noveltree
+* restructure subworkflows
+  * search is become a separate workflow that is part of an optional prefilter process
+```
+nextflow run ioo-main.nf -profile local -c ioo-nextflow.config -params-file ioo-params.json
+```

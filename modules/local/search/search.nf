@@ -1,4 +1,5 @@
 process SEARCH {
+    label 'process_low'
     conda "${moduleDir}/environment.yml"
     //container 'community.wave.seqera.io/library/bedtools_biopython_hmmer_samtools_python:c2a5749688500b49'
     //container 'oras://community.wave.seqera.io/library/bedtools_biopython_hmmer_samtools_python:6ff18068cb3833ec'
@@ -16,6 +17,7 @@ process SEARCH {
     tuple val(meta), path("searches/${input_source}/${meta.id}.txt"), emit: txt
     tuple val(meta), path("searches/${input_source}/*.domains.fasta"), optional: true, emit: domfasta
     tuple val(meta), path("searches/${input_source}/*.domtable"), optional: true, emit: domtable
+    tuple val(meta), path("defline_info.csv"), optional: true, emit: defline_info
     
     script:
     """
@@ -29,5 +31,13 @@ process SEARCH {
         -o searches
 
     touch searches/${input_source}/${meta.id}.txt
+
+    # Extract deflines and create CSV
+    grep ">" searches/${input_source}/*.domains.fasta | sed 's/>//g' | awk -v OFS=',' \
+        -v id="${meta.id}" \
+        -v fa="${meta.fasta}" \
+        -v fa_name="${fasta}" \
+        -v gf="${gene_family_name}" \
+        '{print \$0, fa, gf}' > defline_info.csv
     """
 }

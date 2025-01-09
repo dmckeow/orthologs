@@ -1,0 +1,11 @@
+{
+    "samplesheet": "ioo-samplesheet1.csv",
+    "search_params": "ioo-samplesheet2.csv",
+    "outdir": "results/ioo",
+    "runName": "ioo",
+    "mcl_inflation": 2.5,
+    "run": {
+        "prefilter_proteomes": true,
+        "init_ortho_orthofinder": false
+    }
+}

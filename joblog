@@ -33,3 +33,8 @@ SUBMISSION_TIME	SLURM_JOB_ID	SLURM_LOG	SLURM_ERR	COMMAND	NOTE
 2025-01-07 13:01:06	3285078	logs/slurm-nf.3285078.out	logs/slurm-nf.3285078.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json	
 2025-01-07 13:12:13	3286321	logs/slurm-nf.3286321.out	logs/slurm-nf.3286321.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json -resume	
 2025-01-07 14:35:21	3294260	logs/slurm-nf.3294260.out	logs/slurm-nf.3294260.err	sbatch submit_nf.sh main.nf -profile slurm -params-file params-WhichTest.json -resume	
+2025-01-09 12:24:41	3380320	logs/slurm-nf.3380320.out	logs/slurm-nf.3380320.err	sbatch submit_nf.sh ioo-main.nf -profile local -c ioo-nextflow.config -params-file ioo-params.json	
+2025-01-09 12:28:51	3380408	logs/slurm-nf.3380408.out	logs/slurm-nf.3380408.err	sbatch submit_nf.sh ioo-main.nf -profile slurm -c ioo-nextflow.config -params-file ioo-params.json	
+2025-01-09 12:32:33	3380458	logs/slurm-nf.3380458.out	logs/slurm-nf.3380458.err	sbatch submit_nf.sh ioo-main.nf -profile slurm -c ioo-nextflow.config -params-file ioo-params.json	
+2025-01-09 12:55:22	3380808	logs/slurm-nf.3380808.out	logs/slurm-nf.3380808.err	sbatch submit_nf.sh ioo-main.nf -profile slurm -c ioo-nextflow.config -params-file ioo-params.json	
+2025-01-09 12:56:46	3380846	logs/slurm-nf.3380846.out	logs/slurm-nf.3380846.err	sbatch submit_nf.sh ioo-main.nf -profile slurm -c ioo-nextflow.config -params-file ioo-params.json	
