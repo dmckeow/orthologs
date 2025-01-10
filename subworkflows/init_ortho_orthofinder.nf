@@ -115,27 +115,23 @@ workflow INIT_ORTHO_ORTHOFINDER {
     search_params
     outdir
     mcl_inflation
-    prefilter_proteomes_domfastas
+    prefilter_metamap
 
     main:
 
     ch_versions = Channel.empty()
     ch_best_inflation = Channel.of(params.mcl_inflation)
 
-    // Determine which input to use based on prefilter_proteomes_domfastas
-    prefilter_proteomes_domfastas.view { it -> "prefilter_proteomes_domfastas: $it" }
+    // Determine which input to use based on prefilter
+    
 
-    ch_all_data = prefilter_proteomes_domfastas
-        .ifEmpty { 
-            Channel
-                .fromPath(samplesheet)
-                .splitCsv(header:true)
-                .map { row -> tuple([id: row.id], file(row.fasta)) }
-        }
-    ch_all_data.view { it -> "ch_all_data: $it" }
-
+    ch_all_data = prefilter_metamap
+    
     species_name_list = ch_all_data.collect { it[0].id }
     complete_prots_list = ch_all_data.collect { it[1] }
+
+    species_name_list.view { it -> "species_name_list: $it" }
+    complete_prots_list.view { it -> "complete_prots_list: $it" }
 
     //
     // MODULE: Prepare directory structure and fasta files according to

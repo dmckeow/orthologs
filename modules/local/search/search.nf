@@ -20,6 +20,7 @@ process SEARCH {
     tuple val(meta), path("defline_info.csv"), optional: true, emit: defline_info
     
     script:
+    
     """
     python3 ${projectDir}/bin/search.py \
         -f ${fasta} \
@@ -32,12 +33,20 @@ process SEARCH {
 
     touch searches/${input_source}/${meta.id}.txt
 
-    # Extract deflines and create CSV
-    grep ">" searches/${input_source}/*.domains.fasta | sed 's/>//g' | awk -v OFS=',' \
+    # Extract deflines and create CSV with full paths
+    echo "seq,parent_seq,fa_name,gene_family_name,id,input_fasta_path,domain_fasta_path" > defline_info.csv
+    for domain_fasta in searches/${input_source}/*.domains.fasta; do
+        grep ">" \$domain_fasta | sed 's/>//g' | awk -v OFS=',' \
         -v id="${meta.id}" \
-        -v fa="${meta.fasta}" \
         -v fa_name="${fasta}" \
         -v gf="${gene_family_name}" \
-        '{print \$0, fa, gf}' > defline_info.csv
+        -v input_path="\$(readlink -f ${fasta})" \
+        -v domain_path="\$(readlink -f \$domain_fasta)" \
+        '{
+            original=\$0;
+            gsub(/:.*/, "", \$0);
+            print original, \$0, fa_name, gf, id, input_path, domain_path
+        }' >> defline_info.csv
+    done
     """
 }

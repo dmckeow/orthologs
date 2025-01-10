@@ -1,6 +1,6 @@
 #!/usr/bin/env nextflow
 
-include { PREFILTER_PROTEOMES } from './subworkflows/prefilter_proteomes'
+include { PREFILTER } from './subworkflows/prefilter'
 include { INIT_ORTHO_ORTHOFINDER } from './subworkflows/init_ortho_orthofinder'
 
 workflow {
@@ -12,23 +12,22 @@ workflow {
         error "Please provide a samplesheet with the '--samplesheet' option."
     }
 
-    if (params.run.prefilter_proteomes && params.search_params == null) {
-        error "prefilter_proteomes requires a samplesheet with the '--search_params' option."
+    if (params.run.prefilter_hmmsearch && params.search_params == null) {
+        log.warn "search_params needs '--search_params' option - running on whole proteome"
     }
 
-    prefilter_proteomes_fastas = Channel.empty()
-    prefilter_proteomes_metamap = Channel.empty()
+    prefilter_metamap = Channel.empty()
 
     // Run the orthology workflow
-    if (params.run.prefilter_proteomes) {
-        PREFILTER_PROTEOMES (
-            params.samplesheet,
-            params.search_params,
-            params.outdir
-        )
-        prefilter_proteomes_fastas = PREFILTER_PROTEOMES.out.fastas
-        prefilter_proteomes_metamap = PREFILTER_PROTEOMES.out.metamap
-    }
+    // Always run prefilter step because it also preprocesses fastas even if no seach step is run
+    PREFILTER (
+        params.samplesheet,
+        params.search_params,
+        params.outdir,
+        params.run.prefilter_hmmsearch
+    )
+    prefilter_metamap = PREFILTER.out.metamap
+
 
     if (params.run.init_ortho_orthofinder) {
         INIT_ORTHO_ORTHOFINDER (
@@ -36,8 +35,7 @@ workflow {
             params.search_params,
             params.outdir,
             params.mcl_inflation,
-            prefilter_proteomes_fastas,
-            prefilter_proteomes_metamap
+            prefilter_metamap
         )
     }
 }

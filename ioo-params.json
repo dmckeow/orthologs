@@ -5,7 +5,7 @@
     "runName": "ioo",
     "mcl_inflation": 2.5,
     "run": {
-        "prefilter_proteomes": true,
+        "prefilter_hmmsearch": true,
         "init_ortho_orthofinder": false
     }
 }
