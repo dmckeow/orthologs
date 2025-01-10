@@ -1,4 +1,5 @@
 process PREFILTER_SEARCH {
+    tag "Preparing fastas for orthogroup calling, running hmmsearch if selected"
     label 'process_low'
     container 'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/d0/d06f9c1b929618ccc24024d4d13768bd9196a05416f9dcad078853ecbf40efa9/data'
 

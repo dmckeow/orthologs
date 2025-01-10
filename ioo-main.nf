@@ -26,16 +26,13 @@ workflow {
         params.outdir,
         params.run.prefilter_hmmsearch
     )
-    prefilter_metamap = PREFILTER.out.metamap
-
 
     if (params.run.init_ortho_orthofinder) {
         INIT_ORTHO_ORTHOFINDER (
-            params.samplesheet,
-            params.search_params,
             params.outdir,
             params.mcl_inflation,
-            prefilter_metamap
+            PREFILTER.out.fasta_info_metamap,
+            PREFILTER.out.cleanfastas_collected
         )
     }
 }

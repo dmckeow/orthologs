@@ -111,24 +111,24 @@ def create_og_channel(Object inputs) {
 //
 workflow INIT_ORTHO_ORTHOFINDER {
     take:
-    samplesheet
-    search_params
     outdir
     mcl_inflation
-    prefilter_metamap
+    fasta_info_metamap
+    cleanfastas_collected
 
     main:
 
     ch_versions = Channel.empty()
-    ch_best_inflation = Channel.of(params.mcl_inflation)
+    ch_best_inflation = Channel.of(mcl_inflation)
 
     // Determine which input to use based on prefilter
     
+    ch_all_data = cleanfastas_collected
 
-    ch_all_data = prefilter_metamap
+    ch_all_data.view { it -> "ch_all_data: $it" }
     
-    species_name_list = ch_all_data.collect { it[0].id }
-    complete_prots_list = ch_all_data.collect { it[1] }
+    species_name_list = ch_all_data.map { it[0].id }.unique().collect()
+    complete_prots_list = ch_all_data.map { it[1] }.collect()
 
     species_name_list.view { it -> "species_name_list: $it" }
     complete_prots_list.view { it -> "complete_prots_list: $it" }

@@ -4,6 +4,38 @@ nextflow.enable.dsl = 2
 // SINGLE USE MODULES FROM ORIGINAL INIT_ORTHO 
 include { PREFILTER_SEARCH } from '../modules/local/prefilter_search'
 
+
+process MERGE_FASTAS {
+    publishDir "${params.outdir}/prefilter/initial/clean_fasta/merged", mode: 'copy'
+
+    input:
+    tuple val(id), path(fasta_files)
+
+    output:
+    tuple val(id), path("${id}.fa"), emit: merged_fasta
+    
+    script:
+    """
+    cat ${fasta_files.join(' ')} > ${id}.fa
+    """
+}
+
+process CONCATENATE_FASTAS {
+    publishDir "results", mode: 'copy'
+
+    input:
+    tuple val(id), path(fastas)
+
+    output:
+    path "${id}.fasta"
+
+    script:
+    """
+    cat ${fastas.join(' ')} > ${id}.fasta
+    """
+}
+
+
 workflow PREFILTER {
     take:
     samplesheet
@@ -78,9 +110,26 @@ workflow PREFILTER {
     
     cleanfastas_collected = PREFILTER_SEARCH.out.cleanfasta.collect()
 
+    if (run_prefilter_hmmsearch) {
+        cleanfastas_collected = PREFILTER_SEARCH.out.cleanfasta.collect()
+    
+        // Reshape the collected data into a more usable format
+        cleanfastas_reshaped = cleanfastas_collected
+            .flatten()
+            .collate(2)
+            .map { meta, path -> 
+                def id = meta.id
+                [id, path]
+            }
+            .groupTuple()
+        
+        CONCATENATE_FASTAS(cleanfastas_reshaped) 
+    }
+
+
     //defline_info_metamap.view { it -> "defline_info_metamap: $it" }
     //fasta_info_metamap.view { it -> "fasta_info_metamap: $it" }
-    //cleanfastas_collected.view { it -> "cleanfastas_collected: $it" }
+    cleanfastas_collected.view { it -> "cleanfastas_collected: $it" }
 
     emit:
     defline_info_metamap = defline_info_metamap
