@@ -4,36 +4,24 @@ nextflow.enable.dsl = 2
 // SINGLE USE MODULES FROM ORIGINAL INIT_ORTHO 
 include { PREFILTER_SEARCH } from '../modules/local/prefilter_search'
 
-
-process MERGE_FASTAS {
-    publishDir "${params.outdir}/prefilter/initial/clean_fasta/merged", mode: 'copy'
-
-    input:
-    tuple val(id), path(fasta_files)
-
-    output:
-    tuple val(id), path("${id}.fa"), emit: merged_fasta
-    
-    script:
-    """
-    cat ${fasta_files.join(' ')} > ${id}.fa
-    """
-}
-
 process CONCATENATE_FASTAS {
-    publishDir "results", mode: 'copy'
+    tag "Concatentaing fastas from hmmsearch to keep one input per species or OrthoFinder etc"
+    label 'process_low'
+    publishDir "${params.outdir}/prefilter/initial/clean_fasta/merged", mode: 'copy'
 
     input:
     tuple val(id), path(fastas)
 
     output:
-    path "${id}.fasta"
+    tuple val(id), path("${id}.fasta"), emit: concatenated_fasta
 
     script:
     """
     cat ${fastas.join(' ')} > ${id}.fasta
     """
 }
+
+
 
 
 workflow PREFILTER {
@@ -78,19 +66,21 @@ workflow PREFILTER {
     defline_info_metamap = defline_info_collected
         .splitCsv(header: ['seq', 'parent_seq', 'clean_seq', 'clean_parent_seq', 'id', 'input_fasta_path', 'gene_family_name', 'preprocessed_fasta_path'])
         .map { row -> 
-            [
+            def groupKey = [
+                id: row.id
+            ]
+            def seqInfo = [
                 seq: row.seq,
                 parent_seq: row.parent_seq,
                 clean_seq: row.clean_seq,
                 clean_parent_seq: row.clean_parent_seq,
-                id: row.id,
                 input_fasta_path: row.input_fasta_path,
                 gene_family_name: row.gene_family_name,
                 preprocessed_fasta_path: row.preprocessed_fasta_path
             ]
+            [groupKey, seqInfo]
         }
-        .collect()
-        .map { list -> [metamap: list] }
+        .groupTuple(by: 0)
     
     fasta_info_collected = PREFILTER_SEARCH.out.fasta_info
         .collectFile(name: 'all_fasta_info.csv', keepHeader: false, skip: 1)
@@ -98,41 +88,44 @@ workflow PREFILTER {
     fasta_info_metamap = fasta_info_collected
         .splitCsv(header: ['id', 'input_fasta_path', 'gene_family_name', 'preprocessed_fasta_path'])
         .map { row -> 
-            [
-                id: row.id,
+            def groupKey = [
+                    id: row.id
+                ]
+            def seqInfo = [
                 input_fasta_path: row.input_fasta_path,
                 gene_family_name: row.gene_family_name,
                 preprocessed_fasta_path: row.preprocessed_fasta_path
             ]
+            [groupKey, seqInfo]
         }
-        .collect()
-        .map { list -> [metamap: list] }
+        .groupTuple(by: 0)
     
     cleanfastas_collected = PREFILTER_SEARCH.out.cleanfasta.collect()
+    //cleanfastas_collected.view { it -> "cleanfastas_collected initial: $it" }
 
     if (run_prefilter_hmmsearch) {
-        cleanfastas_collected = PREFILTER_SEARCH.out.cleanfasta.collect()
-    
-        // Reshape the collected data into a more usable format
-        cleanfastas_reshaped = cleanfastas_collected
-            .flatten()
-            .collate(2)
-            .map { meta, path -> 
-                def id = meta.id
-                [id, path]
-            }
-            .groupTuple()
-        
-        CONCATENATE_FASTAS(cleanfastas_reshaped) 
+        // If hmmsearch was run, then we merge the outputs fastas for all gene families per genome
+        preprocessed_fastas_by_id = fasta_info_metamap
+        .map { entry ->
+            def id = entry[0].id
+            def fastas = entry[1].collect { it.preprocessed_fasta_path }
+            return tuple(id, fastas)
+        }
+
+        CONCATENATE_FASTAS(preprocessed_fastas_by_id)
+
+        cleanfastas_collected = CONCATENATE_FASTAS.out.concatenated_fasta
+            .map { id, path -> [[id: id], path.toString()] }
+            .collect()
     }
 
 
     //defline_info_metamap.view { it -> "defline_info_metamap: $it" }
-    //fasta_info_metamap.view { it -> "fasta_info_metamap: $it" }
-    cleanfastas_collected.view { it -> "cleanfastas_collected: $it" }
+    fasta_info_metamap.view { it -> "fasta_info_metamap: $it" }
+    cleanfastas_collected.view { it -> "cleanfastas_collected final: $it" }
 
     emit:
-    defline_info_metamap = defline_info_metamap
-    fasta_info_metamap = fasta_info_metamap
-    cleanfastas_collected = cleanfastas_collected
+    defline_info_metamap = defline_info_metamap // metainfo to later identify gene families
+    fasta_info_metamap = fasta_info_metamap // metainfo to regroup fastas and later identify gene families
+    cleanfastas_collected = cleanfastas_collected // this will be the set of fastas analysed downstream
 }

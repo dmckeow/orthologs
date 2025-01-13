@@ -55,7 +55,7 @@ include { ORTHOFINDER_MCL as ORTHOFINDER_MCL_ALL    } from '../noveltree/modules
 include { ANNOTATE_UNIPROT                          } from '../noveltree/modules/local/annotate_uniprot'
 include { COGEQC                                    } from '../noveltree/modules/local/cogeqc'
 include { SELECT_INFLATION                          } from '../noveltree/modules/local/select_inflation'
-include { FILTER_ORTHOGROUPS                        } from '../noveltree/modules/local/filter_orthogroups'
+include { FILTER_ORTHOGROUPS                        } from '../modules/local/filter_orthogroups'
 include { ASTEROID                                  } from '../noveltree/modules/local/asteroid'
 include { SPECIESRAX                                } from '../noveltree/modules/local/speciesrax'
 include { GENERAX_PER_FAMILY                        } from '../noveltree/modules/local/generax_per_family'
@@ -111,6 +111,7 @@ def create_og_channel(Object inputs) {
 //
 workflow INIT_ORTHO_ORTHOFINDER {
     take:
+    samplesheet
     outdir
     mcl_inflation
     fasta_info_metamap
@@ -122,13 +123,24 @@ workflow INIT_ORTHO_ORTHOFINDER {
     ch_best_inflation = Channel.of(mcl_inflation)
 
     // Determine which input to use based on prefilter
-    
     ch_all_data = cleanfastas_collected
+        .flatten()
+        .collate(2)
+        .map { item ->
+            def meta = item[0]
+            def fasta = file(item[1])
+            [ meta, fasta ]
+        }
 
     ch_all_data.view { it -> "ch_all_data: $it" }
-    
-    species_name_list = ch_all_data.map { it[0].id }.unique().collect()
-    complete_prots_list = ch_all_data.map { it[1] }.collect()
+
+    species_name_list = ch_all_data
+    .map { meta, fasta -> meta.id }
+    .collect()
+
+    complete_prots_list = ch_all_data
+        .map { meta, fasta -> fasta }
+        .collect()
 
     species_name_list.view { it -> "species_name_list: $it" }
     complete_prots_list.view { it -> "complete_prots_list: $it" }
@@ -145,6 +157,10 @@ workflow INIT_ORTHO_ORTHOFINDER {
     //
     // For the full dataset, to be clustered into orthogroups using
     // the best inflation parameter.
+
+    ORTHOFINDER_PREP_ALL.out.fastas.view { it -> "ORTHOFINDER_PREP_ALL.out.fastas: $it" }
+    ORTHOFINDER_PREP_ALL.out.diamonds.view { it -> "ORTHOFINDER_PREP_ALL.out.diamonds: $it" }
+
     DIAMOND_BLASTP_ALL(
         ch_all_data,
         ORTHOFINDER_PREP_ALL.out.fastas.flatten(),
@@ -165,17 +181,16 @@ workflow INIT_ORTHO_ORTHOFINDER {
         ORTHOFINDER_PREP_ALL.out.seqIDs,
         "complete_dataset"
     )
-}
 
-workflow NOT_READY {
     //
     // MODULE: FILTER_ORTHOGROUPS
     // Subset orthogroups based on their copy number and distribution
     // across species and taxonomic group.
     // The conservative subset will be used for species tree inference,
     // and the remainder will be used to infer gene family trees only.
+
     FILTER_ORTHOGROUPS(
-        INPUT_CHECK.out.complete_samplesheet,
+        file(samplesheet),
         ORTHOFINDER_MCL_ALL.out.inflation_dir,
         params.min_num_seq_per_og,
         params.min_num_spp_per_og,
@@ -194,6 +209,7 @@ workflow NOT_READY {
     // And now create the tuple of these output fastas paired with the meta map
     ch_spptree_fas = spptree_og_map.merge(FILTER_ORTHOGROUPS.out.spptree_fas.flatten())
     ch_genetree_fas = genetree_og_map.merge(FILTER_ORTHOGROUPS.out.genetree_fas.flatten())
+
 
     //
     // MODULE: ALIGN_SEQS
@@ -260,6 +276,11 @@ workflow NOT_READY {
     // map links that are provided in bulk to SpeciesRax
     core_og_maplink_list = ch_core_og_maplinks.collect { it[1] }
     core_og_clean_msa_list = ch_core_og_clean_msas.collect { it[1] }
+
+}
+
+workflow NOT_READY {
+    
 
     //
     // MODULE: INFER_TREES

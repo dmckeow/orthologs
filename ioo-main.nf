@@ -16,8 +16,6 @@ workflow {
         log.warn "search_params needs '--search_params' option - running on whole proteome"
     }
 
-    prefilter_metamap = Channel.empty()
-
     // Run the orthology workflow
     // Always run prefilter step because it also preprocesses fastas even if no seach step is run
     PREFILTER (
@@ -29,6 +27,7 @@ workflow {
 
     if (params.run.init_ortho_orthofinder) {
         INIT_ORTHO_ORTHOFINDER (
+            params.samplesheet,
             params.outdir,
             params.mcl_inflation,
             PREFILTER.out.fasta_info_metamap,

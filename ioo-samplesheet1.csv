@@ -1,6 +1,6 @@
-id,fasta
-Aque,/users/asebe/dmckeown/projects/crg-bcaortho/example_data/Aque_long.pep.fasta
-Beraby,/users/asebe/dmckeown/projects/crg-bcaortho/example_data/Beraby_long.pep.fasta
-Berova,/users/asebe/dmckeown/projects/crg-bcaortho/example_data/Berova_long.pep.fasta
-Bolinf,/users/asebe/dmckeown/projects/crg-bcaortho/example_data/Bolinf_long.pep.fasta
-Bolmic,/users/asebe/dmckeown/projects/crg-bcaortho/example_data/Bolmic_long.pep.fasta
+id,fasta,taxonomy
+Aque,/users/asebe/dmckeown/projects/crg-bcaortho/example_data/Aque_long.pep.fasta,Porifera
+Beraby,/users/asebe/dmckeown/projects/crg-bcaortho/example_data/Beraby_long.pep.fasta,Ctenophora
+Berova,/users/asebe/dmckeown/projects/crg-bcaortho/example_data/Berova_long.pep.fasta,Ctenophora
+Bolinf,/users/asebe/dmckeown/projects/crg-bcaortho/example_data/Bolinf_long.pep.fasta,Ctenophora
+Bolmic,/users/asebe/dmckeown/projects/crg-bcaortho/example_data/Bolmic_long.pep.fasta,Ctenophora

@@ -6,6 +6,6 @@
     "mcl_inflation": 2.5,
     "run": {
         "prefilter_hmmsearch": true,
-        "init_ortho_orthofinder": false
+        "init_ortho_orthofinder": true
     }
 }
