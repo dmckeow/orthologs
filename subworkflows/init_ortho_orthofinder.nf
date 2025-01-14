@@ -11,25 +11,25 @@ ch_aligner = params.aligner
 ch_msa_trimmer = params.msa_trimmer
 ch_tree_method = params.tree_method
 if (ch_aligner == "witch") {
-    include { WITCH as ALIGN_SEQS                   } from '../noveltree/modules/local/witch'
-    include { WITCH as ALIGN_REMAINING_SEQS         } from '../noveltree/modules/local/witch'
+    include { WITCH as ALIGN_SEQS                   } from '../modules/local/witch'
+    include { WITCH as ALIGN_REMAINING_SEQS         } from '../modules/local/witch'
 } else {
-    include { MAFFT as ALIGN_SEQS                   } from '../noveltree/modules/nf-core-modified/mafft'
-    include { MAFFT as ALIGN_REMAINING_SEQS         } from '../noveltree/modules/nf-core-modified/mafft'
+    include { MAFFT as ALIGN_SEQS                   } from '../modules/nf-core-modified/mafft'
+    include { MAFFT as ALIGN_REMAINING_SEQS         } from '../modules/nf-core-modified/mafft'
 }
 if (ch_msa_trimmer == "clipkit") {
-    include { CLIPKIT as TRIM_MSAS                  } from '../noveltree/modules/local/clipkit'
-    include { CLIPKIT as TRIM_REMAINING_MSAS        } from '../noveltree/modules/local/clipkit'
+    include { CLIPKIT as TRIM_MSAS                  } from '../modules/local/clipkit'
+    include { CLIPKIT as TRIM_REMAINING_MSAS        } from '../modules/local/clipkit'
 } else if (ch_msa_trimmer == 'cialign') {
-    include { CIALIGN as TRIM_MSAS                  } from '../noveltree/modules/local/cialign'
-    include { CIALIGN as TRIM_REMAINING_MSAS        } from '../noveltree/modules/local/cialign'
+    include { CIALIGN as TRIM_MSAS                  } from '../modules/local/cialign'
+    include { CIALIGN as TRIM_REMAINING_MSAS        } from '../modules/local/cialign'
 }
 if (ch_tree_method == "iqtree") {
-    include { IQTREE as INFER_TREES                 } from '../noveltree/modules/nf-core-modified/iqtree'
-    include { IQTREE as INFER_REMAINING_TREES       } from '../noveltree/modules/nf-core-modified/iqtree'
+    include { IQTREE as INFER_TREES                 } from '../modules/nf-core-modified/iqtree'
+    include { IQTREE as INFER_REMAINING_TREES       } from '../modules/nf-core-modified/iqtree'
 } else {
-    include { FASTTREE as INFER_TREES               } from '../noveltree/modules/local/fasttree'
-    include { FASTTREE as INFER_REMAINING_TREES     } from '../noveltree/modules/local/fasttree'
+    include { FASTTREE as INFER_TREES               } from '../modules/local/fasttree'
+    include { FASTTREE as INFER_REMAINING_TREES     } from '../modules/local/fasttree'
 }
 
 /*
@@ -41,26 +41,26 @@ if (ch_tree_method == "iqtree") {
 //
 // SUBWORKFLOW
 //
-include { INPUT_CHECK                               } from '../noveltree/subworkflows/local/input_check'
+//include { INPUT_CHECK                               } from '../noveltree/subworkflows/local/input_check'
 
 //
 // MODULE
 //
 // Modules being run twice (for MCL testing and full analysis)
 // needs to be included twice under different names.
-include { ORTHOFINDER_PREP as ORTHOFINDER_PREP_ALL  } from '../noveltree/modules/local/orthofinder_prep'
-include { ORTHOFINDER_PREP as ORTHOFINDER_PREP_TEST } from '../noveltree/modules/local/orthofinder_prep'
-include { ORTHOFINDER_MCL as ORTHOFINDER_MCL_TEST   } from '../noveltree/modules/local/orthofinder_mcl'
-include { ORTHOFINDER_MCL as ORTHOFINDER_MCL_ALL    } from '../noveltree/modules/local/orthofinder_mcl'
-include { ANNOTATE_UNIPROT                          } from '../noveltree/modules/local/annotate_uniprot'
-include { COGEQC                                    } from '../noveltree/modules/local/cogeqc'
-include { SELECT_INFLATION                          } from '../noveltree/modules/local/select_inflation'
+include { ORTHOFINDER_PREP as ORTHOFINDER_PREP_ALL  } from '../modules/local/orthofinder_prep'
+include { ORTHOFINDER_PREP as ORTHOFINDER_PREP_TEST } from '../modules/local/orthofinder_prep'
+include { ORTHOFINDER_MCL as ORTHOFINDER_MCL_TEST   } from '../modules/local/orthofinder_mcl'
+include { ORTHOFINDER_MCL as ORTHOFINDER_MCL_ALL    } from '../modules/local/orthofinder_mcl'
+include { ANNOTATE_UNIPROT                          } from '../modules/local/annotate_uniprot'
+include { COGEQC                                    } from '../modules/local/cogeqc'
+include { SELECT_INFLATION                          } from '../modules/local/select_inflation'
 include { FILTER_ORTHOGROUPS                        } from '../modules/local/filter_orthogroups'
-include { ASTEROID                                  } from '../noveltree/modules/local/asteroid'
-include { SPECIESRAX                                } from '../noveltree/modules/local/speciesrax'
-include { GENERAX_PER_FAMILY                        } from '../noveltree/modules/local/generax_per_family'
-include { GENERAX_PER_SPECIES                       } from '../noveltree/modules/local/generax_per_species'
-include { ORTHOFINDER_PHYLOHOGS                     } from '../noveltree/modules/local/orthofinder_phylohogs'
+include { ASTEROID                                  } from '../modules/local/asteroid'
+include { SPECIESRAX                                } from '../modules/local/speciesrax'
+include { GENERAX_PER_FAMILY                        } from '../modules/local/generax_per_family'
+include { GENERAX_PER_SPECIES                       } from '../modules/local/generax_per_species'
+include { ORTHOFINDER_PHYLOHOGS                     } from '../modules/local/orthofinder_phylohogs'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -73,12 +73,12 @@ include { ORTHOFINDER_PHYLOHOGS                     } from '../noveltree/modules
 //
 // Modules being run twice (for MCL testing and full analysis)
 // needs to be included twice under different names.
-include { BUSCO as BUSCO_SHALLOW                    } from '../noveltree/modules/nf-core-modified/busco'
-include { BUSCO as BUSCO_BROAD                      } from '../noveltree/modules/nf-core-modified/busco'
-include { DIAMOND_BLASTP as DIAMOND_BLASTP_ALL      } from '../noveltree/modules/nf-core-modified/diamond_blastp'
-include { DIAMOND_BLASTP as DIAMOND_BLASTP_TEST     } from '../noveltree/modules/nf-core-modified/diamond_blastp'
-include { IQTREE_PMSF as IQTREE_PMSF_ALL            } from '../noveltree/modules/nf-core-modified/iqtree_pmsf'
-include { IQTREE_PMSF as IQTREE_PMSF_REMAINING      } from '../noveltree/modules/nf-core-modified/iqtree_pmsf'
+include { BUSCO as BUSCO_SHALLOW                    } from '../modules/nf-core-modified/busco'
+include { BUSCO as BUSCO_BROAD                      } from '../modules/nf-core-modified/busco'
+include { DIAMOND_BLASTP as DIAMOND_BLASTP_ALL      } from '../modules/nf-core-modified/diamond_blastp'
+include { DIAMOND_BLASTP as DIAMOND_BLASTP_TEST     } from '../modules/nf-core-modified/diamond_blastp'
+include { IQTREE_PMSF as IQTREE_PMSF_ALL            } from '../modules/nf-core-modified/iqtree_pmsf'
+include { IQTREE_PMSF as IQTREE_PMSF_REMAINING      } from '../modules/nf-core-modified/iqtree_pmsf'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -277,11 +277,6 @@ workflow INIT_ORTHO_ORTHOFINDER {
     core_og_maplink_list = ch_core_og_maplinks.collect { it[1] }
     core_og_clean_msa_list = ch_core_og_clean_msas.collect { it[1] }
 
-}
-
-workflow NOT_READY {
-    
-
     //
     // MODULE: INFER_TREES
     // Infer gene-family trees from the trimmed MSAs using either
@@ -335,6 +330,14 @@ workflow NOT_READY {
     if (params.outgroups == "none") {
         ch_asteroid = Channel.value("none")
     }
+
+
+}
+
+workflow NOT_READY {
+    
+
+    
 
     //
     // MODULE: SPECIESRAX
