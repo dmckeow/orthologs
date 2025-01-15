@@ -2,6 +2,12 @@ process ORTHOFINDER_PREP {
     tag "Prepping data for OrthoFinder"
     label 'process_low'
 
+    publishDir(
+        path: "${params.outdir}/orthofinder",
+        mode: 'copy',
+        saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
+    )
+
     container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/orthofinder_2.5.4:1.0.0' :
         workflow.containerEngine == 'apptainer' ? 'arcadiascience/orthofinder_2.5.4:1.0.0' :
         '' }"

@@ -97,7 +97,7 @@ process WITCH {
         # and then the protein
         mkdir species_protein_maps
         grep ">" cleaned_alignments/${og}_witch_cleaned.fa | sed "s/>//g"  | sed "s/.*://g" > prot
-        sed "s/_[^_]*\$//" prot | sed "s/EP0*._//g" > spp
+        sed -E 's/___.+//g' prot > spp
         paste prot spp > species_protein_maps/${og}_map.link
         rm prot && rm spp
     fi

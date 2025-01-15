@@ -331,14 +331,6 @@ workflow INIT_ORTHO_ORTHOFINDER {
         ch_asteroid = Channel.value("none")
     }
 
-
-}
-
-workflow NOT_READY {
-    
-
-    
-
     //
     // MODULE: SPECIESRAX
     // Now infer the rooted species tree with SpeciesRax,
@@ -378,6 +370,16 @@ workflow NOT_READY {
         .generax_per_spp_gfts
         .collect { it[1] }
         .set { ch_recon_perspp_gene_trees }
+
+
+}
+
+workflow NOT_READY {
+    
+
+    
+
+    
 
     //
     // MODULE: ORTHOFINDER_PHYLOHOGS

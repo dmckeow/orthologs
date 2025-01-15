@@ -64,7 +64,7 @@ process SPECIES_TREE_PREP {
         # file, where each protein in the tree is a new line, listing species
         # and then the protein
         grep ">" \${og}* | sed "s/>//g"  | sed "s/.*://g" > prot
-        sed "s/_[^_]*\$//" prot | sed "s/EP0*._//g" > spp
+        sed -E 's/___.+//g' prot > spp
         paste prot spp > \${og}_${family_set}_map.link
         rm prot && rm spp
 

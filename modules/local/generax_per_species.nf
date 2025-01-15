@@ -38,6 +38,9 @@ process GENERAX_PER_SPECIES {
     # Do the same for Pyrrolysine
     sed -E -i '/>/!s/O/-/g' *.fa
 
+    # Do the same for stop codon
+    sed -E -i '/>/!s/\\*/-/g' *.fa
+
     # Populate the family file for this gene family for the
     # analysis with GeneRax
     # We will be using LG+G4+F for all gene families

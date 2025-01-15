@@ -58,7 +58,7 @@ process CIALIGN {
         # and then the protein
         mkdir species_protein_maps
         grep ">" \${prefix}_cialign.fa | sed "s/>//g"  | sed "s/.*://g" > prot
-        sed "s/_[^_]*\$//" prot | sed "s/EP0*._//g" > spp
+        sed -E 's/___.+//g' prot > spp
         paste prot spp > species_protein_maps/\${prefix}_map.link
         rm prot && rm spp
     fi

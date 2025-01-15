@@ -41,6 +41,9 @@ process SPECIESRAX {
     # Do the same for Pyrrolysine
     sed -E -i '/>/!s/O/-/g' *.fa
 
+    # Do the same for stop codon
+    sed -E -i '/>/!s/\\*/-/g' *.fa
+
     # Construct the family files for each gene family
     echo "[FAMILIES]" > speciesrax_orthogroup.families
     for msa in \$(ls *fa)

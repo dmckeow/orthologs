@@ -121,8 +121,8 @@ workflow PREFILTER {
 
 
     //defline_info_metamap.view { it -> "defline_info_metamap: $it" }
-    fasta_info_metamap.view { it -> "fasta_info_metamap: $it" }
-    cleanfastas_collected.view { it -> "cleanfastas_collected final: $it" }
+    //fasta_info_metamap.view { it -> "fasta_info_metamap: $it" }
+    //cleanfastas_collected.view { it -> "cleanfastas_collected final: $it" }
 
     emit:
     defline_info_metamap = defline_info_metamap // metainfo to later identify gene families

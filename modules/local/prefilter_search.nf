@@ -3,6 +3,12 @@ process PREFILTER_SEARCH {
     label 'process_low'
     container 'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/d0/d06f9c1b929618ccc24024d4d13768bd9196a05416f9dcad078853ecbf40efa9/data'
 
+    publishDir(
+        path: "${params.outdir}/prefilter/${input_source}",
+        mode: params.publish_dir_mode,
+        saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
+    )
+
     input:
     tuple val(meta), path(fasta)
     val(gene_family_info)
@@ -30,10 +36,13 @@ process PREFILTER_SEARCH {
             -H ${hmm_dir} \
             -i ${input_source} \
             -o prefilter
-        # make copy of fasta with cleaned deflines
 
+        # make copy of fasta with cleaned deflines and insert the species name into every defline followed by 3 underscores because it will save headaches later
         for f in prefilter/${input_source}/*.domains.fasta; do
-            awk '/^>/ {gsub(/[^a-zA-Z0-9_>]/, "_", \$0)} {print}' \$f \
+            awk '/^>/ {gsub(/[^a-zA-Z0-9_>]/, "_", \$0)} {print}' \$f | \
+            sed -E 's/_+/_/g' | \
+            sed 's/>/>${meta.id}___/g' | \
+            awk '/^>/ {gsub(/[^a-zA-Z0-9_>]/, "_", \$0)} {print}' \
             > prefilter/${input_source}/clean_fasta/\$(basename \$f)
         done
 
@@ -66,8 +75,12 @@ process PREFILTER_SEARCH {
         """ :
         """
         echo "RUNNING PREFILTER WITHOUT SEARCH"
-        # Make a copy of the fasta with clean deflines
-        awk '/^>/ {gsub(/[^a-zA-Z0-9_>]/, "_", \$0)} {print}' ${fasta} \
+        # Make a copy of the fasta with clean deflines and species name add to defline
+
+        awk '/^>/ {gsub(/[^a-zA-Z0-9_>]/, "_", \$0)} {print}' ${fasta} | \
+            sed -E 's/_+/_/g' | \
+            sed 's/>/>${meta.id}___/g' | \
+            awk '/^>/ {gsub(/[^a-zA-Z0-9_>]/, "_", \$0)} {print}' \
             > prefilter/${input_source}/clean_fasta/\$(basename ${fasta})
 
         # Extract deflines and create CSV with full paths
