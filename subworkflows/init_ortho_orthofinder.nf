@@ -132,7 +132,7 @@ workflow INIT_ORTHO_ORTHOFINDER {
             [ meta, fasta ]
         }
 
-    ch_all_data.view { it -> "ch_all_data: $it" }
+    //ch_all_data.view { it -> "ch_all_data: $it" }
 
     species_name_list = ch_all_data
     .map { meta, fasta -> meta.id }
@@ -142,8 +142,8 @@ workflow INIT_ORTHO_ORTHOFINDER {
         .map { meta, fasta -> fasta }
         .collect()
 
-    species_name_list.view { it -> "species_name_list: $it" }
-    complete_prots_list.view { it -> "complete_prots_list: $it" }
+    //species_name_list.view { it -> "species_name_list: $it" }
+    //complete_prots_list.view { it -> "complete_prots_list: $it" }
 
     //
     // MODULE: Prepare directory structure and fasta files according to
@@ -158,18 +158,28 @@ workflow INIT_ORTHO_ORTHOFINDER {
     // For the full dataset, to be clustered into orthogroups using
     // the best inflation parameter.
 
-    ORTHOFINDER_PREP_ALL.out.fastas.view { it -> "ORTHOFINDER_PREP_ALL.out.fastas: $it" }
-    ORTHOFINDER_PREP_ALL.out.diamonds.view { it -> "ORTHOFINDER_PREP_ALL.out.diamonds: $it" }
+    //ORTHOFINDER_PREP_ALL.out.fastas.view { it -> "ORTHOFINDER_PREP_ALL.out.fastas: $it" }
+    //ORTHOFINDER_PREP_ALL.out.diamonds.view { it -> "ORTHOFINDER_PREP_ALL.out.diamonds: $it" }
 
+    //DIAMOND_BLASTP_ALL(
+    //    ch_all_data,
+    //    ORTHOFINDER_PREP_ALL.out.fastas.flatten(),
+    //    ORTHOFINDER_PREP_ALL.out.diamonds.flatten(),
+    //    "txt",
+     //   "false"
+    //)
+
+    // Job array version:
     DIAMOND_BLASTP_ALL(
-        ch_all_data,
-        ORTHOFINDER_PREP_ALL.out.fastas.flatten(),
-        ORTHOFINDER_PREP_ALL.out.diamonds.flatten(),
+        ORTHOFINDER_PREP_ALL.out.fastas.flatten().map { file -> 
+            def meta = [:]
+            meta.id = file.baseName
+            [meta, file]
+        },
+        ORTHOFINDER_PREP_ALL.out.diamonds.collect(),
         "txt",
         "false"
     )
-    ch_versions = ch_versions.mix(DIAMOND_BLASTP_ALL.out.versions)
-
     // Using this best-performing inflation parameter, infer orthogroups for
     // all samples.
     ORTHOFINDER_MCL_ALL(
@@ -371,16 +381,6 @@ workflow INIT_ORTHO_ORTHOFINDER {
         .collect { it[1] }
         .set { ch_recon_perspp_gene_trees }
 
-
-}
-
-workflow NOT_READY {
-    
-
-    
-
-    
-
     //
     // MODULE: ORTHOFINDER_PHYLOHOGS
     // Now using the reconciled gene family trees and rooted species tree,
@@ -396,6 +396,6 @@ workflow NOT_READY {
         ch_recon_perspp_gene_trees,
         DIAMOND_BLASTP_ALL.out.txt.collect()
     )
-}
 
+}
 

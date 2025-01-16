@@ -1,0 +1,226 @@
+<!--
+  ~ Copyright 2013-2024, Seqera Labs
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+<html>
+<head>
+<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, maximum-scale=1">
+</head>
+<body>
+<pre class="mermaid" style="text-align: center;">
+flowchart TB
+    subgraph " "
+    v0["Channel.fromPath"]
+    v3["Channel.fromPath"]
+    v10["input_source"]
+    v11["output_dir"]
+    v12["prefilter_hmmsearch"]
+    v31["Channel.of"]
+    v39["output_directory"]
+    v44["output_extension"]
+    v45["mcl_test"]
+    v55["output_directory"]
+    v57["samplesheet"]
+    v58["min_num_seqs"]
+    v59["min_num_spp"]
+    v60["min_prop_spp_for_spptree"]
+    v61["min_num_groups"]
+    v62["max_copy_num_filt1"]
+    v63["max_copy_num_filt2"]
+    v89["model"]
+    v91["model"]
+    v96["outgroups"]
+    v105["ch_asteroid"]
+    end
+    subgraph PREFILTER
+    v13([PREFILTER_SEARCH])
+    v27([CONCATENATE_FASTAS])
+    v1(( ))
+    v15(( ))
+    v20(( ))
+    v24(( ))
+    v28(( ))
+    end
+    subgraph " "
+    v14[" "]
+    v19["defline_info_metamap"]
+    v25["cleanfastas_collected"]
+    v47[" "]
+    v48[" "]
+    v49[" "]
+    v50[" "]
+    v51[" "]
+    v52[" "]
+    v65[" "]
+    v66[" "]
+    v67[" "]
+    v68[" "]
+    v80[" "]
+    v81[" "]
+    v84[" "]
+    v85[" "]
+    v86[" "]
+    v93[" "]
+    v98[" "]
+    v99[" "]
+    v100[" "]
+    v101[" "]
+    v102["ch_asteroid"]
+    v103[" "]
+    v107[" "]
+    v109["ch_versions"]
+    v117[" "]
+    v119["ch_recon_perfam_gene_trees"]
+    v121[" "]
+    v125[" "]
+    end
+    subgraph INIT_ORTHO_ORTHOFINDER
+    v40([ORTHOFINDER_PREP_ALL])
+    v46([DIAMOND_BLASTP_ALL])
+    v56([ORTHOFINDER_MCL_ALL])
+    v64([FILTER_ORTHOGROUPS])
+    v79([ALIGN_SEQS])
+    v83([ALIGN_REMAINING_SEQS])
+    v90([INFER_TREES])
+    v92([INFER_REMAINING_TREES])
+    v97([ASTEROID])
+    v106([SPECIESRAX])
+    v116([GENERAX_PER_FAMILY])
+    v120([GENERAX_PER_SPECIES])
+    v124([ORTHOFINDER_PHYLOHOGS])
+    v41(( ))
+    v42(( ))
+    v43(( ))
+    v54(( ))
+    v69(( ))
+    v72(( ))
+    v87(( ))
+    v88(( ))
+    v95(( ))
+    v110(( ))
+    v118(( ))
+    v122(( ))
+    v123(( ))
+    end
+    v0 --> v1
+    v3 --> v1
+    v10 --> v13
+    v11 --> v13
+    v12 --> v13
+    v1 --> v13
+    v13 --> v14
+    v13 --> v15
+    v13 --> v20
+    v13 --> v24
+    v15 --> v19
+    v24 --> v25
+    v20 --> v27
+    v27 --> v28
+    v31 --> v56
+    v39 --> v40
+    v28 --> v40
+    v40 --> v56
+    v40 --> v124
+    v40 --> v41
+    v40 --> v42
+    v40 --> v43
+    v44 --> v46
+    v45 --> v46
+    v28 --> v46
+    v42 --> v46
+    v43 --> v46
+    v46 --> v52
+    v46 --> v51
+    v46 --> v50
+    v46 --> v49
+    v46 --> v48
+    v46 --> v47
+    v46 --> v41
+    v46 --> v54
+    v46 --> v123
+    v55 --> v56
+    v54 --> v56
+    v56 --> v64
+    v56 --> v124
+    v57 --> v64
+    v58 --> v64
+    v59 --> v64
+    v60 --> v64
+    v61 --> v64
+    v62 --> v64
+    v63 --> v64
+    v64 --> v68
+    v64 --> v67
+    v64 --> v66
+    v64 --> v65
+    v64 --> v69
+    v64 --> v72
+    v69 --> v79
+    v79 --> v81
+    v79 --> v80
+    v79 --> v90
+    v79 --> v41
+    v79 --> v87
+    v79 --> v88
+    v79 --> v110
+    v72 --> v83
+    v83 --> v86
+    v83 --> v92
+    v83 --> v85
+    v83 --> v84
+    v83 --> v110
+    v89 --> v90
+    v90 --> v41
+    v90 --> v95
+    v90 --> v110
+    v91 --> v92
+    v92 --> v93
+    v92 --> v110
+    v96 --> v97
+    v28 --> v97
+    v95 --> v97
+    v97 --> v103
+    v97 --> v102
+    v97 --> v101
+    v97 --> v100
+    v97 --> v99
+    v97 --> v98
+    v97 --> v41
+    v105 --> v106
+    v87 --> v106
+    v88 --> v106
+    v95 --> v106
+    v106 --> v107
+    v106 --> v124
+    v106 --> v41
+    v106 --> v110
+    v41 --> v109
+    v110 --> v116
+    v116 --> v117
+    v116 --> v118
+    v118 --> v119
+    v110 --> v120
+    v120 --> v121
+    v120 --> v122
+    v122 --> v124
+    v123 --> v124
+    v124 --> v125
+
+</pre>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, maxTextSize: Number.MAX_SAFE_INTEGER, maxEdges: Number.MAX_SAFE_INTEGER });
+</script>
+</body>
+</html>

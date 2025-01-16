@@ -1,7 +1,7 @@
 {
-    "samplesheet": "ioo-samplesheet1.csv",
-    "search_params": "ioo-samplesheet2.csv",
-    "outdir": "results/ioo",
+    "samplesheet": "ioo_mz155-samplesheet1.csv",
+    "search_params": "ioo_mz155-samplesheet2.csv",
+    "outdir": "results/ioo_mz155",
     "mcl_inflation": 2.5,
     "min_num_spp_per_og": 4,
     "min_num_grp_per_og": 2,
@@ -11,5 +11,6 @@
     "run": {
         "prefilter_hmmsearch": true,
         "init_ortho_orthofinder": true
-    }
+    },
+    "diamond_array_size": 100
 }
