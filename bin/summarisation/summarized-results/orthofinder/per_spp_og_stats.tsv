@@ -1,0 +1,6 @@
+species Number.of.genes Number.of.genes.in.orthogroups Number.of.unassigned.genes Percentage.of.genes.in.orthogroups Percentage.of.unassigned.genes Number.of.orthogroups.containing.species Percentage.of.orthogroups.containing.species Number.of.species.specific.orthogroups Number.of.genes.in.species.specific.orthogroups Percentage.of.genes.in.species.specific.orthogroups
+Aque 96 92 4 95.8 4.2 54 20.5 7 18 18.8
+Bolinf 302 267 35 88.4 11.6 110 41.7 16 78 25.8
+Bolmic 478 415 63 86.8 13.2 201 76.1 26 131 27.4
+Beraby 226 217 9 96 4 110 41.7 4 9 4
+Berova 301 281 20 93.4 6.6 175 66.3 11 24 8

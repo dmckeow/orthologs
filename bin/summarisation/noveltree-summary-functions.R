@@ -1,13 +1,20 @@
+# renv
+# Initialize and restore the renv environment
+if (!requireNamespace("renv", quietly = TRUE)) {
+  install.packages("renv")
+}
+renv::restore()
+
 # This contains a series of functions used to summarize outputs produced from
 # running the NovelTree workflow using 36 species of TSAR Eukaryotes
-require(tidyverse)  # Version 2.0.0
-require(ggtree) # Version 3.6.2
-require(ggnewscale) # Version 0.4.8
-require(parallel) # Version 4.2.1
-require(reshape2) # Version 1.4.4
-require(cowplot) # Version 1.1.1
-require(phytools) # Version 1.5.1
-require(ape) # Version 5.7.1
+library(tidyverse)  # Version 2.0.0
+library(ggtree) # Version 3.6.2
+library(ggnewscale) # Version 0.4.8
+library(parallel) # Version 4.2.1
+library(reshape2) # Version 1.4.4
+library(cowplot) # Version 1.1.1
+library(phytools) # Version 1.5.1
+library(ape) # Version 5.7.1
 library(ggforce) # Version 0.4.1
 library(plotly) # Version 4.10.1
 library(cogeqc) # Version 1.2.1
@@ -62,7 +69,7 @@ plot_spp_tree <-
     # names that were induced through the use of disco to decompose multi-copy 
     # gene family trees (replacement of underscores with hyphens in species names).
     tree$tip.label[order(tree$tip.label)] <- 
-      samplesheet$species[order(samplesheet$species)]
+      samplesheet$id[order(samplesheet$id)]
     
     # If an outgroup is provided, root using those taxa.
     if(!is.null(outgroup)){
@@ -97,7 +104,7 @@ plot_spp_tree <-
       support_breaks <- c(-1, -0.5, 0.0, 0.5, 1)
     }
     taxa_tibble <- tibble(
-      tip = samplesheet$species,
+      tip = samplesheet$id,
       grp = samplesheet$taxonomy)
     
     
@@ -408,7 +415,7 @@ get_per_spp_ofinder_stats <-
     # Now prepare to plot
     # Get metadata for plotting
     taxa_tibble <- tibble(
-      tip = samplesheet$species,
+      tip = samplesheet$id,
       grp = samplesheet$taxonomy)
     
     # Root if using the asteroid tree and a specified outgroup

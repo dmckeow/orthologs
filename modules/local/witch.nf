@@ -43,6 +43,7 @@ process WITCH {
     # can cause errors downstream and in parsing.
     sed -E -i '/>/!s/U//g' ${fasta} # selenocysteine
     sed -E -i '/>/!s/O//g' ${fasta} # pyrrolysine
+    sed -E -i '/>/!s/\\*//g' ${fasta} # stop codons - can cause aligned seqs to have different lengths
 
     python3 /WITCH/witch.py \\
         -i ${fasta} \\

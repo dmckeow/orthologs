@@ -73,10 +73,16 @@ include { ORTHOFINDER_PHYLOHOGS                     } from '../modules/local/ort
 //
 // Modules being run twice (for MCL testing and full analysis)
 // needs to be included twice under different names.
+ch_use_arrays = params.use_arrays
 include { BUSCO as BUSCO_SHALLOW                    } from '../modules/nf-core-modified/busco'
 include { BUSCO as BUSCO_BROAD                      } from '../modules/nf-core-modified/busco'
-include { DIAMOND_BLASTP as DIAMOND_BLASTP_ALL      } from '../modules/nf-core-modified/diamond_blastp'
-include { DIAMOND_BLASTP as DIAMOND_BLASTP_TEST     } from '../modules/nf-core-modified/diamond_blastp'
+if (ch_use_arrays) {
+    include { DIAMOND_BLASTP_ARRAY as DIAMOND_BLASTP_ALL      } from '../modules/nf-core-modified/diamond_blastp'
+    include { DIAMOND_BLASTP_ARRAY as DIAMOND_BLASTP_TEST     } from '../modules/nf-core-modified/diamond_blastp'
+} else {
+    include { DIAMOND_BLASTP as DIAMOND_BLASTP_ALL      } from '../modules/nf-core-modified/diamond_blastp'
+    include { DIAMOND_BLASTP as DIAMOND_BLASTP_TEST     } from '../modules/nf-core-modified/diamond_blastp'
+}
 include { IQTREE_PMSF as IQTREE_PMSF_ALL            } from '../modules/nf-core-modified/iqtree_pmsf'
 include { IQTREE_PMSF as IQTREE_PMSF_REMAINING      } from '../modules/nf-core-modified/iqtree_pmsf'
 
@@ -161,30 +167,54 @@ workflow INIT_ORTHO_ORTHOFINDER {
     //ORTHOFINDER_PREP_ALL.out.fastas.view { it -> "ORTHOFINDER_PREP_ALL.out.fastas: $it" }
     //ORTHOFINDER_PREP_ALL.out.diamonds.view { it -> "ORTHOFINDER_PREP_ALL.out.diamonds: $it" }
 
-    //DIAMOND_BLASTP_ALL(
-    //    ch_all_data,
-    //    ORTHOFINDER_PREP_ALL.out.fastas.flatten(),
-    //    ORTHOFINDER_PREP_ALL.out.diamonds.flatten(),
-    //    "txt",
-     //   "false"
-    //)
 
-    // Job array version:
-    DIAMOND_BLASTP_ALL(
+
+    if (ch_use_arrays) {
+
+        // View the contents of the fastas channel
         ORTHOFINDER_PREP_ALL.out.fastas.flatten().map { file -> 
             def meta = [:]
             meta.id = file.baseName
             [meta, file]
-        },
-        ORTHOFINDER_PREP_ALL.out.diamonds.collect(),
-        "txt",
-        "false"
-    )
+        }.view { meta, file -> 
+            "Fasta file: ${meta.id}, Path: ${file}"
+        }
+        // View the contents of the diamonds channel
+        ORTHOFINDER_PREP_ALL.out.diamonds.collect().view { 
+            "Diamond databases: ${it}"
+        }
+
+        // Job array version:
+        DIAMOND_BLASTP_ALL(
+            ORTHOFINDER_PREP_ALL.out.fastas.flatten().map { file -> 
+                def meta = [:]
+                meta.id = file.baseName
+                [meta, file]
+            },
+            ORTHOFINDER_PREP_ALL.out.diamonds.collect(),
+            "txt",
+            "false"
+        )
+
+        diamond_blast_files = DIAMOND_BLASTP_ALL.out.txt.flatten().collect()
+    } else {
+            // run without job array
+            DIAMOND_BLASTP_ALL(
+                ch_all_data,
+                    ORTHOFINDER_PREP_ALL.out.fastas.flatten(),
+                    ORTHOFINDER_PREP_ALL.out.diamonds.flatten(),
+                    "txt",
+                    "false"
+                )
+            diamond_blast_files = DIAMOND_BLASTP_ALL.out.txt.collect()
+    }
+    
+
     // Using this best-performing inflation parameter, infer orthogroups for
     // all samples.
     ORTHOFINDER_MCL_ALL(
         ch_best_inflation,
-        DIAMOND_BLASTP_ALL.out.txt.collect(),
+        diamond_blast_files,
         ORTHOFINDER_PREP_ALL.out.fastas,
         ORTHOFINDER_PREP_ALL.out.diamonds,
         ORTHOFINDER_PREP_ALL.out.sppIDs,

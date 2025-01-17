@@ -43,8 +43,8 @@ source('./arcadia-color-gradients.R')
 result_directory <-  '../../results/ioo/'
 
 # And where summarized results should be saved. 
-#dir.create('./summarized-results', showWarnings = F)
-dir.create('../../summarized-results', showWarnings = F)
+dir.create('./summarized-results', showWarnings = F)
+dir.create('./summarized-results/orthofinder', showWarnings = F)
 
 # Some colors used for plotting each of the four supergroups 
 # within TSAR Eukaryotes
@@ -73,7 +73,8 @@ summ_genefam_composition(results_dir = result_directory, show_plots = T)
 # And get orthogroup summary statistics per species
 per_spp_of_stats <-
   get_per_spp_ofinder_stats(tree_fpath = paste0(result_directory, 'speciesrax/species_trees/inferred_species_tree.newick'),
-                        samplesheet_fpath = paste0(result_directory, 'pipeline_info/complete_samplesheet.valid.csv'),
+                        #samplesheet_fpath = paste0(result_directory, 'pipeline_info/complete_samplesheet.valid.csv'),
+                        samplesheet_fpath = paste0(result_directory, '../../ioo-samplesheet1.csv'),
                         results_dir = result_directory, grp_name = 'Supergroup',
                         tip_grp_cols = tsar_cols, 
                         count_cols = arcadia_cividis,
@@ -109,13 +110,14 @@ Let's go ahead and visualize the species trees inferred from Asteroid and Specie
 ```{r Species Trees}
 asteroid_plt <-
   plot_spp_tree(tree_fpath = paste0(result_directory, 'asteroid/asteroid.bestTree.newick'),
-                samplesheet_fpath = paste0(result_directory, 'pipeline_info/complete_samplesheet.valid.csv'),
-                grp_name = 'Supergroup', outgroup = c("Telonema_sp_P-2", "Telonema_subtile"),
+                samplesheet_fpath = paste0(result_directory, '../../ioo-samplesheet1.csv'),
+                grp_name = 'Supergroup',
+                #outgroup = c("Telonema_sp_P-2", "Telonema_subtile"
                 tip_grp_cols = tsar_cols, cladogram = T)
 
 spprax_plt <-
   plot_spp_tree(tree_fpath = paste0(result_directory, 'speciesrax/species_trees/inferred_species_tree.newick'),
-                samplesheet_fpath = paste0(result_directory, 'pipeline_info/complete_samplesheet.valid.csv'),
+                samplesheet_fpath = paste0(result_directory, '../../ioo-samplesheet1.csv'),
                 grp_name = 'Supergroup',
                 nodelab_name = 'EPQIC',
                 tip_grp_cols = tsar_cols)
@@ -266,18 +268,23 @@ rates_per_og$verticality <-
   rowSums(apply(generax_res_per_fam$events_per_og[,c(2,3,4,7)], 2, as.numeric)) / 
   rowSums(apply(generax_res_per_fam$events_per_og[,c(2:5,7)], 2, as.numeric))
 
+samplesheet <- read.table(paste0(result_directory, '../../ioo-samplesheet1.csv'),
+                          sep = ",", header = T)
+
 # Get the total copy number and count of species for each gene family, either across all 
 # species, or per taxonomic supergroup:
 og_tax_count <- 
   data.frame("gene_family" = generax_res_per_fam$events_per_og$gene_family,
              "total_number_species" = generax_res_per_fam$events_per_og$number_species,
-             "alveolata_number_species" = NA, "rhizaria_number_species" = NA, 
-             "stramenopile_number_species" = NA, "telonemia_number_species" = NA)
+             "ctenophora_number_species" = NA,
+             "porifera_number_species" = NA
+             )
 og_tax_copynum <- 
   data.frame("gene_family" = generax_res_per_fam$events_per_og$gene_family,
              "total_copy_number" = generax_res_per_fam$events_per_og$number_gene_copies,
-             "alveolata_copy_number" = NA, "rhizaria_copy_number" = NA,
-             "stramenopile_copy_number" = NA, "telonemia_copy_number" = NA)
+             "ctenophora_copy_number" = NA,
+             "porifera_copy_number" = NA
+             )
 
 grps <- unique(samplesheet$taxonomy)
 for(i in 1:length(grps[order(grps)])){
@@ -300,13 +307,13 @@ event_rates_3d_plt <-
           marker = list(size = 4, opacity = 0.95, showscale = T, color = rates_per_og$transfer,
                         colorscale = list(c(0, 0.33, 0.66, 1.0), unlist(arcadia_viridis$color_dict)),
                         colorbar = list(title = "Verticality")),
-          text = ~paste0('Family: ', rates_per_og$gene_family, '<br>', 
+          text = ~paste0(
+                          'Family: ', rates_per_og$gene_family, '<br>', 
                           'Total # Spp.: ', og_tax_summary$total_number_species, '<br>',
                           'Total Copy #: ', og_tax_summary$total_copy_number, '<br>',
-                          '# Telonemia: ', og_tax_summary$telonemia_number_species, '<br>',
-                          '# Alveolates: ', og_tax_summary$alveolata_number_species, '<br>',
-                          '# Stramenopiles: ', og_tax_summary$stramenopile_number_species, '<br>',
-                          '# Rhizariates: ', og_tax_summary$rhizaria_number_species, '<br>'),
+                          '# Ctenophora: ', og_tax_summary$ctenophora_number_species, '<br>',
+                          '# Porifera: ', og_tax_summary$porifera_number_species, '<br>'
+          ),
           mode = 'markers', type = 'scatter3d') %>%
   layout(scene = list(xaxis = list(title = "Duplication Rate"),
                       yaxis = list(title = "Loss Rate"),
@@ -325,7 +332,7 @@ Now, lets summarize the rates/occurrence of pairwise horizontal transfer between
 spptree <- ladderize(read.tree(paste0(result_directory, 'speciesrax/species_trees/inferred_species_tree.newick')), right = F)
 
 # Read in samplesheet to plot taxonomic group along with the species tree
-samplesheet <- read.table(paste0(result_directory, 'pipeline_info/complete_samplesheet.valid.csv'),
+samplesheet <- read.table(paste0(result_directory, '../../ioo-samplesheet1.csv'),
                           sep = ",", header = T)
 taxa_tibble <- tibble(
   tip = samplesheet$species,
@@ -582,13 +589,13 @@ event_rates_3d_plt <-
           marker = list(size = 4, opacity = 0.95, showscale = T, color = rates_per_og$transfer,
                         colorscale = list(c(0, 0.33, 0.66, 1.0), unlist(arcadia_viridis$color_dict)),
                         colorbar = list(title = "Verticality")),
-          text = ~paste0('Family: ', rates_per_og$gene_family, '<br>', 
+          text = ~paste0(
+                          'Family: ', rates_per_og$gene_family, '<br>', 
                           'Total # Spp.: ', og_tax_summary$total_number_species, '<br>',
                           'Total Copy #: ', og_tax_summary$total_copy_number, '<br>',
-                          '# Telonemia: ', og_tax_summary$telonemia_number_species, '<br>',
-                          '# Alveolates: ', og_tax_summary$alveolata_number_species, '<br>',
-                          '# Stramenopiles: ', og_tax_summary$stramenopile_number_species, '<br>',
-                          '# Rhizariates: ', og_tax_summary$rhizaria_number_species, '<br>'),
+                          '# Ctenophora: ', og_tax_summary$ctenophora_number_species, '<br>',
+                          '# Porifera: ', og_tax_summary$porifera_number_species, '<br>'
+                          ),
           mode = 'markers', type = 'scatter3d') %>%
   layout(scene = list(xaxis = list(title = "Duplication Rate"),
                       yaxis = list(title = "Loss Rate"),
@@ -683,7 +690,7 @@ Now, lets summarize the rates/occurrence of pairwise horizontal transfer between
 spptree <- ladderize(read.tree(paste0(result_directory, 'speciesrax/species_trees/inferred_species_tree.newick')), right = F)
 
 # Read in samplesheet to plot taxonomic group along with the species tree
-samplesheet <- read.table(paste0(result_directory, 'pipeline_info/complete_samplesheet.valid.csv'),
+samplesheet <- read.table(paste0(result_directory, '../../ioo-samplesheet1.csv'),
                           sep = ",", header = T)
 taxa_tibble <- tibble(
   tip = samplesheet$species,

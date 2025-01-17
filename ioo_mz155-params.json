@@ -12,5 +12,6 @@
         "prefilter_hmmsearch": true,
         "init_ortho_orthofinder": true
     },
-    "diamond_array_size": 100
+    "use_arrays": true,
+    "diamond_array_size": 155
 }
