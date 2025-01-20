@@ -73,6 +73,8 @@ process GENERAX_PER_FAMILY {
     # And move the reconciliation transfer samples into a subdirectory, archive, and compress.
     mkdir $og/reconciliations/reconciliation_transfer_samples/
     mv $og/reconciliations/*_*_transfers.txt $og/reconciliations/reconciliation_transfer_samples/
+    sleep 5
+    sync
     tar -czvf $og/reconciliations/reconciliation_transfer_samples.tar.gz $og/reconciliations/reconciliation_transfer_samples/
     rm -r $og/reconciliations/reconciliation_transfer_samples/
     """

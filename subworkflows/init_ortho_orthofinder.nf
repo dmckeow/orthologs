@@ -424,7 +424,7 @@ workflow INIT_ORTHO_ORTHOFINDER {
         ORTHOFINDER_PREP_ALL.out.sppIDs,
         ORTHOFINDER_PREP_ALL.out.seqIDs,
         ch_recon_perspp_gene_trees,
-        DIAMOND_BLASTP_ALL.out.txt.collect()
+        diamond_blast_files
     )
 
 }
