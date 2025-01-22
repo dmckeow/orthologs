@@ -33,3 +33,10 @@ SUBMISSION_TIME	SLURM_JOB_ID	SLURM_LOG	SLURM_ERR	COMMAND	NOTE
 2025-01-20 11:04:02	4558726	logs/slurm-nf.4558726.out	logs/slurm-nf.4558726.err	sbatch submit_nf.sh ioo-main.nf -profile slurm -c ioo-nextflow.config -params-file ioo_mz46-params.json -resume	
 2025-01-20 17:48:43	4791894	logs/slurm-nf.4791894.out	logs/slurm-nf.4791894.err	sbatch submit_nf.sh ioo-main.nf -profile slurm -c ioo-nextflow.config -params-file ioo_mz46-params.json -resume	
 2025-01-22 10:29:17	5396750	logs/slurm-nf.5396750.out	logs/slurm-nf.5396750.err	sbatch submit_nf.sh ioo-main.nf -profile slurm -c ioo-nextflow.config -params-file ioo_mz46-params.json -resume -with-dag workflow.mmd	
+2025-01-22 17:11:44	5405936	logs/slurm-nf.5405936.out	logs/slurm-nf.5405936.err	sbatch submit_nf.sh ioo-main.nf -profile slurm -c ioo-nextflow.config -params-file ioo_mz46-params.json -resume	
+2025-01-22 17:38:29	5406230	logs/slurm-nf.5406230.out	logs/slurm-nf.5406230.err	sbatch submit_nf.sh ioo-main.nf -profile slurm -c ioo-nextflow.config -params-file ioo_mz46-params.json -resume	
+2025-01-22 17:40:47	5406263	logs/slurm-nf.5406263.out	logs/slurm-nf.5406263.err	sbatch submit_nf.sh ioo-main.nf -profile slurm -c ioo-nextflow.config -params-file ioo_mz46-params.json -resume	
+2025-01-22 17:41:48	5406266	logs/slurm-nf.5406266.out	logs/slurm-nf.5406266.err	sbatch submit_nf.sh ioo-main.nf -profile slurm -c ioo-nextflow.config -params-file ioo_mz46-params.json -resume	
+2025-01-22 17:52:43	5406333	logs/slurm-nf.5406333.out	logs/slurm-nf.5406333.err	sbatch submit_nf.sh ioo-main.nf -profile slurm -c ioo-nextflow.config -params-file ioo_mz46-params.json -resume	
+2025-01-22 17:54:51	5406336	logs/slurm-nf.5406336.out	logs/slurm-nf.5406336.err	sbatch submit_nf.sh ioo-main.nf -profile slurm -c ioo-nextflow.config -params-file ioo_mz46-params.json -resume	
+2025-01-22 17:59:26	5406359	logs/slurm-nf.5406359.out	logs/slurm-nf.5406359.err	sbatch submit_nf.sh ioo-main.nf -profile slurm -c ioo-nextflow.config -params-file ioo_mz46-params.json	

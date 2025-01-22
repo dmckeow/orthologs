@@ -34,4 +34,13 @@ workflow {
             PREFILTER.out.cleanfastas_collected
         )
     }
+
+    publish:
+    PREFILTER.out.defline_info_csv >> 'defline_info_csv'
+}
+
+output {
+    'defline_info_csv' {
+        path 'prefilter/initial'
+    }
 }

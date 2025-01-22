@@ -113,7 +113,7 @@ def create_og_channel(Object inputs) {
 
 
 //
-// WORKFLOW: Run main Arcadia-Science/noveltree analysis pipeline
+// WORKFLOW: Main workflow - currently runs for OrthoFinder
 //
 workflow INIT_ORTHO_ORTHOFINDER {
     take:
