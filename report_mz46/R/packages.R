@@ -1,0 +1,13 @@
+# R version 4.3.3 (2024-02-29) -- "Angel Food Cake"
+library(tidyverse)
+library(ggtree)
+library(ggnewscale)
+library(parallel)
+library(reshape2)
+library(cowplot)
+library(phytools)
+library(ape)
+library(ggforce)
+library(plotly)
+library(cogeqc)
+library(DiagrammeR)

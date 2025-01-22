@@ -4,6 +4,7 @@ author: "Dean Mckeown"
 date: "`r Sys.Date()`"
 output: 
   html_document:
+    output_file: "../results/summary.html"
     toc: true
     toc_float: TRUE
     toc_depth: 4
@@ -14,8 +15,7 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-#knitr::opts_knit$set(root.dir = getwd())
+knitr::opts_chunk$set(echo = TRUE, fig.path = "../results/")
 knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 ```
 
@@ -32,8 +32,8 @@ ___
 ## Preparation
 We will begin by creating a variable that specifies where all workflow outputs are stored. Additionally we will source the script containing helper functions, and setting to variable some colors that we'll use throughout. 
 ```{r Preparation, results = FALSE}
-suppressPackageStartupMessages(
-  suppressWarnings(source('R/summary-functions.R')))
+suppressPackageStartupMessages(suppressWarnings(source('R/packages.R')))
+suppressPackageStartupMessages(suppressWarnings(source('R/summary-functions.R')))
 source('R/arcadia-color-gradients.R')
 
 # INPUTS
@@ -67,15 +67,47 @@ SUPERGROUP_COLS <- c(
 
 ___
 
-## BUSCO
-Skipped this
+## Pipeline workflow
+Current overview of the pipeline
 
+```{r}
+library(DiagrammeR)
+
+mermaid("
+graph TB
+  PREFILTER-->PREFILTER_SEARCH
+  PREFILTER-->ORTHOFINDER_PREP_ALL
+  PREFILTER_SEARCH-->CONCATENATE_FASTAS
+  CONCATENATE_FASTAS-->ORTHOFINDER_PREP_ALL
+  ORTHOFINDER_PREP_ALL-->DIAMOND_BLASTP_ALL
+  DIAMOND_BLASTP_ALL-->ORTHOFINDER_MCL_ALL
+  ORTHOFINDER_MCL_ALL-->FILTER_ORTHOGROUPS
+  FILTER_ORTHOGROUPS-->ALIGN_SEQS
+  FILTER_ORTHOGROUPS-->ALIGN_REMAINING_SEQS
+  ALIGN_SEQS-->INFER_TREES
+  ALIGN_REMAINING_SEQS-->INFER_REMAINING_TREES
+  INFER_TREES-->ASTEROID
+  ASTEROID-->SPECIESRAX
+  SPECIESRAX-->GENERAX_PER_FAMILY
+  INFER_REMAINING_TREES-->GENERAX_PER_SPECIES
+  SPECIESRAX-->GENERAX_PER_SPECIES
+  INFER_REMAINING_TREES-->GENERAX_PER_FAMILY
+  GENERAX_PER_FAMILY-->ORTHOFINDER_PHYLOHOGS
+  GENERAX_PER_SPECIES-->ORTHOFINDER_PHYLOHOGS
+  ORTHOFINDER_PHYLOHOGS
+
+")
+
+```
+
+
+    
 ___
 
 ## Gene Family Summaries {.tabset}
 Now, let's go ahead and summarize the results from OrthoFinder. To start, this will just include some high-level summaries - number of species per gene family, gene copy number per gene family, etc.
 
-```{r Gene Family Summary Stats, fig.asp = .95, class.source = 'fold-show'}
+```{r Gene Family Summary Stats, fig.asp = .95}
 # Summarize gene family content, both with respect to number of species 
 # included in each gene family, and the per-species mean copy number
 summ_genefam_composition(results_dir = RESULT_DIR, show_plots = T, out_dir = paste0(OUTPUT_DIR, 'orthofinder/'))

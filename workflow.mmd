@@ -1,0 +1,203 @@
+flowchart TB
+    subgraph " "
+    v0["Channel.fromPath"]
+    v3["Channel.fromPath"]
+    v10["input_source"]
+    v11["output_dir"]
+    v12["prefilter_hmmsearch"]
+    v31["Channel.of"]
+    v39["output_directory"]
+    v52["output_extension"]
+    v53["mcl_test"]
+    v64["output_directory"]
+    v66["samplesheet"]
+    v67["min_num_seqs"]
+    v68["min_num_spp"]
+    v69["min_prop_spp_for_spptree"]
+    v70["min_num_groups"]
+    v71["max_copy_num_filt1"]
+    v72["max_copy_num_filt2"]
+    v98["model"]
+    v100["model"]
+    v105["outgroups"]
+    v114["ch_asteroid"]
+    end
+    subgraph PREFILTER
+    v13([PREFILTER_SEARCH])
+    v27([CONCATENATE_FASTAS])
+    v1(( ))
+    v15(( ))
+    v20(( ))
+    v24(( ))
+    v28(( ))
+    end
+    subgraph " "
+    v14[" "]
+    v19["defline_info_metamap"]
+    v25["cleanfastas_collected"]
+    v45[" "]
+    v48[" "]
+    v55[" "]
+    v56[" "]
+    v57[" "]
+    v58[" "]
+    v59[" "]
+    v60[" "]
+    v61[" "]
+    v74[" "]
+    v75[" "]
+    v76[" "]
+    v77[" "]
+    v89[" "]
+    v90[" "]
+    v93[" "]
+    v94[" "]
+    v95[" "]
+    v102[" "]
+    v107[" "]
+    v108[" "]
+    v109[" "]
+    v110[" "]
+    v111["ch_asteroid"]
+    v112[" "]
+    v116[" "]
+    v118["ch_versions"]
+    v126[" "]
+    v128["ch_recon_perfam_gene_trees"]
+    v130[" "]
+    v133[" "]
+    end
+    subgraph INIT_ORTHO_ORTHOFINDER
+    v40([ORTHOFINDER_PREP_ALL])
+    v54([DIAMOND_BLASTP_ALL])
+    v65([ORTHOFINDER_MCL_ALL])
+    v73([FILTER_ORTHOGROUPS])
+    v88([ALIGN_SEQS])
+    v92([ALIGN_REMAINING_SEQS])
+    v99([INFER_TREES])
+    v101([INFER_REMAINING_TREES])
+    v106([ASTEROID])
+    v115([SPECIESRAX])
+    v125([GENERAX_PER_FAMILY])
+    v129([GENERAX_PER_SPECIES])
+    v132([ORTHOFINDER_PHYLOHOGS])
+    v41(( ))
+    v42(( ))
+    v46(( ))
+    v49(( ))
+    v51(( ))
+    v62(( ))
+    v78(( ))
+    v81(( ))
+    v96(( ))
+    v97(( ))
+    v104(( ))
+    v119(( ))
+    v127(( ))
+    v131(( ))
+    end
+    v0 --> v1
+    v3 --> v1
+    v10 --> v13
+    v11 --> v13
+    v12 --> v13
+    v1 --> v13
+    v13 --> v14
+    v13 --> v15
+    v13 --> v20
+    v13 --> v24
+    v15 --> v19
+    v24 --> v25
+    v20 --> v27
+    v27 --> v28
+    v31 --> v65
+    v39 --> v40
+    v28 --> v40
+    v40 --> v65
+    v40 --> v132
+    v40 --> v41
+    v40 --> v42
+    v40 --> v46
+    v40 --> v49
+    v40 --> v51
+    v42 --> v45
+    v46 --> v48
+    v52 --> v54
+    v53 --> v54
+    v49 --> v54
+    v51 --> v54
+    v54 --> v61
+    v54 --> v60
+    v54 --> v59
+    v54 --> v58
+    v54 --> v57
+    v54 --> v56
+    v54 --> v55
+    v54 --> v62
+    v64 --> v65
+    v62 --> v65
+    v65 --> v73
+    v65 --> v132
+    v66 --> v73
+    v67 --> v73
+    v68 --> v73
+    v69 --> v73
+    v70 --> v73
+    v71 --> v73
+    v72 --> v73
+    v73 --> v77
+    v73 --> v76
+    v73 --> v75
+    v73 --> v74
+    v73 --> v78
+    v73 --> v81
+    v78 --> v88
+    v88 --> v90
+    v88 --> v89
+    v88 --> v99
+    v88 --> v41
+    v88 --> v96
+    v88 --> v97
+    v88 --> v119
+    v81 --> v92
+    v92 --> v95
+    v92 --> v101
+    v92 --> v94
+    v92 --> v93
+    v92 --> v119
+    v98 --> v99
+    v99 --> v41
+    v99 --> v104
+    v99 --> v119
+    v100 --> v101
+    v101 --> v102
+    v101 --> v119
+    v105 --> v106
+    v28 --> v106
+    v104 --> v106
+    v106 --> v112
+    v106 --> v111
+    v106 --> v110
+    v106 --> v109
+    v106 --> v108
+    v106 --> v107
+    v106 --> v41
+    v114 --> v115
+    v96 --> v115
+    v97 --> v115
+    v104 --> v115
+    v115 --> v116
+    v115 --> v132
+    v115 --> v41
+    v115 --> v119
+    v41 --> v118
+    v119 --> v125
+    v125 --> v126
+    v125 --> v127
+    v127 --> v128
+    v119 --> v129
+    v129 --> v130
+    v129 --> v131
+    v62 --> v132
+    v131 --> v132
+    v132 --> v133

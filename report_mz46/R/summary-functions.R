@@ -1,34 +1,5 @@
-# This contains a series of functions used to summarize outputs produced from
-# running the NovelTree workflow using 36 species of TSAR Eukaryotes
-library(tidyverse)  # Version 2.0.0
-library(ggtree) # Version 3.6.2
-library(ggnewscale) # Version 0.4.8
-library(parallel) # Version 4.2.1
-library(reshape2) # Version 1.4.4
-library(cowplot) # Version 1.1.1
-library(phytools) # Version 1.5.1
-library(ape) # Version 5.7.1
-library(ggforce) # Version 0.4.1
-library(plotly) # Version 4.10.1
-library(cogeqc) # Version 1.2.1
 
 ####################################
-# Function to read busco results
-read_busco_summary <- 
-  function (busco_summary = NULL){
-    classes <- 
-      c("Complete_SC", "Complete_duplicate", "Fragmented", "Missing")
-    busco_res <- read_table(busco_summary, progress = F, show_col_types = F)[,-c(3,8)]
-    busco_res[1,1] <- gsub(".fasta", "", busco_res[1,1])
-    colnames(busco_res) <- 
-      c("Species", "Lineage", "Complete_SC", "Complete_duplicate", 
-        "Fragmented", "Missing")
-    busco_res <- reshape2::melt(busco_res, id = c("Species", "Lineage"))
-    colnames(busco_res) <- c("File", "Lineage", "Class", "Frequency")
-    busco_res <- busco_res[, c("Class", "Frequency", "Lineage", "File")]
-    busco_res$Class <- factor(busco_res$Class, levels = classes)
-    return(busco_res)
-  }
 
 # Function to calculate the bootstrapped support values from 
 # a distribution of trees, given a user-specified fixed tree. 
@@ -441,7 +412,7 @@ get_per_spp_ofinder_stats <-
         scale_fill_manual(values = SUPERGROUP_COLS) + 
         guides(fill = guide_legend(title = grp_name, nrow = 2,
                                    title.position="top", title.hjust = 0)) + 
-        theme(legend.position = "top", legend.justification = "left") + 
+        theme(legend.position = "right", legend.justification = "left") + 
         new_scale_fill()) 
     
     # Combine with heatmap of per-species orthogroup count stats
@@ -452,7 +423,7 @@ get_per_spp_ofinder_stats <-
                colnames_offset_y = 0.25) + 
         scale_fill_gradientn(colors = count_cols$color_dict,
                              values = count_cols$values, 
-                             trans = "log10") + 
+                             trans = "log1p") + 
         theme(legend.position = "none"))
     
     # Get legends...
@@ -469,7 +440,7 @@ get_per_spp_ofinder_stats <-
         labs(fill = "Count") + 
         guides(fill = guide_colorbar(title.position="top", 
                                      title.hjust = 0)) +
-        theme(legend.position = "top", legend.justification = "left",
+        theme(legend.position = "right", legend.justification = "left",
               legend.key.width = unit(1,"cm"), 
               plot.margin = margin(10, 10, 15,10),
               legend.text = element_text(size = 8),
@@ -483,10 +454,10 @@ get_per_spp_ofinder_stats <-
                colnames_offset_y = 0.25) + 
         scale_fill_gradientn(colors = prop_cols$color_dict,
                              values = prop_cols$values, 
-                             trans = "log10", 
+                             trans = "log1p", 
                              labels = c(0, 5, 10, 25, 50, 75, 100),
                              breaks = c(0, 5, 10, 25, 50, 75, 100)) +
-        theme(legend.position = "top", legend.justification = "left",
+        theme(legend.position = "right", legend.justification = "left",
               legend.key.width = unit(1,"cm"), 
               plot.margin = margin(10, 10, 15,10),
               legend.text = element_text(size = 8),
@@ -502,7 +473,7 @@ get_per_spp_ofinder_stats <-
                colnames_offset_y = 0.25) + 
         scale_fill_gradientn(colors = count_cols$color_dict,
                              values = count_cols$values, 
-                             trans = "log10") + 
+                             trans = "log1p") + 
         theme(legend.position = "none") +
         new_scale_fill())
     
@@ -513,7 +484,7 @@ get_per_spp_ofinder_stats <-
                colnames_offset_y = 0.25) + 
         scale_fill_gradientn(colors = prop_cols$color_dict,
                              values = prop_cols$values, 
-                             trans = "log10", 
+                             trans = "log1p", 
                              labels = c(0, 5, 10, 25, 50, 75, 100),
                              breaks = c(0, 5, 10, 25, 50, 75, 100)) + 
         theme(legend.position = "none",
@@ -521,11 +492,11 @@ get_per_spp_ofinder_stats <-
         coord_cartesian(clip = "off"))
     
     legs <- 
-      plot_grid(leg1, leg2, leg3, ncol = 3)
+      plot_grid(leg1, NULL, leg2, leg3, ncol = 2)
     
     og_spp_stats_p_final <- 
-      plot_grid(legs, og_spp_stats_p, ncol = 1, 
-                rel_heights = c(0.15, 1))
+      plot_grid(legs, og_spp_stats_p, ncol = 1, nrow = 2,
+                rel_heights = c(0.5, 1))
     
     # Plot out if requested
     if(show_plots == T){print(og_spp_stats_p_final)}
@@ -541,10 +512,10 @@ get_per_spp_ofinder_stats <-
       # That was involved.... Save this to a pdf
       ggsave(og_spp_stats_p_final, 
              filename = paste0(out_dir, "species_tree_gene_og_stat_heatmaps.pdf"),
-             height = 7, width = 8)
+             height = 8, width = 8)
       ggsave(og_spp_stats_p_final, 
              filename = paste0(out_dir, "species_tree_gene_og_stat_heatmaps.png"),
-             height = 7, width = 8, dpi = 600)
+             height = 8, width = 8, dpi = 600)
     }
     
     # Return both the dataframe and plot of per-species stats (in the inevitable 
@@ -836,7 +807,7 @@ summarize_generax_per_family <-
       list.files(full.names = T, path = generax_dir, pattern = "speciesEventCounts.txt", recursive = T)
     per_og_rates_fpaths <- 
       list.files(full.names = T, path = generax_dir, pattern = "stats.txt", recursive = T)
-    per_og_rates_fpaths <- per_og_rates_fpaths[which(grepl("results/", per_og_rates_fpaths))]
+    per_og_rates_fpaths <- per_og_rates_fpaths[grepl("/generax/per_family_rates/OG[0-9]+/results/OG[0-9]+/stats\\.txt$", per_og_rates_fpaths)]
     spp_tranf_rates_fpaths <- 
       list.files(full.names = T, path = generax_dir, pattern = "transfers", recursive = T)
     per_spp_coverage <- 
