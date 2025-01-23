@@ -1,0 +1,875 @@
+---
+title: "Orthology Results: 46 metazoans"
+author: "Dean Mckeown"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    output_file: "../results/summary.html"
+    toc: true
+    toc_float: TRUE
+    toc_depth: 4
+    number_sections: true
+    theme: united
+    highlight: tango
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.path = "../results/")
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+```
+
+```{css, echo=FALSE}
+.scroll-200 {
+  max-height: 200px;
+  overflow-y: auto;
+  background-color: inherit;
+}
+```
+
+___
+
+## Preparation
+We will begin by creating a variable that specifies where all workflow outputs are stored. Additionally we will source the script containing helper functions, and setting to variable some colors that we'll use throughout. 
+```{r Preparation, results = FALSE}
+suppressPackageStartupMessages(suppressWarnings(source('R/packages.R')))
+suppressPackageStartupMessages(suppressWarnings(source('R/summary-functions.R')))
+source('R/arcadia-color-gradients.R')
+
+# INPUTS
+# Specify where the workflow outputs are stored (relative paths unless indicated)
+
+RESULT_DIR  <-  "../results/"
+SAMPLESHEET <- "/users/asebe/dmckeown/projects/crg-bcaortho/project-ioo_mz46/samplesheet1.csv"
+
+# OUTPUTS
+# And where summarized results should be saved.
+OUTPUT_DIR <- './results/'
+dir.create(OUTPUT_DIR, showWarnings = F)
+dir.create(paste0(OUTPUT_DIR, 'orthofinder'), showWarnings = F)
+
+# OTHER PARAMETERS
+# Set colours to plot supergroups (taxonomy field in samplesheet1)
+
+SUPERGROUP_COLS <- c(
+  Bilateria_Deuterostomia = "#8DD3C7",
+  Bilateria_Protostomia = "#FFFFB3",
+  Choanoflagellata = "#BEBADA",
+  Cnidaria = "#FB8072",
+  Ctenophora = "#80B1D3",
+  Filasterea = "#FDB462",
+  Placozoa = "#B3DE69",
+  Porifera = "#FCCDE5",
+  Teretosporea = "#D9D9D9"
+)
+
+```
+
+___
+
+## Pipeline workflow
+Current overview of the pipeline
+
+```{r}
+library(DiagrammeR)
+
+mermaid("
+graph TB
+  PREFILTER-->PREFILTER_SEARCH
+  PREFILTER-->ORTHOFINDER_PREP_ALL
+  PREFILTER_SEARCH-->CONCATENATE_FASTAS
+  CONCATENATE_FASTAS-->ORTHOFINDER_PREP_ALL
+  ORTHOFINDER_PREP_ALL-->DIAMOND_BLASTP_ALL
+  DIAMOND_BLASTP_ALL-->ORTHOFINDER_MCL_ALL
+  ORTHOFINDER_MCL_ALL-->FILTER_ORTHOGROUPS
+  FILTER_ORTHOGROUPS-->ALIGN_SEQS
+  FILTER_ORTHOGROUPS-->ALIGN_REMAINING_SEQS
+  ALIGN_SEQS-->INFER_TREES
+  ALIGN_REMAINING_SEQS-->INFER_REMAINING_TREES
+  INFER_TREES-->ASTEROID
+  ASTEROID-->SPECIESRAX
+  SPECIESRAX-->GENERAX_PER_FAMILY
+  INFER_REMAINING_TREES-->GENERAX_PER_SPECIES
+  SPECIESRAX-->GENERAX_PER_SPECIES
+  INFER_REMAINING_TREES-->GENERAX_PER_FAMILY
+  GENERAX_PER_FAMILY-->ORTHOFINDER_PHYLOHOGS
+  GENERAX_PER_SPECIES-->ORTHOFINDER_PHYLOHOGS
+  ORTHOFINDER_PHYLOHOGS
+
+")
+
+```
+
+
+    
+___
+
+## Gene Family Summaries {.tabset}
+Now, let's go ahead and summarize the results from OrthoFinder. To start, this will just include some high-level summaries - number of species per gene family, gene copy number per gene family, etc.
+
+```{r Gene Family Summary Stats, fig.asp = .95}
+# Summarize gene family content, both with respect to number of species 
+# included in each gene family, and the per-species mean copy number
+summ_genefam_composition(results_dir = RESULT_DIR, show_plots = T, out_dir = paste0(OUTPUT_DIR, 'orthofinder/'))
+
+# And get orthogroup summary statistics per species
+per_spp_of_stats <-
+  get_per_spp_ofinder_stats(tree_fpath = paste0(RESULT_DIR, 'speciesrax/species_trees/inferred_species_tree.newick'),
+                        samplesheet_fpath = SAMPLESHEET,
+                        results_dir = RESULT_DIR, grp_name = 'Supergroup',
+                        out_dir = paste0(OUTPUT_DIR, 'orthofinder/'),
+                        tip_grp_cols = SUPERGROUP_COLS, 
+                        count_cols = arcadia_cividis,
+                        prop_cols = arcadia_viridis)
+
+# Lastly, get the per-species orthogroup counts/copy numbers
+og_counts <- get_per_spp_og_counts(results_dir = RESULT_DIR)
+```
+
+___
+
+## Species Trees {.tabset}
+Let's go ahead and visualize the species trees inferred from Asteroid and SpeciesRax: 
+
+ 1. The Asteroid species tree is unrooted:  
+    + Bipartition support values are obtained through 100 bootstrap replicates.  
+    
+ 2. The SpeciesRax tree is rooted:  
+    + Inferred using the set of gene family trees (GFTs) that:  
+      - include at least four species, and 
+      - a maximum copy number of 5.  
+    + The tree inference procedure includes:
+      - Inferring a reasonable starting tree with MiniNJ, and
+      - subsequently optimizing the species tree topology and root position under an explicit model of gene family Duplication, Transfer, and Loss (DTL) through reconciliation and topology optimization of the GFTs used to infer it.
+    + Bipartition support values are EPQIC values, a paralogy-aware quartet-based method that ranges between -1 and 1.
+    + Interpretation is as follows (as described on the [SpeciesRax wiki](https://github.com/BenoitMorel/GeneRax/wiki/SpeciesRax)):
+      - 1.0: perfect support
+      - \> 0.5: excellent support
+      - \> 0.2: very good support
+      - \> 0.0: positive support
+      - < 0.0: negative support (one alternative quartet is more represented)
+
+```{r Species Trees}
+asteroid_plt <-
+  plot_spp_tree(tree_fpath = paste0(RESULT_DIR, 'asteroid/asteroid.bestTree.newick'),
+                samplesheet_fpath = SAMPLESHEET,
+                grp_name = 'Supergroup',
+                #outgroup = c("Telonema_sp_P-2", "Telonema_subtile"
+                tip_grp_cols = SUPERGROUP_COLS, cladogram = T)
+
+spprax_plt <-
+  plot_spp_tree(tree_fpath = paste0(RESULT_DIR, 'speciesrax/species_trees/inferred_species_tree.newick'),
+                samplesheet_fpath = SAMPLESHEET,
+                grp_name = 'Supergroup',
+                nodelab_name = 'EPQIC',
+                tip_grp_cols = SUPERGROUP_COLS)
+
+ggsave(asteroid_plt, height = 7, width = 6, filename = paste0(OUTPUT_DIR, 'asteroid_spptree_w_boots.pdf'))
+ggsave(spprax_plt, height = 7, width = 6, filename = paste0(OUTPUT_DIR, 'speciesrax_spptree_w_epqic.pdf'))
+ggsave(asteroid_plt, height = 7, width = 6, filename = paste0(OUTPUT_DIR, 'asteroid_spptree_w_boots.png'), dpi = 600)
+ggsave(spprax_plt, height = 7, width = 6, filename = paste0(OUTPUT_DIR, 'speciesrax_spptree_w_epqic.png'), dpi = 600)
+
+# And go ahead and view these:
+asteroid_plt
+spprax_plt
+```
+
+___
+
+## GeneRax
+Now lets go ahead and summarize, plot, and reformat in more user-friendly ways the large amount of results that are generated from GeneRax.
+
+### Preparation
+We will begin by first reading in all outputs and reformatting, saving the resultant tables for any additional downstream analyses. The functions used to reformat GeneRax outputs are fairly involved, producing numerous summarized outputs, facilitating downstream analysis and visualization. Briefly, these functions are:
+
+  1. `summarize_generax_per_family`, which summarizes the results of the per-family model of GeneRax. The object created from this function is a named list that contains:  
+      + `rates_per_og`: For each gene family, inferred rates of duplication, transfer, and loss, assuming constant rates across the gene family.  
+      + `events_per_og`: Counts of duplications, transfers, and losses per gene family, summed across all species.  
+      + `lgt_count_mat`: A matrix of the sum of transfer events between pairs of species, across all gene families.  
+      + `speciations_per_spp`: For each gene family, the counts of gene speciation events per species.  
+      + `duplications_per_spp`: For each gene family, the counts of duplication events per species.  
+      + `losses_per_spp`: For each gene family, the counts of gene loss events per species.  
+      + `transfer_donor_counts`: For each gene family, the counts of transfer donor events per species.  
+      + `transfer_recip_counts`: For each gene family, the counts of transfer recipient events per species.  
+      
+  2. `generax_res_per_species`, which summarizes the results of the per-species model of GeneRax. The object created from this function is a named list that contains the same elements as in the previous results, but additionally includes:  
+      + `spp_rates_per_og`: The rates of each event type for each branch in the species tree.  
+
+Because there are typically thousands to tends of thousands of gene families, there are a large number of calculations that need to be conducted. Consequently, to expedite this process, these functions are parallelized - I suggest taking advantage of this!
+```{r GeneRax Output Reformatting: Per-family, collapse = TRUE, class.source = 'fold-show', class.output="scroll-200"}
+generax_res_per_fam <-
+  summarize_generax_per_family(results_dir = RESULT_DIR, 
+                               per_spp_og_counts = og_counts,
+                               nparallel = detectCores(), 
+                               out_dir = paste0(OUTPUT_DIR, 'generax-per-family/')
+  )
+```
+```{r GeneRax Output Reformatting: Per-species, collapse = TRUE, class.source = 'fold-show', class.output="scroll-200"}
+generax_res_per_species <-
+  summarize_generax_per_species(results_dir = RESULT_DIR, 
+                                per_spp_og_counts = og_counts,
+                                nparallel = detectCores(), 
+                                out_dir = paste0(OUTPUT_DIR, 'generax-per-species/')
+  )
+```
+___
+
+### Results: Per-Family {.tabset}
+In the following section, we summarize results obtained from the per-family model of gene family evolution implemented in GeneRax. Here, it is assumed that rates of duplication/transfer/loss are constant across all species/branches in the species tree.  
+
+#### D/T/L rates: Per-family
+Now let's visualize rates of duplication, transfer, and loss per gene family.
+```{r Rates per Gene Family, fig.asp = .5, fig.width = 9}
+# reformat the per-og event rates to a melted data frame for plotting
+rates_per_og <-
+  melt(generax_res_per_fam$rates_per_og, id.vars = "gene_family",
+       variable.name = "Event", value.name = "Rate")
+rates_per_og$Rate <-
+  as.numeric(rates_per_og$Rate)
+
+# Plot the rates per orthogroup
+rates_per_og_plt <-
+  ggplot(data = rates_per_og,
+         aes(fill = Event, x = Event, y = Rate)) +
+  geom_sina(aes(color = Event), alpha = 0.5, pch = 20, size = 1) +
+  geom_violin(alpha = 0.25) +
+  stat_boxplot(geom = 'errorbar', width = 0.05, linewidth = 1) +
+  geom_boxplot(width = 0.05, linewidth = 0.5, outlier.color = NA, notch = T) +
+  scale_fill_brewer(type = 'qual', palette = 2) +
+  scale_color_brewer(type = 'qual', palette = 2) +
+  theme_classic(base_size = 14) +
+  theme(legend.position = 'none') +
+  xlab('Event Rate')
+
+# Save out to a pdf
+ggsave(rates_per_og_plt, filename = paste0(OUTPUT_DIR, 'generax-per-family/per_og_generax_event_rates.pdf'),
+       height = 8, width = 8)
+
+# And let's take a look:
+rates_per_og_plt
+```
+
+Let's also visualize in three separate panes showing how the three rates co-vary.
+```{r Covariation of Rates per Gene Family, fig.asp = 0.7, fig.width = 9}
+rates_per_og <- generax_res_per_fam$rates_per_og
+rates_per_og[,-1] <- apply(rates_per_og[,-1], 2, as.numeric)
+ylimit <- c(0, round(max(rates_per_og[,-1]) + 0.005, 2))
+dup_loss_rate_plt <-
+  ggplot(data = rates_per_og,
+         aes(fill = transfer, x = duplication, y = loss)) +
+  geom_point(pch = 21, size = 3, alpha = 0.5) +
+  scale_fill_distiller(type = 'seq', palette = 3, name = 'Transfer Rate') +
+  theme_classic(base_size = 14) +
+  theme(legend.position = 'top', legend.justification = 'left',
+        legend.key.width = unit(1,"cm")) +
+  guides(fill = guide_colorbar(title.position="top", title.hjust = 0)) +
+  xlab('Duplication Rate') +
+  ylab('Loss Rate') +
+  ylim(ylimit)
+
+dup_transf_rate_plt <-
+  ggplot(data = rates_per_og,
+         aes(fill = loss, x = duplication, y = transfer)) +
+  geom_point(pch = 21, size = 3, alpha = 0.5) +
+  scale_fill_distiller(type = 'seq', palette = 7, name = 'Loss Rate') +
+  theme_classic(base_size = 14) +
+  theme(legend.position = 'top', legend.justification = 'left',
+        legend.key.width = unit(1,"cm")) +
+  guides(fill = guide_colorbar(title.position="top", title.hjust = 0)) +
+  xlab('Duplication Rate') +
+  ylab('Transfer Rate') +
+  ylim(ylimit)
+
+transf_loss_rate_plt <-
+  ggplot(data = rates_per_og,
+         aes(fill = duplication, x = transfer, y = loss)) +
+  geom_point(pch = 21, size = 3, alpha = 0.5) +
+  scale_fill_distiller(type = 'seq', palette = 2, name = 'Duplication Rate') +
+  theme_classic(base_size = 14) +
+  theme(legend.position = 'top', legend.justification = 'left',
+        legend.key.width = unit(1,"cm")) +
+  guides(fill = guide_colorbar(title.position="top", title.hjust = 0)) +
+  xlab('Transfer Rate') +
+  ylab('Loss Rate') +
+  ylim(ylimit)
+
+# Combine them, visualize, and save
+og_event_rate_2d_plts <-
+  plot_grid(dup_loss_rate_plt, dup_transf_rate_plt,
+            transf_loss_rate_plt, ncol = 3)
+
+ggsave(og_event_rate_2d_plts, filename = paste0(OUTPUT_DIR, 'generax-per-family/dup_transf_loss_2d_plots.pdf'),
+       height = 6, width = 14)
+
+og_event_rate_2d_plts
+```
+
+And finally, let's plot these rates interactively in three dimensions!
+This code does not like missing data due to partial proteomes being used 
+```{r Rates per Gene Family in 3D, fig.asp = 0.9, fig.width = 7.5, warning = FALSE}
+rates_per_og <- generax_res_per_fam$rates_per_og
+rates_per_og[,-1] <- apply(rates_per_og[,-1], 2, as.numeric)
+rates_per_og$verticality <- 
+  rowSums(apply(generax_res_per_fam$events_per_og[,c(2,3,4,7)], 2, as.numeric)) / 
+  rowSums(apply(generax_res_per_fam$events_per_og[,c(2:5,7)], 2, as.numeric))
+
+samplesheet <- read.table(SAMPLESHEET, sep = ",", header = T)
+
+# Get the total copy number and count of species for each gene family, either across all 
+# species, or per taxonomic supergroup:
+og_tax_count <- data.frame("gene_family" = generax_res_per_fam$events_per_og$gene_family,
+             "total_number_species" = generax_res_per_fam$events_per_og$number_species,
+             "bilateria_deuterostomia_number_species" = NA,
+             "bilateria_protostomia_number_species" = NA,
+             "choanoflagellata_number_species" = NA,
+             "cnidaria_number_species" = NA,
+             "ctenophora_number_species" = NA,
+             "filasterea_number_species" = NA,
+             "placozoa_number_species" = NA,
+             "porifera_number_species" = NA,
+             "teretosporea_number_species" = NA
+             )
+
+og_tax_copynum <- data.frame("gene_family" = generax_res_per_fam$events_per_og$gene_family,
+             "total_copy_number" = generax_res_per_fam$events_per_og$number_gene_copies,
+             "bilateria_deuterostomia_copy_number" = NA,
+             "bilateria_protostomia_copy_number" = NA,
+             "choanoflagellata_copy_number" = NA,
+             "cnidaria_copy_number" = NA,
+             "ctenophora_copy_number" = NA,
+             "filasterea_copy_number" = NA,
+             "placozoa_copy_number" = NA,
+             "porifera_copy_number" = NA,
+             "teretosporea_copy_number" = NA
+             )
+
+
+# Initialize an empty list to store count_dat for each group (for testing)
+count_dat_list <- list()
+num_spp_list <- list()
+
+grps <- unique(samplesheet$taxonomy)
+for(i in 1:length(grps[order(grps)])){
+  # Identify the group we're dealing with
+  grp <- grps[i]
+  # Pull out count data for the corresponding species
+  spps <- samplesheet$id[which(samplesheet$taxonomy == grp)]
+  #count_dat <- og_counts[which(og_counts$Orthogroup %in% rates_per_og$gene_family),which(colnames(og_counts) %in% spps)]
+
+  # Modified count_dat generation
+  count_dat <- og_counts[which(og_counts$Orthogroup %in% rates_per_og$gene_family), c("Orthogroup", spps), drop = FALSE]
+  count_dat <- count_dat[, -1, drop = FALSE]  # Remove the Orthogroup column
+  count_dat_list[[grp]] <- count_dat
+  # Identify the count of species within with taxonomic group that occur in each gene family
+  num_spp <- apply(count_dat, 1, function(x) length(which(x > 0)))
+  num_spp_list[[grp]] <- num_spp
+  copynum <- rowSums(count_dat)
+  #og_tax_count[,2+i] <- num_spp
+  #og_tax_copynum[,2+i] <- copynum
+}
+
+og_tax_summary <- merge(og_tax_count, og_tax_copynum)
+
+event_rates_3d_plt <-
+  plot_ly(x = rates_per_og$duplication, y = rates_per_og$loss,
+          z = rates_per_og$transfer, hoverinfo = 'text',
+          marker = list(size = 4, opacity = 0.95, showscale = T, color = rates_per_og$transfer,
+                        colorscale = list(c(0, 0.33, 0.66, 1.0), unlist(arcadia_viridis$color_dict)),
+                        colorbar = list(title = "Verticality")),
+          text = ~paste0(
+                          'Family: ', rates_per_og$gene_family, '<br>', 
+                          'Total # Spp.: ', og_tax_summary$total_number_species, '<br>',
+                          'Total Copy #: ', og_tax_summary$total_copy_number, '<br>',
+                          '# Bilateria Deuterostomia: ', og_tax_summary$bilateria_deuterostomia_number_species, '<br>',
+                          '# Bilateria Protostomia: ', og_tax_summary$bilateria_protostomia_number_species, '<br>',
+                          '# Choanoflagellata: ', og_tax_summary$choanoflagellata_number_species, '<br>',
+                          '# Cnidaria: ', og_tax_summary$cnidaria_number_species, '<br>',
+                          '# Ctenophora: ', og_tax_summary$ctenophora_number_species, '<br>',
+                          '# Filasterea: ', og_tax_summary$filasterea_number_species, '<br>',
+                          '# Placozoa: ', og_tax_summary$placozoa_number_species, '<br>',
+                          '# Porifera: ', og_tax_summary$porifera_number_species, '<br>',
+                          '# Teretosporea: ', og_tax_summary$teretosporea_number_species, '<br>'
+          ),
+          mode = 'markers', type = 'scatter3d') %>%
+  layout(scene = list(xaxis = list(title = "Duplication Rate"),
+                      yaxis = list(title = "Loss Rate"),
+                      zaxis = list(title = "Transfer Rate")))
+
+event_rates_3d_plt
+
+# And save this out to an HTML
+htmlwidgets::saveWidget(as_widget(event_rates_3d_plt), paste0(OUTPUT_DIR, 'generax-per-family/generax_per_og_event_rates_3d.html'))
+```
+
+#### Tranfer counts among species
+Now, lets summarize the rates/occurrence of pairwise horizontal transfer between species (terminal branches of the phylogeny). Eventually will build/include additional visualization of transfer rates between internal branches; that is a significantly more complicated problem to solve, however.
+```{r Horizontal transfer count matrix, fig.asp = .8, fig.width = 12, results = 'hide', warning = FALSE}
+# Since we haven't explicitly done so yet, read in the SpeciesRax tree to variable
+spptree <- ladderize(read.tree(paste0(RESULT_DIR, 'speciesrax/species_trees/inferred_species_tree.newick')), right = F)
+
+# Read in samplesheet to plot taxonomic group along with the species tree
+samplesheet <- read.table(SAMPLESHEET, sep = ",", header = T)
+head(samplesheet)
+
+taxa_tibble <- tibble(
+  tip = samplesheet$id,
+  grp = samplesheet$taxonomy)
+head(taxa_tibble)
+    
+# Pull these data out and reformat for plotting
+transf_count_mat <-
+  melt(generax_res_per_fam$lgt_count_mat, varnames = c('Donor', 'Recipient'))
+
+# Below, we figure out if branches are terminal or not (i.e. correspond to
+# extant species), and then pull transfer events corresponding to these
+# branches out, converting into a pairwise matrix, with donors as columns,
+# recipients as rows.
+is_tip <- spptree$edge[,2] <= length(spptree$tip.label)
+ordered_tips <- rev(spptree$edge[is_tip, 2])
+
+transf_count_mat$Donor <-
+  factor(transf_count_mat$Donor, levels = spptree$tip.label[ordered_tips])
+transf_count_mat$Recipient <-
+  factor(transf_count_mat$Recipient, levels = rev(spptree$tip.label[ordered_tips]))
+transf_count_mat$value <- as.numeric(transf_count_mat$value)
+
+# Now, plot the species tree alongside a heatmap of pairwise transfers.
+tree_p <- 
+  ggtree(spptree, ladderize = T, size = 1.25) %<+% taxa_tibble +
+  new_scale_fill() +
+  geom_tippoint(aes(fill = grp), pch = 22, 
+                      size = 3, color = "black") + 
+  scale_fill_manual(values = SUPERGROUP_COLS) + 
+  guides(fill = guide_legend(title = 'Supergroup', nrow = 2)) + 
+  theme(legend.position = 'top')
+
+tax_leg <- get_legend(tree_p)
+
+# Now plot with the taxonomic group tip labels:
+transf_heatmap <-
+  ggplot(data = transf_count_mat,
+         aes(x = Donor, y = Recipient, fill = value)) +
+  geom_tile() +
+  theme_classic(base_size = 14) +
+  scale_y_discrete(position = 'right') +
+  guides(fill = guide_colorbar(title = 'Transfer Count',
+                      title.position = 'top',
+                      title.hjust = 0)) +
+  theme(legend.position = 'top',
+        axis.text.x = element_text(size = 10, angle = 45, hjust=1),
+        axis.text.y = element_text(size = 10),
+        legend.key.width = unit(2,'cm')) +
+  scale_fill_gradientn(colors = arcadia_magma$color_dict,
+                       values = arcadia_magma$values, 
+                       trans = "log10", 
+                       na.value = arcadia_magma$values[1])
+
+transfer_leg <- get_legend(transf_heatmap)
+transf_heatmap <- transf_heatmap + theme(legend.position = 'none')
+transf_heatmap <- transf_heatmap %>% aplot::insert_left(tree_p + theme(legend.position = 'none'), width = 0.5)
+
+legends <- plot_grid(tax_leg, transfer_leg, nrow = 1)
+transf_heatmap_plt <-
+  plot_grid(legends, ggplotify::as.grob(transf_heatmap),
+            nrow = 2, rel_heights = c(0.1, 0.9))
+
+# Save the figure to a pdf
+ggsave(transf_heatmap_plt, filename = paste0(OUTPUT_DIR, 'generax-per-family/species_pairwise_hgt_event_count.pdf'),
+       height = 9.5, width = 12)
+ggsave(transf_heatmap_plt, filename = paste0(OUTPUT_DIR, 'generax-per-family/species_pairwise_hgt_event_count.png'),
+       height = 9.5, width = 12, dpi = 600)
+
+transf_heatmap_plt
+```
+
+```{r Horizontal transfer count matrix (GeneRax Per-family) - interactive, fig.asp = 0.9, fig.width = 7, warning = FALSE}
+# And let's visualize this heatmap interactively with plotly!
+gg <- 
+  ggplot(data = transf_count_mat,
+         aes(x = Donor, y = Recipient, fill = value+1)) +
+  geom_tile(aes(text = value)) +
+  theme_classic(base_size = 14) +
+  scale_fill_gradientn(colors = arcadia_magma$color_dict,
+                       values = arcadia_magma$values, 
+                       na.value = arcadia_magma$values[1],
+                       trans = 'log10') +
+  scale_y_discrete(position = 'right') +
+  theme(legend.position = 'top',
+        axis.text.x = element_text(size = 6, angle = 45, hjust=1),
+        axis.text.y = element_text(size = 6),
+        legend.key.width = unit(2,'cm'))
+
+transf_heatmap_plotly <- ggplotly(gg)
+transf_heatmap_plotly$x$data[[2]]$marker$colorbar$title <- "Transfer\nCount"
+transf_heatmap_plotly$x$data[[1]]$text <- sub("value \\+ 1: .*/>", "Number Transfers:", transf_heatmap_plotly$x$data[[1]]$text)
+transf_heatmap_plotly$x$data[[2]]$marker$colorbar$thickness <- 35
+transf_heatmap_plotly
+
+# And save this out to an HTML
+htmlwidgets::saveWidget(as_widget(transf_heatmap_plotly), paste0(OUTPUT_DIR, 'generax-per-family/species_pairwise_hgt_event_count.html'))
+```
+
+### Results: Per-Species {.tabset}
+In the following section, we summarize results obtained from the per-species model of gene family evolution implemented in GeneRax. Here, each species/branch in the species tree may have its own rate of duplication/transfer/loss. 
+
+#### D/T/L rates: Per-family
+Now let's visualize rates of duplication, transfer, and loss per species, measured for each gene family. 
+```{r Rates per Species for each Gene Family, fig.asp = .5, fig.width = 9}
+# reformat the per-og event rates to a melted data frame for plotting
+rates_per_spp <- generax_res_per_species$spp_rates_per_og
+rates_per_spp[,-c(1,2)] <- apply(rates_per_spp[,-c(1,2)], 2, as.numeric)
+rates_per_og <- rates_per_spp %>% 
+  summarise(.by = gene_family, duplication = mean(duplication), 
+            loss = mean(loss), transfer = mean(transfer)) 
+rates_per_og <-
+  melt(rates_per_og, id.vars = "gene_family",
+       variable.name = "Event", value.name = "Rate")
+
+# Plot the rates per orthogroup
+rates_per_og_plt <-
+  ggplot(data = rates_per_og,
+         aes(fill = Event, x = Event, y = Rate)) +
+  geom_sina(aes(color = Event), alpha = 0.5, pch = 20, size = 1) +
+  geom_violin(alpha = 0.25) +
+  stat_boxplot(geom = 'errorbar', width = 0.05, linewidth = 1) +
+  geom_boxplot(width = 0.05, linewidth = 0.5, outlier.color = NA, notch = T) +
+  scale_fill_brewer(type = 'qual', palette = 2) +
+  scale_color_brewer(type = 'qual', palette = 2) +
+  theme_classic(base_size = 14) +
+  theme(legend.position = 'none') +
+  xlab('Event Rate')
+
+# Save out to a pdf
+ggsave(rates_per_og_plt, filename = paste0(OUTPUT_DIR, 'generax-per-species/per_og_generax_event_rates.pdf'),
+       height = 8, width = 8)
+
+# And let's take a look:
+rates_per_og_plt
+```
+
+Let's also visualize in three separate panes showing how the three rates co-vary.
+```{r Covariation of Rates per Species for each Gene Family, fig.asp = 0.7, fig.width = 9}
+rates_per_spp <- generax_res_per_species$spp_rates_per_og
+rates_per_spp[,-c(1,2)] <- apply(rates_per_spp[,-c(1,2)], 2, as.numeric)
+rates_per_og <- rates_per_spp %>% 
+  summarise(.by = gene_family, duplication = mean(duplication), 
+            loss = mean(loss), transfer = mean(transfer)) 
+
+ylimit <- c(0, round(max(rates_per_og[,-1]) + 0.005, 2))
+dup_loss_rate_plt <-
+  ggplot(data = rates_per_og,
+         aes(fill = transfer, x = duplication, y = loss)) +
+  geom_point(pch = 21, size = 3, alpha = 0.5) +
+  scale_fill_distiller(type = 'seq', palette = 3, name = 'Transfer Rate') +
+  theme_classic(base_size = 14) +
+  theme(legend.position = 'top', legend.justification = 'left',
+        legend.key.width = unit(1,"cm")) +
+  guides(fill = guide_colorbar(title.position="top", title.hjust = 0)) +
+  xlab('Duplication Rate') +
+  ylab('Loss Rate') +
+  ylim(ylimit)
+
+dup_transf_rate_plt <-
+  ggplot(data = rates_per_og,
+         aes(fill = loss, x = duplication, y = transfer)) +
+  geom_point(pch = 21, size = 3, alpha = 0.5) +
+  scale_fill_distiller(type = 'seq', palette = 7, name = 'Loss Rate') +
+  theme_classic(base_size = 14) +
+  theme(legend.position = 'top', legend.justification = 'left',
+        legend.key.width = unit(1,"cm")) +
+  guides(fill = guide_colorbar(title.position="top", title.hjust = 0)) +
+  xlab('Duplication Rate') +
+  ylab('Transfer Rate') +
+  ylim(ylimit)
+
+transf_loss_rate_plt <-
+  ggplot(data = rates_per_og,
+         aes(fill = duplication, x = transfer, y = loss)) +
+  geom_point(pch = 21, size = 3, alpha = 0.5) +
+  scale_fill_distiller(type = 'seq', palette = 2, name = 'Duplication Rate') +
+  theme_classic(base_size = 14) +
+  theme(legend.position = 'top', legend.justification = 'left',
+        legend.key.width = unit(1,"cm")) +
+  guides(fill = guide_colorbar(title.position="top", title.hjust = 0)) +
+  xlab('Transfer Rate') +
+  ylab('Loss Rate') +
+  ylim(ylimit)
+
+# Combine them, visualize, and save
+og_event_rate_2d_plts <-
+  plot_grid(dup_loss_rate_plt, dup_transf_rate_plt,
+            transf_loss_rate_plt, ncol = 3)
+
+ggsave(og_event_rate_2d_plts, filename = paste0(OUTPUT_DIR, 'generax-per-species/dup_transf_loss_2d_plots.pdf'),
+       height = 6, width = 14)
+
+counts <- generax_res_per_fam$events_per_og
+rates_per_og$verticality <- rowSums(apply(counts[,c(2,3,4,7)], 2, as.numeric)) / rowSums(apply(counts[,c(2:5,7)], 2, as.numeric))
+rates_per_og$td_ratio <- rates_per_og$transfer / rates_per_og$duplication
+rates_per_og$dl_ratio <- rates_per_og$duplication / rates_per_og$loss
+rates_per_og$tl_ratio <- rates_per_og$transfer / rates_per_og$loss
+
+td_d_plt <- 
+  ggplot(data = rates_per_og,
+         aes(fill = verticality, x = duplication, y = td_ratio)) +
+  geom_point(pch = 21, size = 3) +
+  scale_fill_distiller(type = 'seq', palette = 2, name = 'Verticality') +
+  theme_classic(base_size = 14) +
+  theme(legend.position = 'top', legend.justification = 'left',
+        legend.key.width = unit(1,"cm")) +
+  guides(fill = guide_colorbar(title.position="top", title.hjust = 0)) +
+  xlab('Duplication Rate') +scale_y_log10() + scale_x_log10() +
+  ylab('Transfer Rate / Duplication Rate')
+
+dl_l_plt <- 
+  ggplot(data = rates_per_og,
+         aes(fill = verticality, x = loss, y = dl_ratio)) +
+  geom_point(pch = 21, size = 3) +
+  scale_fill_distiller(type = 'seq', palette = 2, name = 'Verticality') +
+  theme_classic(base_size = 14) +
+  theme(legend.position = 'top', legend.justification = 'left',
+        legend.key.width = unit(1,"cm")) +
+  guides(fill = guide_colorbar(title.position="top", title.hjust = 0)) +
+  xlab('Loss Rate') + scale_y_log10() + scale_x_log10() +
+  ylab('Duplication Rate / Loss Rate')
+
+tl_l_plt <- 
+  ggplot(data = rates_per_og,
+         aes(fill = verticality, x = loss, y = tl_ratio)) +
+  geom_point(pch = 21, size = 3) +
+  scale_fill_distiller(type = 'seq', palette = 2, name = 'Verticality') +
+  theme_classic(base_size = 14) +
+  theme(legend.position = 'top', legend.justification = 'left',
+        legend.key.width = unit(1,"cm")) +
+  guides(fill = guide_colorbar(title.position="top", title.hjust = 0)) +
+  xlab('Loss Rate') + scale_y_log10() + scale_x_log10() +
+  ylab('Transfer Rate / Loss Rate')
+
+og_event_rate_2d_plts
+```
+
+And let's plot these rates interactively in three dimensions!
+```{r Rates per Species for each Gene Family in 3D, fig.asp = 0.9, fig.width = 7.5}
+rates_per_spp <- generax_res_per_species$spp_rates_per_og
+rates_per_spp[,-c(1,2)] <- apply(rates_per_spp[,-c(1,2)], 2, as.numeric)
+rates_per_og <- rates_per_spp %>% 
+  summarise(.by = gene_family, duplication = mean(duplication), 
+            loss = mean(loss), transfer = mean(transfer)) 
+
+counts <- generax_res_per_fam$events_per_og
+rates_per_og$verticality <- 
+  rowSums(apply(generax_res_per_species$events_per_og[,c(2,3,4,7)], 2, as.numeric)) / 
+  rowSums(apply(generax_res_per_species$events_per_og[,c(2:5,7)], 2, as.numeric))
+
+event_rates_3d_plt <-
+  plot_ly(x=rates_per_og$duplication, y= rates_per_og$loss,
+          z=rates_per_og$transfer, hoverinfo = 'text',
+          marker = list(size = 4, opacity = 0.95, showscale = T, color = rates_per_og$transfer,
+                        colorscale = list(c(0, 0.33, 0.66, 1.0), unlist(arcadia_viridis$color_dict)),
+                        colorbar = list(title = "Verticality")),
+          text = ~paste0(
+                          'Family: ', rates_per_og$gene_family, '<br>', 
+                          'Total # Spp.: ', og_tax_summary$total_number_species, '<br>',
+                          'Total Copy #: ', og_tax_summary$total_copy_number, '<br>',
+                          '# Ctenophora: ', og_tax_summary$ctenophora_number_species, '<br>',
+                          '# Porifera: ', og_tax_summary$porifera_number_species, '<br>'
+                          ),
+          mode = 'markers', type = 'scatter3d') %>%
+  layout(scene = list(xaxis = list(title = "Duplication Rate"),
+                      yaxis = list(title = "Loss Rate"),
+                      zaxis = list(title = "Transfer Rate")))
+
+event_rates_3d_plt
+
+# And save this out to an HTML
+htmlwidgets::saveWidget(as_widget(event_rates_3d_plt), paste0(OUTPUT_DIR, 'generax-per-species/generax_per_og_event_rates_3d.html'))
+```
+
+#### D/T/L rates: Per-species
+Using the results of GeneRax where rates of D/T/L are inferred for each species and branch in the phylogeny, let's summarize across all gene families. Specifically, we'll visualize mean rates of duplication, transfer, loss and the ratio of duplication/transfer along each branch. 
+```{r Rates per Species summarized across Gene Families, fig.width = 11.5, fig.height = 8}
+rates_per_spp <- generax_res_per_species$spp_rates_per_og
+rates_per_spp[,-c(1,2)] <- apply(rates_per_spp[,-c(1,2)], 2, as.numeric)
+rates_per_spp$dt_ratio <- apply(rates_per_spp[,c(3,5)], 1, function(x) x[1] / x[2])
+
+rates_per_spp <- rates_per_spp %>% 
+  summarise(.by = species, duplication = mean(duplication), 
+            loss = mean(loss), transfer = mean(transfer), 
+            dt_ratio = median(dt_ratio))
+rownames(rates_per_spp) <- rates_per_spp$species
+colnames(rates_per_spp)[1] <- 'node'
+
+rates_per_spp_melted <- 
+  melt(rates_per_spp, id.vars = "node", 
+       variable.name = "event", 
+       value.name = "value")
+
+# Use the SpeciesRax species tree to correspond these values to each branch 
+spprax_tree <- read.tree(paste0(RESULT_DIR, 'speciesrax/species_trees/inferred_species_tree.newick'))
+spprax_tree$node.label <- NULL
+
+# Update the node names in the tree to correspond with their numeric ID
+rates_per_spp <- update_node_names(rates_per_spp, spprax_tree)
+
+rates_per_spp_plts <- 
+  plot_rates_per_spp(tree = spprax_tree, species_rates = rates_per_spp, 
+                     rate_cols = list(arcadia_dahlias, arcadia_pansies, arcadia_poppies))
+
+# Combine the plots into a four-pane figure:
+spp_dtl_rates_plt <- 
+  plot_grid(rates_per_spp_plts$duplication, rates_per_spp_plts$transfer,
+          rates_per_spp_plts$loss, rates_per_spp_plts$dt_ratio,
+          ncol = 2)
+
+# and one that has each along a single row
+rates_per_spp_plts_dup <- rates_per_spp_plts
+rates_per_spp_plts_dup$duplication$layers[[4]] <- NULL
+rates_per_spp_plts_dup$transfer$layers[[4]] <- NULL
+rates_per_spp_plts_dup$loss$layers[[4]] <- NULL
+
+spp_dtl_rates_plt_horiz <- 
+  plot_grid(rates_per_spp_plts_dup$duplication + theme(plot.margin = margin(5,10,10,5)), 
+            rates_per_spp_plts_dup$transfer + theme(plot.margin = margin(5,10,10,5)),
+            rates_per_spp_plts_dup$loss + theme(plot.margin = margin(5,10,10,5)), 
+            rates_per_spp_plts_dup$dt_ratio, nrow = 1, rel_widths = c(0.65, 0.65, 0.65, 1))
+spp_dtl_rates_plt_horiz
+
+# Save this to file, along with the four individual panels
+ggsave(spp_dtl_rates_plt, file = paste0(OUTPUT_DIR, 'generax-per-species/dtl_rates_per_species.png'), 
+       dpi = 600, height = 12, width = 12)
+ggsave(spp_dtl_rates_plt, file = paste0(OUTPUT_DIR, 'generax-per-species/dtl_rates_per_species.pdf'), 
+       height = 12, width = 10)
+ggsave(spp_dtl_rates_plt_horiz, file = paste0(OUTPUT_DIR, 'generax-per-species/dtl_rates_per_species_landscape.png'), 
+       dpi = 600, height = 6, width = 14)
+ggsave(spp_dtl_rates_plt_horiz, file = paste0(OUTPUT_DIR, 'generax-per-species/dtl_rates_per_species_landscape.pdf'), 
+       height = 6, width = 14)
+ggsave(rates_per_spp_plts$duplication, file = paste0(OUTPUT_DIR, 'generax-per-species/duplication_rates_per_species.png'), 
+       dpi = 600, height = 6, width = 6)
+ggsave(rates_per_spp_plts$duplication, file = paste0(OUTPUT_DIR, 'generax-per-species/duplication_rates_per_species.pdf'), 
+       height = 6, width = 6)
+ggsave(rates_per_spp_plts$transfer, file = paste0(OUTPUT_DIR, 'generax-per-species/transfer_rates_per_species.png'), 
+       dpi = 600, height = 6, width = 6)
+ggsave(rates_per_spp_plts$transfer, file = paste0(OUTPUT_DIR, 'generax-per-species/transfer_rates_per_species.pdf'), 
+       height = 6, width = 6)
+ggsave(rates_per_spp_plts$loss, file = paste0(OUTPUT_DIR, 'generax-per-species/loss_rates_per_species.png'), 
+       dpi = 600, height = 6, width = 6)
+ggsave(rates_per_spp_plts$loss, file = paste0(OUTPUT_DIR, 'generax-per-species/loss_rates_per_species.pdf'), 
+       height = 6, width = 5)
+ggsave(rates_per_spp_plts$dt_ratio, file = paste0(OUTPUT_DIR, 'generax-per-species/duplication_transfer_ratio_per_species.png'), 
+       dpi = 600, height = 6, width = 6)
+ggsave(rates_per_spp_plts$dt_ratio, file = paste0(OUTPUT_DIR, 'generax-per-species/duplication_transfer_ratio_per_species.pdf'), 
+       height = 6, width = 6)
+```
+
+#### Tranfer counts among species
+Now, lets summarize the rates/occurrence of pairwise horizontal transfer between species (terminal branches of the phylogeny). Eventually will build/include additional visualization of transfer rates between internal branches; that is a significantly more complicated problem to solve, however.
+```{r Horizontal transfer count matrix (GeneRax Per-species), fig.asp = 0.9, fig.width = 11.5, warning = FALSE}
+# Read in the species tree
+spptree <- ladderize(read.tree(paste0(RESULT_DIR, 'speciesrax/species_trees/inferred_species_tree.newick')), right = F)
+
+# Read in samplesheet to plot taxonomic group along with the species tree
+samplesheet <- read.table(SAMPLESHEET, sep = ",", header = T)
+
+taxa_tibble <- tibble(
+  tip = samplesheet$id,
+  grp = samplesheet$taxonomy)
+    
+# Pull these data out and reformat for plotting
+transf_count_mat <-
+  melt(generax_res_per_species$lgt_count_mat, varnames = c('Donor', 'Recipient'))
+
+# Below, we figure out if branches are terminal or not (i.e. correspond to
+# extant species), and then pull transfer events corresponding to these
+# branches out, converting into a pairwise matrix, with donors as columns,
+# recipients as rows.
+is_tip <- spptree$edge[,2] <= length(spptree$tip.label)
+ordered_tips <- rev(spptree$edge[is_tip, 2])
+
+transf_count_mat$Donor <-
+  factor(transf_count_mat$Donor, levels = spptree$tip.label[ordered_tips])
+transf_count_mat$Recipient <-
+  factor(transf_count_mat$Recipient, levels = rev(spptree$tip.label[ordered_tips]))
+transf_count_mat$value <- as.numeric(transf_count_mat$value)
+
+# Now, plot the species tree alongside a heatmap of pairwise transfers.
+tree_p <- 
+  ggtree(spptree, ladderize = T, size = 1.25) %<+% taxa_tibble +
+  new_scale_fill() +
+  geom_tippoint(aes(fill = grp), pch = 22, 
+                      size = 3, color = "black") + 
+  scale_fill_manual(values = SUPERGROUP_COLS) + 
+  guides(fill = guide_legend(title = 'Supergroup', nrow = 2)) + 
+  theme(legend.position = 'top')
+
+tax_leg <- get_legend(tree_p)
+
+# Now plot with the taxonomic group tip labels:
+transf_heatmap <-
+  ggplot(data = transf_count_mat,
+         aes(x = Donor, y = Recipient, fill = value)) +
+  geom_tile() +
+  theme_classic(base_size = 14) +
+  scale_y_discrete(position = 'right') +
+  guides(fill = guide_colorbar(title = 'Transfer Count',
+                      title.position = 'top',
+                      title.hjust = 0)) +
+  theme(legend.position = 'top',
+        axis.text.x = element_text(size = 10, angle = 45, hjust=1),
+        axis.text.y = element_text(size = 10),
+        legend.key.width = unit(2,'cm')) +
+  scale_fill_gradientn(colors = arcadia_magma$color_dict,
+                       values = arcadia_magma$values, 
+                       trans = "log10", 
+                       na.value = arcadia_magma$values[1])
+
+transfer_leg <- get_legend(transf_heatmap)
+transf_heatmap <- transf_heatmap + theme(legend.position = 'none')
+transf_heatmap <- transf_heatmap %>% aplot::insert_left(tree_p + theme(legend.position = 'none'), width = 0.5)
+
+legends <- plot_grid(tax_leg, transfer_leg, nrow = 1)
+transf_heatmap_plt <-
+  plot_grid(legends, ggplotify::as.grob(transf_heatmap),
+            nrow = 2, rel_heights = c(0.1, 0.9))
+
+# Save the figure to a pdf
+ggsave(transf_heatmap_plt, filename = paste0(OUTPUT_DIR, 'generax-per-species/species_pairwise_hgt_event_count.pdf'),
+       height = 9.5, width = 12)
+ggsave(transf_heatmap_plt, filename = paste0(OUTPUT_DIR, 'generax-per-species/species_pairwise_hgt_event_count.png'),
+       height = 9.5, width = 12, dpi = 600)
+
+transf_heatmap_plt
+```
+
+```{r Horizontal transfer count matrix (GeneRax Per-species) - interactive, fig.asp = 0.9, fig.width = 7, warning = FALSE}
+# And let's visualize this heatmap interactively with plotly!
+transf_count_mat$Donor <- gsub("_", " ", transf_count_mat$Donor)
+transf_count_mat$Recipient <- gsub("_", " ", transf_count_mat$Recipient)
+transf_count_mat$Donor <-
+  factor(transf_count_mat$Donor, levels = gsub("_", " ", spptree$tip.label[ordered_tips]))
+transf_count_mat$Recipient <-
+  factor(transf_count_mat$Recipient, levels = gsub("_", " ", rev(spptree$tip.label[ordered_tips])))
+
+gg <- 
+  ggplot(data = transf_count_mat,
+         aes(x = Donor, y = Recipient, fill = value+1)) +
+  geom_tile(aes(text = value)) +
+  theme_classic(base_size = 12) +
+  scale_fill_gradientn(colors = arcadia_magma$color_dict,
+                       values = arcadia_magma$values, 
+                       na.value = arcadia_magma$values[1],
+                       trans = 'log10') +
+  scale_y_discrete(position = 'right') +
+  theme(legend.position = 'top',
+        axis.text.x = element_text(size = 6, angle = 45, hjust=1),
+        axis.text.y = element_text(size = 6),
+        legend.key.width = unit(2,'cm'))
+
+transf_heatmap_plotly <- ggplotly(gg)
+transf_heatmap_plotly$x$data[[2]]$marker$colorbar$title <- "Transfer\nCount"
+transf_heatmap_plotly$x$data[[1]]$text <- sub("value \\+ 1: .*/>", "Number Transfers:", transf_heatmap_plotly$x$data[[1]]$text)
+transf_heatmap_plotly$x$data[[2]]$marker$colorbar$thickness <- 35
+transf_heatmap_plotly
+
+# And save this out to an HTML
+htmlwidgets::saveWidget(as_widget(transf_heatmap_plotly), paste0(OUTPUT_DIR, 'generax-per-species/species_pairwise_hgt_event_count.html'))
+```
