@@ -61,6 +61,7 @@ include { SPECIESRAX                                } from '../modules/local/spe
 include { GENERAX_PER_FAMILY                        } from '../modules/local/generax_per_family'
 include { GENERAX_PER_SPECIES                       } from '../modules/local/generax_per_species'
 include { ORTHOFINDER_PHYLOHOGS                     } from '../modules/local/orthofinder_phylohogs'
+include { GET_ORTHOGROUP_INFO as GET_ORTHOGROUP_INFO_OF } from '../modules/local/get_og_info'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -221,6 +222,12 @@ workflow INIT_ORTHO_ORTHOFINDER {
         ORTHOFINDER_PREP_ALL.out.seqIDs,
         "complete_dataset"
     )
+    // Parse the initial orthorgoups (homogroups) to tsv that can be used for cogeqc
+    GET_ORTHOGROUP_INFO_OF(
+        ORTHOFINDER_MCL_ALL.out.initial_orthogroups_fa_dir,
+        "orthofinder_mcl/Orthogroups.tsv"
+    )
+
 
     //
     // MODULE: FILTER_ORTHOGROUPS

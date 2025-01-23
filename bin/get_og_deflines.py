@@ -1,186 +1,75 @@
+import os
 import re
-import csv
 import argparse
 from collections import defaultdict
 
-def normalize_defline(defline):
-	return re.sub(r'[^a-zA-Z0-9_-]', '_', defline)
+def process_fasta_files(directory, output_file):
+	# Initialize a dictionary to hold the deflines for each sample
+	data = defaultdict(lambda: defaultdict(list))
 
-def modify_fasta_field(fasta):
-	fasta = fasta.replace('.domains.fasta', '')
-	parts = fasta.split('.')
-	if len(parts) >= 2:
-		return '.'.join(parts[-2:])
-	return fasta
+	# Regular expression to extract sample name from the fasta defline
+	sample_regex = re.compile(r">([^_]+)")
 
-def parse_input_file(file_path, modify_fasta=False):
-	data = {}
-	with open(file_path, 'r') as f:
-		next(f)  # Skip header
-		for line in f:
-			parts = line.strip().split('\t')
-			sample, fasta, defline = parts
-			if modify_fasta:
-				fasta = modify_fasta_field(fasta)
-			normalized_defline = normalize_defline(defline)
-			data[normalized_defline] = {'sample': sample, 'fasta': fasta, 'original': defline}
-	return data
+	# Loop through all files in the directory
+	for filename in os.listdir(directory):
+		# Only process .fa files
+		if filename.endswith(".fa"):
+			orthogroup = filename.split('.')[0]  # Extract orthogroup from filename
+			
+			# Open and process the fasta file
+			with open(os.path.join(directory, filename), 'r') as file:
+				current_sample = None
+				# Iterate over each line in the file
+				for line in file:
+					line = line.strip()
+					if line.startswith(">"):
+						# Extract the sample name from the defline
+						match = sample_regex.match(line)
+						if match:
+							current_sample = match.group(1)  # The sample name
 
-def parse_orthofinder_file(file_path):
-	data = defaultdict(lambda: defaultdict(str))
-	with open(file_path, 'r') as f:
-		next(f)  # Skip header
-		for line in f:
-			parts = line.strip().split('\t')
-			og = parts[0]
-			for genome in parts[1:]:
-				deflines = genome.split(', ')
-				for defline in deflines:
-					normalized_defline = normalize_defline(defline)
-					data[normalized_defline]['og'] = og
-					data[normalized_defline]['original'] = defline
-	return data
+							# Add the defline to the appropriate sample in the dictionary
+							data[orthogroup][current_sample].append(line[1:]) # leading > is removed here
+					elif current_sample:
+						# skip if it is sequence
+						continue
 
-def parse_broccoli_file(file_path):
-	data = defaultdict(lambda: defaultdict(str))
-	with open(file_path, 'r') as f:
-		next(f)  # Skip header
-		for line in f:
-			parts = line.strip().split('\t')
-			og = parts[0]
-			for genome in parts[1:]:
-				deflines = genome.split()
-				for defline in deflines:
-					normalized_defline = normalize_defline(defline)
-					data[normalized_defline]['og'] = og
-					data[normalized_defline]['original'] = defline
-	return data
+	# Prepare the output
+	header = ["Orthogroup"]  # Start with the Orthogroup column
+	samples = sorted(set(sample for orthogroup in data.values() for sample in orthogroup.keys()))
+	header.extend(samples)  # Add sample names as headers
 
-def parse_diamond_mcl_file(file_path):
-	data = defaultdict(lambda: defaultdict(str))
-	with open(file_path, 'r') as f:
-		next(f)  # Skip header
-		for line in f:
-			parts = line.strip().split('\t')
-			cluster = parts[0]
-			deflines = parts[1].split()
-			for defline in deflines:
-				normalized_defline = normalize_defline(defline)
-				data[normalized_defline]['cluster'] = cluster
-				data[normalized_defline]['original'] = defline
-	return data
+	# Initialize the rows
+	rows = []
 
-def parse_mmseqs_file(file_path):
-	data = defaultdict(lambda: defaultdict(str))
-	with open(file_path, 'r') as f:
-		next(f)  # Skip header
-		for line in f:
-			parts = line.strip().split('\t')
-			cluster = parts[0]
-			deflines = parts[1].split()
-			for defline in deflines:
-				normalized_defline = normalize_defline(defline)
-				data[normalized_defline]['cluster'] = cluster
-				data[normalized_defline]['original'] = defline
-	return data
+	# Loop through the orthogroups and create a row for each
+	for orthogroup, samples_data in sorted(data.items()): # sorted here by orthogroup
+		row = [orthogroup]
+		# For each sample, join its fasta deflines with a comma and space
+		for sample in samples:
+			if sample in samples_data:
+				deflines = ", ".join(samples_data[sample])
+				row.append(deflines)
+			else:
+				row.append("")  # Empty if there are no deflines for that sample
+		rows.append(row)
 
-def read_combined_output(file_path):
-	data = defaultdict(lambda: defaultdict(set))
-	with open(file_path, 'r') as f:
-		reader = csv.DictReader(f)
-		for row in reader:
-			for tool in ['orthofinder_og', 'broccoli_og', 'diamond_mcl_cluster', 'mmseqs_cluster']:
-				if row[tool]:
-					data[tool][row[tool]].add(row['original_defline'])
-			data['sample'][row['original_defline']] = row['sample']
-			data['input'][row['original_defline']] = row['input']
-	return data
-
-def generate_og_centric_output(data, output_file):
-	with open(output_file, 'w', newline='') as csvfile:
-		writer = csv.writer(csvfile)
-		writer.writerow(['og_name', 'og_source', 'sample', 'input', 'deflines'])
-		
-		for tool in ['orthofinder_og', 'broccoli_og', 'diamond_mcl_cluster', 'mmseqs_cluster']:
-			og_source = tool.replace('_og', '').replace('_cluster', '')
-			for og, deflines in data[tool].items():
-				samples = set(data['sample'][defline] for defline in deflines)
-				inputs = set(data['input'][defline] for defline in deflines)
-				writer.writerow([
-					og,
-					og_source,
-					' '.join(samples),
-					' '.join(inputs),
-					' '.join(deflines)
-				])
-
-	print(f"Orthogroup-centric data has been written to '{output_file}'")
+	# Write the output to a tab-separated file
+	with open(output_file, "w") as out_file:
+		out_file.write("\t".join(header) + "\n")
+		for row in rows:
+			out_file.write("\t".join(row) + "\n")
 
 def main():
-	parser = argparse.ArgumentParser(description='Combine orthogroup data from multiple sources.')
-	parser.add_argument('--input', required=True, help='Path to the SEARCH deflines file OR the deflines file of original fasta if search skipped (deflines/deflines_combined.txt)')
-	parser.add_argument('--orthofinder', help='Path to the OrthoFinder file')
-	parser.add_argument('--broccoli', help='Path to the Broccoli file')
-	parser.add_argument('--diamond_mcl', help='Path to the Diamond MCL file')
-	parser.add_argument('--mmseqs', help='Path to the MMseqs2 file')
-	parser.add_argument('--output', default='orthogroups_deflines.csv', help='Path to the output CSV file')
-	parser.add_argument('--og_output', default='orthogroups.csv', help='Path to the orthogroup-centric output CSV file')
-	parser.add_argument('--search', action='store_true', help='If set, modifies the fasta field format')
-	args = parser.parse_args()
-
-	all_data = {}
-	fieldnames = ['original_defline', 'sample', 'input']
-
-	input_data = parse_input_file(args.input, modify_fasta=args.search)
-	all_data['input'] = input_data
-
-	if args.orthofinder:
-		orthofinder_data = parse_orthofinder_file(args.orthofinder)
-		all_data['orthofinder'] = orthofinder_data
-		fieldnames.append('orthofinder_og')
-
-	if args.broccoli:
-		broccoli_data = parse_broccoli_file(args.broccoli)
-		all_data['broccoli'] = broccoli_data
-		fieldnames.append('broccoli_og')
-
-	if args.diamond_mcl:
-		diamond_mcl_data = parse_diamond_mcl_file(args.diamond_mcl)
-		all_data['diamond_mcl'] = diamond_mcl_data
-		fieldnames.append('diamond_mcl_cluster')
-
-	if args.mmseqs:
-		mmseqs_data = parse_mmseqs_file(args.mmseqs)
-		all_data['mmseqs'] = mmseqs_data
-		fieldnames.append('mmseqs_cluster')
-
-	# Write the combined data to a CSV file
-	with open(args.output, 'w', newline='') as csvfile:
-		writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-		writer.writeheader()
-
-		for normalized_defline, input_data in all_data['input'].items():
-			row = {
-				'original_defline': input_data['original'],
-				'sample': input_data['sample'],
-				'input': input_data['fasta']
-			}
-			if 'orthofinder' in all_data and normalized_defline in all_data['orthofinder']:
-				row['orthofinder_og'] = all_data['orthofinder'][normalized_defline]['og']
-			if 'broccoli' in all_data and normalized_defline in all_data['broccoli']:
-				row['broccoli_og'] = all_data['broccoli'][normalized_defline]['og']
-			if 'diamond_mcl' in all_data and normalized_defline in all_data['diamond_mcl']:
-				row['diamond_mcl_cluster'] = all_data['diamond_mcl'][normalized_defline]['cluster']
-			if 'mmseqs' in all_data and normalized_defline in all_data['mmseqs']:
-				row['mmseqs_cluster'] = all_data['mmseqs'][normalized_defline]['cluster']
-			writer.writerow(row)
-
-	print(f"Combined data has been written to '{args.output}'")
-
-	data = read_combined_output(args.output)
-	generate_og_centric_output(data, args.og_output)
-
+	# Set up argparse for command-line arguments
+	parser = argparse.ArgumentParser(description="Process fasta files to generate orthogroup summary.")
+	parser.add_argument("directory", type=str, help="Path to the directory containing fasta files.")
+	parser.add_argument("-o", "--output", type=str, default="Orthogroups.tsv", help="Path to the output file. Default is 'Orthogroups.tsv' in the current directory.")
 	
+	args = parser.parse_args()
+	
+	# Call the function to process the fasta files in the provided directory
+	process_fasta_files(args.directory, args.output)
 
 if __name__ == "__main__":
 	main()

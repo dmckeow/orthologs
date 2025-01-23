@@ -4,9 +4,9 @@ process PREFILTER_SEARCH {
     container 'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/d0/d06f9c1b929618ccc24024d4d13768bd9196a05416f9dcad078853ecbf40efa9/data'
 
     publishDir(
-        path: "${params.outdir}/prefilter/${input_source}",
+        path: "${params.outdir}",
         mode: params.publish_dir_mode,
-        saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
+        saveAs: { fn -> fn }
     )
 
     input:
@@ -62,7 +62,7 @@ process PREFILTER_SEARCH {
                     clean_original=original;
                     gsub(/[^a-zA-Z0-9_]/, "_", clean_parent);
                     gsub(/[^a-zA-Z0-9_]/, "_", clean_original);
-                    print original, parent, clean_original, clean_parent, id, input_path, gf, preprocessed_fasta_path
+                    print original, parent, id"___"clean_original, id"___"clean_parent, id, input_path, gf, preprocessed_fasta_path
                 }' >>  \$out_defline_info
             done
 
@@ -99,7 +99,7 @@ process PREFILTER_SEARCH {
                     clean_original=original;
                     gsub(/[^a-zA-Z0-9_>]/, "_", clean_parent);
                     gsub(/[^a-zA-Z0-9_>]/, "_", clean_original);
-                    print original, parent, clean_original, clean_parent, id, input_path, gf, preprocessed_fasta_path
+                    print original, parent, id"___"clean_original, id"___"clean_parent, id, input_path, gf, preprocessed_fasta_path
                 }' >> \$out_defline_info
             done
 

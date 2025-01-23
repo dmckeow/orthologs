@@ -83,12 +83,7 @@ workflow PREFILTER {
         }
         .groupTuple(by: 0)
 
-    // Save the defline info for downstream use
-    defline_info_csv = defline_info_metamap
-    .map { groupKey, seqInfo -> 
-        [groupKey.id, seqInfo.seq, seqInfo.parent_seq, seqInfo.clean_seq, seqInfo.clean_parent_seq, seqInfo.input_fasta_path, seqInfo.gene_family_name, seqInfo.preprocessed_fasta_path].join(',')
-    }
-    .collectFile(name: 'all_defline_info_metamap.csv', newLine: true)
+    
     
     fasta_info_collected = PREFILTER_SEARCH.out.fasta_info
         .collectFile(name: 'all_fasta_info.csv', keepHeader: false, skip: 1)
@@ -136,6 +131,5 @@ workflow PREFILTER {
     defline_info_metamap = defline_info_metamap // metainfo to later identify gene families
     fasta_info_metamap = fasta_info_metamap // metainfo to regroup fastas and later identify gene families
     cleanfastas_collected = cleanfastas_collected // this will be the set of fastas analysed downstream
-    defline_info_csv = defline_info_csv
 
 }

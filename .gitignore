@@ -13,3 +13,4 @@ logs/*
 **/.Rproj*
 **renv/
 **misc/
+.Rproj.user

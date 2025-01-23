@@ -1,0 +1,115 @@
+---
+title: "Orthology Results: Assessing the initial orthogroups (homogroups) 46 metazoans"
+author: "Dean Mckeown"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    output_file: "../results/homogroups.html"
+    toc: true
+    toc_float: TRUE
+    toc_depth: 4
+    number_sections: true
+    theme: united
+    highlight: tango
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.path = "../results/")
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+```
+
+```{css, echo=FALSE}
+.scroll-200 {
+  max-height: 200px;
+  overflow-y: auto;
+  background-color: inherit;
+}
+```
+
+___
+
+## Preparation
+We will begin by creating a variable that specifies where all workflow outputs are stored. Additionally we will source the script containing helper functions, and setting to variable some colors that we'll use throughout. 
+### Inputs needed, ready 
+/users/asebe/dmckeown/projects/crg-bcaortho/project-ioo_mz46/results/orthofinder_mcl/Orthogroups.tsv
+  * made by custom nf module - which homogroups contain what sequences
+/users/asebe/dmckeown/projects/crg-bcaortho/project-ioo_mz46/results/prefilter/initial/defline_info/*.csv
+  * made by custom nf module - hmmsearch assignment for each sequence
+
+### Inputs needed, not setup in pipeline - we want an agnostic way so that any OG caller can be used
+/users/asebe/dmckeown/projects/crg-bcaortho/project-ioo_mz46/results/orthofinder_mcl/complete_dataset/Results_Inflation_2.5/Comparative_Genomics_Statistics/Statistics_PerSpecies.tsv
+  * Quite involved, maybe we can find the code in orthofinder
+
+/users/asebe/dmckeown/projects/crg-bcaortho/project-ioo_mz46/results/orthofinder_mcl/complete_dataset/Results_Inflation_2.5/Orthogroups/Orthogroups.GeneCount.tsv
+  * Straightforward, essentially is just Orthogroups.tsv just totals instead of deflines
+
+/users/asebe/dmckeown/projects/crg-bcaortho/project-ioo_mz46/results/orthofinder_mcl/complete_dataset/Results_Inflation_2.5/Comparative_Genomics_Statistics/Orthogroups_SpeciesOverlaps.tsv
+  * matrix of all samples vs all - might need to hunt down OF code
+  * the number of orthogroups shared between each species-pair as a square matrix.
+
+/users/asebe/dmckeown/projects/crg-bcaortho/data/Aque_long.pep.pfamscan.seq_id-hmm_acc.csv
+  * Two column annotation, gene - must be parent seq, not domain? and pfam annotation
+
+```{r Preparation, results = FALSE}
+suppressPackageStartupMessages(suppressWarnings(source('R/packages.R')))
+suppressPackageStartupMessages(suppressWarnings(source('R/summary-functions.R')))
+source('R/arcadia-color-gradients.R')
+
+# INPUTS
+# Specify where the workflow outputs are stored (relative paths unless indicated)
+
+RESULT_DIR  <-  "../results/"
+SAMPLESHEET <- "/users/asebe/dmckeown/projects/crg-bcaortho/project-ioo_mz46/samplesheet1.csv"
+
+# OUTPUTS
+# And where summarized results should be saved.
+OUTPUT_DIR <- './results/'
+dir.create(OUTPUT_DIR, showWarnings = F)
+dir.create(paste0(OUTPUT_DIR, 'orthofinder'), showWarnings = F)
+
+# OTHER PARAMETERS
+# Set colours to plot supergroups (taxonomy field in samplesheet1)
+
+SUPERGROUP_COLS <- c(
+  Bilateria_Deuterostomia = "#8DD3C7",
+  Bilateria_Protostomia = "#FFFFB3",
+  Choanoflagellata = "#BEBADA",
+  Cnidaria = "#FB8072",
+  Ctenophora = "#80B1D3",
+  Filasterea = "#FDB462",
+  Placozoa = "#B3DE69",
+  Porifera = "#FCCDE5",
+  Teretosporea = "#D9D9D9"
+)
+
+```
+
+___
+    
+___
+
+## Gene Family Summaries {.tabset}
+Now, let's go ahead and summarize the results from OrthoFinder. To start, this will just include some high-level summaries - number of species per gene family, gene copy number per gene family, etc.
+
+```{r Gene Family Summary Stats, fig.asp = .95}
+# Summarize gene family content, both with respect to number of species 
+# included in each gene family, and the per-species mean copy number
+summ_genefam_composition(results_dir = RESULT_DIR, show_plots = T, out_dir = paste0(OUTPUT_DIR, 'orthofinder/'))
+
+# And get orthogroup summary statistics per species
+per_spp_of_stats <-
+  get_per_spp_ofinder_stats(tree_fpath = paste0(RESULT_DIR, 'speciesrax/species_trees/inferred_species_tree.newick'),
+                        samplesheet_fpath = SAMPLESHEET,
+                        results_dir = RESULT_DIR, grp_name = 'Supergroup',
+                        out_dir = paste0(OUTPUT_DIR, 'orthofinder/'),
+                        tip_grp_cols = SUPERGROUP_COLS, 
+                        count_cols = arcadia_cividis,
+                        prop_cols = arcadia_viridis)
+
+# Lastly, get the per-species orthogroup counts/copy numbers
+og_counts <- get_per_spp_og_counts(results_dir = RESULT_DIR)
+```
+
+___
+

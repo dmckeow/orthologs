@@ -6,6 +6,13 @@ process ORTHOFINDER_MCL {
         workflow.containerEngine == 'apptainer' ? 'arcadiascience/orthofinder_2.5.4:1.0.0' :
         '' }"
 
+    publishDir (
+        path: "${params.outdir}/orthofinder_mcl",
+        mode: 'copy',
+        pattern: "${output_directory}/Results_Inflation*",
+        saveAs: { fn -> fn }
+    )
+
     input:
     each mcl_inflation
     file(blast)
@@ -16,7 +23,8 @@ process ORTHOFINDER_MCL {
     val output_directory
 
     output:
-    path("*/Results_Inflation*"), emit: inflation_dir
+    path("${output_directory}/Results_Inflation_${mcl_inflation}"), emit: inflation_dir
+    path("${output_directory}/Results_Inflation_${mcl_inflation}/Orthogroup_Sequences"), emit: initial_orthogroups_fa_dir
 
     when:
     task.ext.when == null || task.ext.when
@@ -25,10 +33,7 @@ process ORTHOFINDER_MCL {
     def args = task.ext.args ?: ''
 
     """
-    for f in \$(ls TestBlast*)
-    do
-        mv \$f \$(echo \$f | sed "s/TestBlast/Blast/g")
-    done
+    
 
     orthofinder \\
         -b ./ \\
@@ -38,21 +43,13 @@ process ORTHOFINDER_MCL {
         -a ${task.cpus} \\
         $args
 
-    # Check if we're running an mcl test or not:
-    # if so, delete the sequence files and other non-essential directories that
-    # we will not be using and take up significant, unnecessary space.
-    if [ "$output_directory" == "mcl_test_dataset" ]; then
-        rm -r OrthoFinder/*/Single_Copy_Orthologue_Sequences/
-        rm -r OrthoFinder/*/Orthogroup_Sequences/
-        rm -r OrthoFinder/*/WorkingDirectory/
-        rm -r OrthoFinder/*/Orthologues/
-    else
-        dir=\$(pwd)
-        cd \$(ls -d OrthoFinder/*/WorkingDirectory)
-        tar -czvf Sequences_ids.tar.gz Sequences_ids
-        rm -r Sequences_ids
-        cd \$dir
-    fi
+    
+    dir=\$(pwd)
+    cd \$(ls -d OrthoFinder/*/WorkingDirectory)
+    tar -czvf Sequences_ids.tar.gz Sequences_ids
+    rm -r Sequences_ids
+    cd \$dir
+
 
     # Restructure to get rid of the unnecessary "OrthoFinder" directory"
     mkdir ${output_directory}
