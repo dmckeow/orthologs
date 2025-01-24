@@ -5,22 +5,23 @@
 process GET_ORTHOGROUP_INFO {
 
     publishDir (
-        path: "${params.outdir}",
-        pattern: "${output_file}",
+        path: "${params.outdir}/${publish_subdir}",
         mode: 'copy',
         saveAs: { fn -> fn }
     )
 
     input:
     path(orthogroup_fasta_dir)
-    val output_file
+    val output_dir
+    val publish_subdir
     
     output:
-    path("${output_file}"), emit: orthogroups_tsv
+    path("${output_dir}/Orthogroups.tsv"), emit: orthogroups_tsv
+    path("${output_dir}/Orthogroups.GeneCount.tsv"), emit: orthogroups_genecount_tsv
     
     script:
     """
-    mkdir -p \$(dirname "${output_file}")
-    python3 ${projectDir}/bin/get_og_deflines.py ${orthogroup_fasta_dir} -o ${output_file}
+    mkdir -p ${output_dir}
+    python3 ${projectDir}/bin/get_og_deflines.py ${orthogroup_fasta_dir} -o ${output_dir}
     """
 }

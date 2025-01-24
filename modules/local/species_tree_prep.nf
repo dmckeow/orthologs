@@ -7,7 +7,7 @@ process SPECIES_TREE_PREP {
     '' }"
 
     publishDir(
-        path: "${params.outdir}/species_tree_prep",
+        path: "${params.outdir}/${publish_subdir}/species_tree_prep",
         mode: params.publish_dir_mode,
         saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
     )
@@ -16,6 +16,7 @@ process SPECIES_TREE_PREP {
     file genetrees  // Output from IQ-tree: filepaths to gene family trees with metadata
     file alignments // Output from ClipKit: filepaths to trimmed alignments with metadata
     val family_set  // String indicating whether these are gene families intended for SpeciesRax or GeneRax
+    val publish_subdir
 
     output:
     path "*gene_family_trees.txt" , emit: treefile

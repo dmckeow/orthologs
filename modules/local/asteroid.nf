@@ -7,7 +7,7 @@ process ASTEROID {
         '' }"
 
     publishDir(
-        path: "${params.outdir}/asteroid",
+        path: "${params.outdir}/${publish_subdir}/asteroid",
         mode: params.publish_dir_mode,
         saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
     )
@@ -16,6 +16,7 @@ process ASTEROID {
     val species_names  // Names of all species
     file treefiles     // Filepath to the asteroid treefile (all newick gene trees)
     val outgroups      // String of specified outgroups to root species tree with, if provided
+    val publish_subdir
 
     output:
     path "asteroid.bestTree.newick"        , emit: spp_tree

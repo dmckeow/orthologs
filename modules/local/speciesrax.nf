@@ -8,7 +8,7 @@ process SPECIESRAX {
     '' }"
 
     publishDir(
-        path: "${params.outdir}/speciesrax",
+        path: "${params.outdir}/${publish_subdir}/speciesrax",
         mode: params.publish_dir_mode,
         saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
     )
@@ -18,6 +18,7 @@ process SPECIESRAX {
     file gene_trees      // Filepaths to the starting gene trees
     file alignments      // Filepaths to the gene family alignments
     file rooted_spp_tree // Filepath to the rooted asteroid species tree
+    val publish_subdir
 
     output:
     path "*"                                          , emit: results

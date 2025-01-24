@@ -8,13 +8,14 @@ process GENERAX_PER_FAMILY {
     '' }"
 
     publishDir(
-        path: "${params.outdir}/generax/per_family_rates",
+        path: "${params.outdir}/${publish_subdir}/generax/per_family_rates",
         mode: params.publish_dir_mode,
         saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
     )
 
     input: // Input is a single large tuple with paths to map-links, tree files, alignments, and the species tree
     tuple val(meta), file(map_link), file(gene_tree), file(alignment), file(species_tree)
+    val publish_subdir
 
     output:
     path "*"                                         , emit: results

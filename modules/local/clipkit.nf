@@ -7,13 +7,14 @@ process CLIPKIT {
         '' }"
 
     publishDir(
-        path: "${params.outdir}/clipkit_cleaned_msas",
+        path: "${params.outdir}/${publish_subdir}/clipkit_cleaned_msas",
         mode: params.publish_dir_mode,
         saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
     )
 
     input:
     tuple val(meta), path(fasta)              // Filepaths to the MSAs
+    val publish_subdir
 
     output:
     tuple val(meta), path("**_clipkit.fa") , emit: cleaned_msas, optional: true

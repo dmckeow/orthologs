@@ -1,9 +1,0 @@
-channels:
-  - bioconda
-  - conda-forge
-dependencies:
-  - conda-forge::python=3.5.5
-  - bioconda::biopython=1.70
-  - bioconda::hmmer=3.4
-  - bioconda::bedtools=2.31.1
-  - bioconda::samtools=1.9

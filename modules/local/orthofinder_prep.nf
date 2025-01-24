@@ -3,7 +3,7 @@ process ORTHOFINDER_PREP {
     label 'process_low'
 
     publishDir(
-        path: "${params.outdir}/orthofinder",
+        path: "${params.outdir}/${publish_subdir}/orthofinder",
         mode: 'copy',
         saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
     )
@@ -12,15 +12,10 @@ process ORTHOFINDER_PREP {
         workflow.containerEngine == 'apptainer' ? 'arcadiascience/orthofinder_2.5.4:1.0.0' :
         '' }"
 
-    publishDir(
-        path: "${params.outdir}/orthofinder",
-        mode: 'copy',
-        saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
-    )
-
     input:
     path(fastas, stageAs: 'input/')
     val output_directory
+    val publish_subdir
 
     output:
     path "**.dmnd"           , emit: diamonds
@@ -31,7 +26,7 @@ process ORTHOFINDER_PREP {
 
     script:
     """
-    # The fasta directory depends on whether we're running the mcl testing or not.
+    
     orthofinder \\
         -f input/ \\
         -t ${task.cpus} \\

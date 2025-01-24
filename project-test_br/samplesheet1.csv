@@ -1,0 +1,11 @@
+id,fasta,taxonomy
+Mbre,/users/asebe/xgraubove/genomes/data/Mbre_long.pep.fasta,Choanoflagellata
+Cowc,/users/asebe/xgraubove/genomes/data/Cowc_long.pep.fasta,Filasterea
+Apla,/users/asebe/xgraubove/genomes/data/Apla_long.pep.fasta,Bilateria_Deuterostomia
+Aedaeg,/users/asebe/xgraubove/genomes/data/Aedaeg_long.pep.fasta,Bilateria_Protostomia
+Exapal,/users/asebe/xgraubove/genomes/data/Exapal_long.pep.fasta,Cnidaria
+Dgig,/users/asebe/xgraubove/genomes/data/Dgig_long.pep.fasta,Cnidaria
+Beraby,/users/asebe/xgraubove/genomes/data/Beraby_long.pep.fasta,Ctenophora
+Drygla,/users/asebe/xgraubove/genomes/data/Drygla_long.pep.fasta,Ctenophora
+Leuniv,/users/asebe/xgraubove/genomes/data/Leuniv_long.pep.fasta,Porifera
+Stycar,/users/asebe/xgraubove/genomes/data/Stycar_long.pep.fasta,Porifera

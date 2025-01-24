@@ -10,20 +10,22 @@ process FILTER_ORTHOGROUPS {
     '' }"
 
     publishDir(
-        path: "${params.outdir}/filtered_orthogroups",
+        path: "${params.outdir}/${publish_subdir}/filtered_orthogroups",
         mode: params.publish_dir_mode,
         saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
     )
 
     input:
     file samplesheet             // Path to samplesheet produced by input check containing sample metadata
-    file orthofinder_outdir      // Directory containing all the inflation params
+    file orthogroup_outdir      // Directory containing the initial orthogroups
+    file og_spp_counts          // path to Orthogroups.GeneCount.tsv
     val min_num_seqs             // Minimum number of sequences in gene family for retention
     val min_num_spp              // Minimum number of species in gene family for retention
     val min_prop_spp_for_spptree // Minimum % of species for inclusion in species tree inference
     val min_num_groups           // Minimum number of clades/taxonomic groups
     val max_copy_num_filt1       // Max copy number for genes intended for species tree inference
     val max_copy_num_filt2       // Max copy number for all other gene family tree inference
+    val publish_subdir
 
     output:
     path "*"                            , emit: filtered_ogs
@@ -44,13 +46,14 @@ process FILTER_ORTHOGROUPS {
     # species/gene tree inference based on their distribution
     # and copy numbers
 
-    og_spp_counts=${orthofinder_outdir}/Orthogroups/Orthogroups.GeneCount.tsv
+    ####og_spp_counts=\${orthofinder_outdir}/Orthogroups/Orthogroups.GeneCount.tsv
 
     # Run the scripts to generate the orthogroup species/taxa gene count summaries and filtered sets
-    ${projectDir}/bin/og_tax_summary.R \$og_spp_counts $samplesheet $min_num_seqs $min_num_spp $min_prop_spp_for_spptree $min_num_groups $max_copy_num_filt1 $max_copy_num_filt2
+    ${projectDir}/bin/og_tax_summary.R ${og_spp_counts} $samplesheet $min_num_seqs $min_num_spp $min_prop_spp_for_spptree $min_num_groups $max_copy_num_filt1 $max_copy_num_filt2
 
     # Add a column of filepaths to these
-    msa_dir=\$( cd ${orthofinder_outdir}/Orthogroup_Sequences/; pwd )
+    #####msa_dir=\$( cd \${orthofinder_outdir}/Orthogroup_Sequences/; pwd )
+    msa_dir=\$( cd ${orthogroup_outdir}/; pwd )
 
     # Create the column
     tail -n+2 spptree_core_ogs_counts.csv | cut -f1 -d"," | sed "s|.*|\${msa_dir}/&.fa|g" > spptree_core_og_fpaths.txt
@@ -62,15 +65,13 @@ process FILTER_ORTHOGROUPS {
     while IFS= read -r trees
     do
         # Copy the file to the destination directory
-        mv "\$trees" species_tree_og_msas/
+        cp "\$trees" species_tree_og_msas/
     done < spptree_core_og_fpaths.txt
     while IFS= read -r trees
     do
         # Copy the file to the destination directory
-        mv "\$trees" gene_tree_og_msas/
+        cp "\$trees" gene_tree_og_msas/
     done < genetree_core_og_fpaths.txt
 
-    # Remove these intermediate files
-    rm *fpaths.txt
     """
 }

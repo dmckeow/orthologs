@@ -3,7 +3,8 @@ nextflow.enable.dsl = 2
 nextflow.preview.output = true
 
 include { PREFILTER } from './subworkflows/prefilter'
-include { INIT_ORTHO_ORTHOFINDER } from './subworkflows/init_ortho_orthofinder'
+include { INIT_ORTHO as INIT_ORTHO_ORTHOFINDER } from './subworkflows/init_ortho'
+include { INIT_ORTHO as INIT_ORTHO_BROCCOLI } from './subworkflows/init_ortho'
 
 workflow {
 
@@ -27,13 +28,25 @@ workflow {
         params.run.prefilter_hmmsearch
     )
 
-    if (params.run.init_ortho_orthofinder) {
+    if (params.run.orthofinder) {
         INIT_ORTHO_ORTHOFINDER (
             params.samplesheet,
-            params.outdir,
+            "orthofinder_results",
             params.mcl_inflation,
             PREFILTER.out.fasta_info_metamap,
-            PREFILTER.out.cleanfastas_collected
+            PREFILTER.out.cleanfastas_collected,
+            "orthofinder"
+        )
+    }
+
+    if (params.run.broccoli) {
+        INIT_ORTHO_BROCCOLI (
+            params.samplesheet,
+            "broccoli_results",
+            params.mcl_inflation,
+            PREFILTER.out.fasta_info_metamap,
+            PREFILTER.out.cleanfastas_collected,
+            "broccoli"
         )
     }
 

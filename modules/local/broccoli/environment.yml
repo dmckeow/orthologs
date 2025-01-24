@@ -1,9 +1,0 @@
-channels:
-  - bioconda
-  - conda-forge
-dependencies:
-  - conda-forge::python=3.5.5
-  - bioconda::biopython=1.70
-  - bioconda::diamond=2.1.10
-  - bioconda::fasttree=2.1.11
-  - bioconda::ete3=3.1.1

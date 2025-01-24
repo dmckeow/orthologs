@@ -7,7 +7,7 @@ process ORTHOFINDER_MCL {
         '' }"
 
     publishDir (
-        path: "${params.outdir}/orthofinder_mcl",
+        path: "${params.outdir}/${publish_subdir}/orthofinder_mcl",
         mode: 'copy',
         pattern: "${output_directory}/Results_Inflation*",
         saveAs: { fn -> fn }
@@ -21,6 +21,7 @@ process ORTHOFINDER_MCL {
     file(sppIDs)
     file(seqIDs)
     val output_directory
+    val publish_subdir
 
     output:
     path("${output_directory}/Results_Inflation_${mcl_inflation}"), emit: inflation_dir

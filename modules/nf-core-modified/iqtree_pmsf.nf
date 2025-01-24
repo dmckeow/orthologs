@@ -13,7 +13,7 @@ process IQTREE_PMSF {
         '' }"
 
     publishDir(
-        path: "${params.outdir}/iqtree_pmsf_gene_trees",
+        path: "${params.outdir}/${publish_subdir}/iqtree_pmsf_gene_trees",
         mode: params.publish_dir_mode,
         saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
     )
@@ -21,6 +21,7 @@ process IQTREE_PMSF {
     input:
     tuple val(meta), file(alignment), file(guide_tree)
     val pmsf_model
+    val publish_subdir
 
     output:
     tuple val(meta), path("*pmsf.treefile") , emit: phylogeny

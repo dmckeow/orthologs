@@ -7,7 +7,7 @@ process ORTHOFINDER_PHYLOHOGS {
         '' }"
 
     publishDir(
-        path: "${params.outdir}/orthofinder/complete_dataset/",
+        path: "${params.outdir}/${publish_subdir}/orthofinder/complete_dataset/",
         mode: params.publish_dir_mode, overwrite: false,
         saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
     )
@@ -20,6 +20,7 @@ process ORTHOFINDER_PHYLOHOGS {
     file orthofinder_spp_ids // Orthofinder species IDs
     file generax_gfts        // Reconciled gene family trees from GeneRax
     file blast               // Blast similarity scores
+    val publish_subdir
 
     output:
     path "Results_HOGs/" , emit: phylohogs

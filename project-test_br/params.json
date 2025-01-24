@@ -1,7 +1,7 @@
 {
-    "samplesheet": "project-ioo_mz46/samplesheet1.csv",
-    "search_params": "project-ioo_mz46/samplesheet2.csv",
-    "outdir": "project-ioo_mz46/results",
+    "samplesheet": "project-test_br/samplesheet1.csv",
+    "search_params": "project-test_br/samplesheet2.csv",
+    "outdir": "project-test_br/results",
     "mcl_inflation": 2.5,
     "min_num_spp_per_og": 4,
     "min_num_grp_per_og": 2,
@@ -14,6 +14,6 @@
         "broccoli": false
     },
     "use_arrays": true,
-    "array_size_samples": 46,
-    "array_size_ogs": 100
+    "array_size_samples": 2,
+    "array_size_ogs": 10
 }

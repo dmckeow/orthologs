@@ -7,7 +7,7 @@ process COGEQC {
         '' }"
 
     publishDir(
-        path: "${params.outdir}/orthogroup_summaries",
+        path: "${params.outdir}/${publish_subdir}/orthogroup_summaries",
         mode: params.publish_dir_mode,
         saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
     )
@@ -16,6 +16,7 @@ process COGEQC {
     file orthofinder_outdir
     val min_spp             // Minimum number of species for orthogroup retention
     file prot_annotations   // Base filepath to where protein annotations are stored
+    val publish_subdir
 
     output:
     path "*_cogeqc_summary.tsv" , emit: cogeqc_summary

@@ -57,3 +57,33 @@ SUBMISSION_TIME	SLURM_JOB_ID	SLURM_LOG	SLURM_ERR	COMMAND	NOTE
 2025-01-23 14:53:20	5419582	logs/slurm-nf.5419582.out	logs/slurm-nf.5419582.err	sbatch submit_nf.sh main.nf -profile slurm -params-file project-ioo_mz46/params.json -resume	
 2025-01-23 14:57:56	5421818	logs/slurm-nf.5421818.out	logs/slurm-nf.5421818.err	sbatch submit_nf.sh main.nf -profile slurm -params-file project-ioo_mz46/params.json -resume	
 2025-01-23 15:05:20	5425784	logs/slurm-nf.5425784.out	logs/slurm-nf.5425784.err	sbatch submit_nf.sh main.nf -profile slurm -params-file project-ioo_mz46/params.json -resume	
+2025-01-24 11:25:26	5462467	logs/slurm-nf.5462467.out	logs/slurm-nf.5462467.err	sbatch submit_nf.sh main.nf -profile slurm -params-file project-test_br/params.json	
+2025-01-24 11:26:42	5462473	logs/slurm-nf.5462473.out	logs/slurm-nf.5462473.err	sbatch submit_nf.sh main.nf -profile slurm -params-file project-test_br/params.json	
+2025-01-24 11:27:25	5462499	logs/slurm-nf.5462499.out	logs/slurm-nf.5462499.err	sbatch submit_nf.sh main.nf -profile slurm -params-file project-test_br/params.json	
+2025-01-24 11:34:54	5462704	logs/slurm-nf.5462704.out	logs/slurm-nf.5462704.err	sbatch submit_nf.sh main.nf -profile slurm -params-file project-test_br/params.json -resume	
+2025-01-24 11:47:38	5462846	logs/slurm-nf.5462846.out	logs/slurm-nf.5462846.err	sbatch submit_nf.sh main.nf -profile slurm -params-file project-test_br/params.json -resume	
+2025-01-24 11:49:56	5462973	logs/slurm-nf.5462973.out	logs/slurm-nf.5462973.err	sbatch submit_nf.sh main.nf -profile slurm -params-file project-test_br/params.json -resume	
+2025-01-24 11:55:35	5463069	logs/slurm-nf.5463069.out	logs/slurm-nf.5463069.err	sbatch submit_nf.sh main.nf -profile slurm -params-file project-test_br/params.json -resume	
+2025-01-24 12:18:27	5463825	logs/slurm-nf.5463825.out	logs/slurm-nf.5463825.err	sbatch submit_nf.sh main.nf -profile slurm -params-file project-test_br/params.json	
+2025-01-24 12:24:29	5463936	logs/slurm-nf.5463936.out	logs/slurm-nf.5463936.err	sbatch submit_nf.sh main.nf -profile slurm -params-file project-test_br/params.json	
+2025-01-24 12:56:18	5464569	logs/slurm-nf.5464569.out	logs/slurm-nf.5464569.err	sbatch submit_nf.sh main.nf -profile slurm -params-file project-test_br/params.json	
+2025-01-24 14:00:15	5465360	logs/slurm-nf.5465360.out	logs/slurm-nf.5465360.err	sbatch submit_nf.sh main.nf -profile slurm -params-file project-test_br/params.json -resume	
+2025-01-24 14:01:54	5465367	logs/slurm-nf.5465367.out	logs/slurm-nf.5465367.err	sbatch submit_nf.sh main.nf -profile slurm -params-file project-test_br/params.json -resume	
+2025-01-24 14:12:45	5465379	logs/slurm-nf.5465379.out	logs/slurm-nf.5465379.err	sbatch submit_nf.sh main.nf -profile slurm -params-file project-test_br/params.json	
+2025-01-24 14:35:10	5465996	logs/slurm-nf.5465996.out	logs/slurm-nf.5465996.err	sbatch submit_nf.sh main.nf -profile slurm -params-file project-test_br/params.json -resume	
+2025-01-24 14:41:27	5466192	logs/slurm-nf.5466192.out	logs/slurm-nf.5466192.err	sbatch submit_nf.sh main.nf -profile slurm -params-file project-test_br/params.json -resume	
+2025-01-24 14:42:29	5466227	logs/slurm-nf.5466227.out	logs/slurm-nf.5466227.err	sbatch submit_nf.sh main.nf -profile slurm -params-file project-test_br/params.json -resume	
+2025-01-24 14:46:46	5466250	logs/slurm-nf.5466250.out	logs/slurm-nf.5466250.err	sbatch submit_nf.sh main.nf -profile slurm -params-file project-test_br/params.json -resume	
+2025-01-24 14:52:32	5466663	logs/slurm-nf.5466663.out	logs/slurm-nf.5466663.err	sbatch submit_nf.sh main.nf -profile slurm -params-file project-test_br/params.json -resume	
+2025-01-24 14:53:35	5466668	logs/slurm-nf.5466668.out	logs/slurm-nf.5466668.err	sbatch submit_nf.sh main.nf -profile slurm -params-file project-test_br/params.json -resume	
+2025-01-24 14:54:53	5466680	logs/slurm-nf.5466680.out	logs/slurm-nf.5466680.err	sbatch submit_nf.sh main.nf -profile slurm -params-file project-test_br/params.json -resume	
+2025-01-24 15:05:50	5466988	logs/slurm-nf.5466988.out	logs/slurm-nf.5466988.err	sbatch submit_nf.sh main.nf -profile slurm -params-file project-test_br/params.json -resume	
+2025-01-24 15:10:24	5467030	logs/slurm-nf.5467030.out	logs/slurm-nf.5467030.err	sbatch submit_nf.sh main.nf -profile slurm -params-file project-test_br/params.json -resume	
+2025-01-24 15:13:44	5467040	logs/slurm-nf.5467040.out	logs/slurm-nf.5467040.err	sbatch submit_nf.sh main.nf -profile slurm -params-file project-test_br/params.json -resume	
+2025-01-24 15:20:15	5467059	logs/slurm-nf.5467059.out	logs/slurm-nf.5467059.err	sbatch submit_nf.sh main.nf -profile slurm -params-file project-test_br/params.json -resume	
+2025-01-24 15:47:54	5467541	logs/slurm-nf.5467541.out	logs/slurm-nf.5467541.err	sbatch submit_nf.sh main.nf -profile slurm -params-file project-test_br/params.json -resume	
+2025-01-24 15:53:17	5467629	logs/slurm-nf.5467629.out	logs/slurm-nf.5467629.err	sbatch submit_nf.sh main.nf -profile slurm -params-file project-test_br/params.json -resume	
+2025-01-24 16:01:48	5467785	logs/slurm-nf.5467785.out	logs/slurm-nf.5467785.err	sbatch submit_nf.sh main.nf -profile slurm -params-file project-test_br/params.json -resume	
+2025-01-24 16:02:18	5467791	logs/slurm-nf.5467791.out	logs/slurm-nf.5467791.err	sbatch submit_nf.sh main.nf -profile slurm -params-file project-test_br/params.json -resume	
+2025-01-24 16:06:17	5467835	logs/slurm-nf.5467835.out	logs/slurm-nf.5467835.err	sbatch submit_nf.sh main.nf -profile slurm -params-file project-test_br/params.json -resume	
+2025-01-24 16:08:35	5467866	logs/slurm-nf.5467866.out	logs/slurm-nf.5467866.err	sbatch submit_nf.sh main.nf -profile slurm -params-file project-test_br/params.json	
