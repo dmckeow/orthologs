@@ -6,6 +6,8 @@ process MAFFT {
     tag "$fasta"
     label 'process_mafft'
 
+    array 100
+
     conda (params.enable_conda ? "bioconda::mafft=7.490" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/mafft:7.490--h779adbc_0':

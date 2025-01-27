@@ -10,7 +10,13 @@ process SPECIESRAX {
     publishDir(
         path: "${params.outdir}/${publish_subdir}/speciesrax",
         mode: params.publish_dir_mode,
-        saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
+        saveAs: { filename -> 
+            if (filename.startsWith('reconciliations/') || 
+                filename.startsWith('SpeciesRax/')) {
+                return null
+            }
+            return filename.substring(filename.lastIndexOf('/')+1)
+        }
     )
 
     input:
@@ -50,7 +56,7 @@ process SPECIESRAX {
     for msa in \$(ls *fa)
     do
         # Get the OG name
-        og=\$(echo \$msa | cut -f1 -d"_")
+        og=\$(echo \$msa | sed -E 's/^(OG_[0-9]+|OG[0-9]+).*/\\1/')
         tree=\$(ls \${og}*.treefile)
 
         # Populate the families file for this gene family for the
@@ -80,10 +86,8 @@ process SPECIESRAX {
     # Remove the redundant result directory, moving everything into the
     # working directory, deleiting the meaningless reconciliations
     # directory and cleaning up
-    mv SpeciesRax/* .
-    rm -r reconciliations
-    rm -r SpeciesRax
-
+    cp -r SpeciesRax/* .
+    
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         generax: \$( generax | head -n1 | sed "s/.*GeneRax //g" )

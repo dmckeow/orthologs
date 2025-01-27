@@ -3,6 +3,8 @@ process GENERAX_PER_SPECIES {
     label 'process_generax'
     stageInMode 'copy' // Must stage in as copy, or OpenMPI will try to contantly read from S3 which causes problems.
 
+    array 100
+
     container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/generax_19604b71:1.0.0': 
         workflow.containerEngine == 'apptainer' ? 'arcadiascience/generax_19604b71:1.0.0': 
     '' }"
@@ -10,7 +12,15 @@ process GENERAX_PER_SPECIES {
     publishDir(
         path: "${params.outdir}/${publish_subdir}/generax/per_species_rates",
         mode: params.publish_dir_mode,
-        saveAs: { fn -> fn.substring(fn.lastIndexOf('/')+1) },
+        saveAs: { filename ->
+            if (filename.startsWith("${meta.og}/gene_optimization_") ||
+                filename == "${meta.og}/results/${meta.og}/geneTree.newick" ||
+                filename.startsWith("${meta.og}/reconciliations/") && filename.endsWith("_transfers.txt") ||
+                filename == "${meta.og}/reconciliations/reconciliation_transfer_samples/") {
+                return null
+            }
+            return filename.substring(filename.lastIndexOf('/')+1)
+        }
     )
 
     input: // Input is a single large tuple with paths to map-links, tree files, alignments, and the species tree
@@ -64,18 +74,15 @@ process GENERAX_PER_SPECIES {
         --reconciliation-samples 100 \\
         $args
 
-    # Clean up
-    rm -r $og/gene_optimization_*
-
     # Rename the inferred reconciled gene trees to be named after their corresponding orthogroup
-    mv $og/results/$og/geneTree.newick $og/results/$og/${og}_reconciled_gft.newick
+    cp $og/results/$og/geneTree.newick $og/results/$og/${og}_reconciled_gft.newick
 
     # And move the reconciliation transfer samples into a subdirectory, archive, and compress.
     mkdir $og/reconciliations/reconciliation_transfer_samples/
-    mv $og/reconciliations/*_*_transfers.txt $og/reconciliations/reconciliation_transfer_samples/
-    sleep 5
-    sync
+    cp $og/reconciliations/*_*_transfers.txt $og/reconciliations/reconciliation_transfer_samples/
+    
     tar -czvf $og/reconciliations/reconciliation_transfer_samples.tar.gz $og/reconciliations/reconciliation_transfer_samples/
-    rm -r $og/reconciliations/reconciliation_transfer_samples/
+    
     """
 }
+

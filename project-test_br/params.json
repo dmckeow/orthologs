@@ -11,9 +11,7 @@
     "run": {
         "prefilter_hmmsearch": true,
         "orthofinder": true,
-        "broccoli": false
+        "broccoli": true
     },
-    "use_arrays": true,
-    "array_size_samples": 2,
-    "array_size_ogs": 10
+    "array_size": 100
 }

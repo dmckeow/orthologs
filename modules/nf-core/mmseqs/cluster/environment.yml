@@ -1,5 +1,0 @@
-channels:
-  - conda-forge
-  - bioconda
-dependencies:
-  - bioconda::mmseqs2=15.6f452

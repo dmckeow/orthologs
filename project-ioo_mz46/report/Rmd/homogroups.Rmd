@@ -31,18 +31,17 @@ ___
 
 ## Preparation
 We will begin by creating a variable that specifies where all workflow outputs are stored. Additionally we will source the script containing helper functions, and setting to variable some colors that we'll use throughout. 
-### Inputs needed, ready 
-/users/asebe/dmckeown/projects/crg-bcaortho/project-ioo_mz46/results/orthofinder_mcl/Orthogroups.tsv
+### Inputs needed
+project-test_br/results/orthofinder_results/orthofinder_mcl/Orthogroups.tsv
   * made by custom nf module - which homogroups contain what sequences
-/users/asebe/dmckeown/projects/crg-bcaortho/project-ioo_mz46/results/prefilter/initial/defline_info/*.csv
+project-test_br/results/prefilter/initial/defline_info/*.csv
   * made by custom nf module - hmmsearch assignment for each sequence
+project-test_br/results/orthofinder_results/orthofinder_mcl/Orthogroups.GeneCount.tsv
+  * just Orthogroups.tsv just totals instead of deflines
 
-### Inputs needed, not setup in pipeline - we want an agnostic way so that any OG caller can be used
+### Inputs needed, but currently only available for orthofinder
 /users/asebe/dmckeown/projects/crg-bcaortho/project-ioo_mz46/results/orthofinder_mcl/complete_dataset/Results_Inflation_2.5/Comparative_Genomics_Statistics/Statistics_PerSpecies.tsv
   * Quite involved, maybe we can find the code in orthofinder
-
-/users/asebe/dmckeown/projects/crg-bcaortho/project-ioo_mz46/results/orthofinder_mcl/complete_dataset/Results_Inflation_2.5/Orthogroups/Orthogroups.GeneCount.tsv
-  * Straightforward, essentially is just Orthogroups.tsv just totals instead of deflines
 
 /users/asebe/dmckeown/projects/crg-bcaortho/project-ioo_mz46/results/orthofinder_mcl/complete_dataset/Results_Inflation_2.5/Comparative_Genomics_Statistics/Orthogroups_SpeciesOverlaps.tsv
   * matrix of all samples vs all - might need to hunt down OF code

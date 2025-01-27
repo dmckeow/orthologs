@@ -8,20 +8,13 @@ nextflow.enable.dsl = 2
 
 */
 
-ch_use_arrays = params.use_arrays
-
 // TODO: Build into subworkflows
 ch_aligner = params.aligner
 ch_msa_trimmer = params.msa_trimmer
 ch_tree_method = params.tree_method
 if (ch_aligner == "witch") {
-    if (ch_use_arrays) {
-        include { WITCH as ALIGN_SEQS                   } from '../modules/local/witch'
-        include { WITCH_ARRAY as ALIGN_REMAINING_SEQS         } from '../modules/local/witch'
-    } else {
-        include { WITCH as ALIGN_SEQS                   } from '../modules/local/witch'
-        include { WITCH as ALIGN_REMAINING_SEQS         } from '../modules/local/witch'
-    }
+    include { WITCH as ALIGN_SEQS                   } from '../modules/local/witch'
+    include { WITCH as ALIGN_REMAINING_SEQS         } from '../modules/local/witch'
 } else {
     include { MAFFT as ALIGN_SEQS                   } from '../modules/nf-core-modified/mafft'
     include { MAFFT as ALIGN_REMAINING_SEQS         } from '../modules/nf-core-modified/mafft'
@@ -36,21 +29,11 @@ if (ch_msa_trimmer == "clipkit") {
 }
 // Currently only arrays set up for gene trees, not the core set that becomes the species tree
 if (ch_tree_method == "iqtree") {
-    if (ch_use_arrays) {
-        include { IQTREE as INFER_TREES                 } from '../modules/nf-core-modified/iqtree'
-        include { IQTREE_ARRAY as INFER_REMAINING_TREES       } from '../modules/nf-core-modified/iqtree'
-    } else {
-        include { IQTREE as INFER_TREES                 } from '../modules/nf-core-modified/iqtree'
-        include { IQTREE as INFER_REMAINING_TREES       } from '../modules/nf-core-modified/iqtree'
-    }
+    include { IQTREE as INFER_TREES                 } from '../modules/nf-core-modified/iqtree'
+    include { IQTREE as INFER_REMAINING_TREES       } from '../modules/nf-core-modified/iqtree'
 } else {
-    if (ch_use_arrays) {
-        include { FASTTREE as INFER_TREES               } from '../modules/local/fasttree'
-        include { FASTTREE_ARRAY as INFER_REMAINING_TREES     } from '../modules/local/fasttree'
-    } else {
-        include { FASTTREE as INFER_TREES               } from '../modules/local/fasttree'
-        include { FASTTREE as INFER_REMAINING_TREES     } from '../modules/local/fasttree'
-    }
+    include { FASTTREE as INFER_TREES               } from '../modules/local/fasttree'
+    include { FASTTREE as INFER_REMAINING_TREES     } from '../modules/local/fasttree'
 }
 
 /*
@@ -78,8 +61,10 @@ include { COGEQC                                    } from '../modules/local/cog
 include { FILTER_ORTHOGROUPS                        } from '../modules/local/filter_orthogroups'
 include { ASTEROID                                  } from '../modules/local/asteroid'
 include { SPECIESRAX                                } from '../modules/local/speciesrax'
+
 include { GENERAX_PER_FAMILY                        } from '../modules/local/generax_per_family'
 include { GENERAX_PER_SPECIES                       } from '../modules/local/generax_per_species'
+
 include { ORTHOFINDER_PHYLOHOGS                     } from '../modules/local/orthofinder_phylohogs'
 include { GET_ORTHOGROUP_INFO as GET_ORTHOGROUP_INFO_OF } from '../modules/local/get_og_info'
 
@@ -99,13 +84,10 @@ include { GET_ORTHOGROUP_INFO as GET_ORTHOGROUP_INFO_BR } from '../modules/local
 // needs to be included twice under different names.
 
 
-if (ch_use_arrays) {
-    include { DIAMOND_BLASTP_ARRAY as DIAMOND_BLASTP_ALL      } from '../modules/nf-core-modified/diamond_blastp'
-    include { DIAMOND_BLASTP_ARRAY as DIAMOND_BLASTP_TEST     } from '../modules/nf-core-modified/diamond_blastp'
-} else {
-    include { DIAMOND_BLASTP as DIAMOND_BLASTP_ALL      } from '../modules/nf-core-modified/diamond_blastp'
-    include { DIAMOND_BLASTP as DIAMOND_BLASTP_TEST     } from '../modules/nf-core-modified/diamond_blastp'
-}
+
+include { DIAMOND_BLASTP as DIAMOND_BLASTP_ALL      } from '../modules/nf-core-modified/diamond_blastp'
+include { DIAMOND_BLASTP as DIAMOND_BLASTP_TEST     } from '../modules/nf-core-modified/diamond_blastp'
+
 include { IQTREE_PMSF as IQTREE_PMSF_ALL            } from '../modules/nf-core-modified/iqtree_pmsf'
 include { IQTREE_PMSF as IQTREE_PMSF_REMAINING      } from '../modules/nf-core-modified/iqtree_pmsf'
 
@@ -228,51 +210,18 @@ if (orthogroup_caller == "orthofinder") {
 
     //ORTHOFINDER_PREP_ALL.out.fastas.view { it -> "ORTHOFINDER_PREP_ALL.out.fastas: $it" }
     //ORTHOFINDER_PREP_ALL.out.diamonds.view { it -> "ORTHOFINDER_PREP_ALL.out.diamonds: $it" }
-
-
-
-    if (ch_use_arrays) {
-
-        // View the contents of the fastas channel
-        //ORTHOFINDER_PREP_ALL.out.fastas.flatten().map { file -> 
-        //    def meta = [:]
-        //    meta.id = file.baseName
-        //    [meta, file]
-        //}.view { meta, file -> 
-        //    "Fasta file: ${meta.id}, Path: ${file}"
-        //}
-        // View the contents of the diamonds channel
-        //ORTHOFINDER_PREP_ALL.out.diamonds.collect().view { 
-        //    "Diamond databases: ${it}"
-        //}
-
-        // Job array version:
-        DIAMOND_BLASTP_ALL(
-            ORTHOFINDER_PREP_ALL.out.fastas.flatten().map { file -> 
-                def meta = [:]
-                meta.id = file.baseName
-                [meta, file]
-            },
-            ORTHOFINDER_PREP_ALL.out.diamonds.collect(),
+     
+    DIAMOND_BLASTP_ALL(
+        ch_all_data,
+            ORTHOFINDER_PREP_ALL.out.fastas.flatten(),
+            ORTHOFINDER_PREP_ALL.out.diamonds.flatten(),
             "txt",
             "false",
             publish_subdir
         )
-
-        diamond_blast_files = DIAMOND_BLASTP_ALL.out.txt.flatten().collect()
-    } else {
-            // run without job array
-            DIAMOND_BLASTP_ALL(
-                ch_all_data,
-                    ORTHOFINDER_PREP_ALL.out.fastas.flatten(),
-                    ORTHOFINDER_PREP_ALL.out.diamonds.flatten(),
-                    "txt",
-                    "false",
-                    publish_subdir
-                )
-            diamond_blast_files = DIAMOND_BLASTP_ALL.out.txt.collect()
-    }
+    diamond_blast_files = DIAMOND_BLASTP_ALL.out.txt.collect()
     
+
 
     // Using this best-performing inflation parameter, infer orthogroups for
     // all samples.
@@ -336,26 +285,6 @@ if (orthogroup_caller == "orthofinder") {
     ch_spptree_fas = spptree_og_map.merge(FILTER_ORTHOGROUPS.out.spptree_fas.flatten())
     ch_genetree_fas = genetree_og_map.merge(FILTER_ORTHOGROUPS.out.genetree_fas.flatten())
 
-    // INPUTS for job arrays
-    // Group the input files into batches based on the array size
-    
-    def chunkSize = params.array_size_ogs
-
-    ch_genetree_fas_grouped = ch_genetree_fas
-        .buffer(size: chunkSize, remainder: true)
-        .map { chunk ->
-            def metas = chunk.collect { it[0] }
-            def fastas = chunk.collect { it[1] }
-            def combinedMeta = [og: metas.collect { it.og }.join(',')]
-            tuple(combinedMeta, fastas)
-        }
-
-    
-
-    //ch_genetree_fas.view { it -> "ch_genetree_fas: $it" }
-    //ch_genetree_fas_grouped.view { it -> "ch_genetree_fas_grouped: $it" }
-
-
     //
     // MODULE: ALIGN_SEQS
     // Infer multiple sequence alignments of orthogroups/gene
@@ -366,8 +295,8 @@ if (orthogroup_caller == "orthofinder") {
             ALIGN_SEQS(ch_spptree_fas, publish_subdir)
             ch_versions = ch_versions.mix(ALIGN_SEQS.out.versions)
     } else {
-        ALIGN_SEQS(ch_spptree_fas, publish_subdir)
-        ch_versions = ch_versions.mix(ALIGN_SEQS.out.versions)
+            ALIGN_SEQS(ch_spptree_fas, publish_subdir)
+            ch_versions = ch_versions.mix(ALIGN_SEQS.out.versions)
     }
 
     // And for the remaining orthogroups:
@@ -376,11 +305,7 @@ if (orthogroup_caller == "orthofinder") {
     // set of MSAs, while avoiding unnecessarily staging thousands of large files.
     
     if (ch_aligner == "witch") {
-        if (ch_use_arrays) {
-            ALIGN_REMAINING_SEQS(ch_genetree_fas_grouped, publish_subdir)
-        } else {
-            ALIGN_REMAINING_SEQS(ch_genetree_fas, publish_subdir)
-        }
+        ALIGN_REMAINING_SEQS(ch_genetree_fas, publish_subdir)
     } else {
         ALIGN_REMAINING_SEQS(ch_genetree_fas, publish_subdir)
     }
@@ -437,28 +362,9 @@ if (orthogroup_caller == "orthofinder") {
 
     INFER_TREES(ch_core_og_clean_msas, params.tree_model, publish_subdir)
 
-    if (ch_use_arrays) {
-        ch_rem_og_clean_msas_grouped = ch_rem_og_clean_msas
-            .flatMap { meta, files -> 
-                def ogs = meta.og.split(',')
-                ogs.collect { og -> tuple([og: og], files.find { it.name.contains(og) }) }
-            }
-            .buffer(size: chunkSize, remainder: true)
-            .map { chunk ->
-                def metas = chunk.collect { it[0] }
-                def fastas = chunk.collect { it[1] }
-                def combinedMeta = [og: metas.collect { it.og }.join(',')]
-                tuple(combinedMeta, fastas)
-            }
-
-
-        ch_rem_og_clean_msas_grouped.view { it -> "ch_rem_og_clean_msas_grouped: $it" }
-        
-        INFER_REMAINING_TREES(ch_rem_og_clean_msas_grouped, params.tree_model, publish_subdir)
-    } else {
-        INFER_REMAINING_TREES(ch_rem_og_clean_msas, params.tree_model, publish_subdir)
-    }
-
+    
+    INFER_REMAINING_TREES(ch_rem_og_clean_msas, params.tree_model, publish_subdir)
+    
     ch_versions = ch_versions.mix(INFER_TREES.out.versions)
 
     // Run IQ-TREE PMSF if model is specified, and subsequently collect final
@@ -531,6 +437,8 @@ if (orthogroup_caller == "orthofinder") {
         .join(ch_all_gene_trees)
         .join(ch_all_og_clean_msas)
         .combine(ch_speciesrax)
+    
+    //ch_generax_input.view { it -> "ch_generax_input: $it" }
 
     GENERAX_PER_FAMILY(
         ch_generax_input,
