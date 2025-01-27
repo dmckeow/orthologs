@@ -56,7 +56,6 @@ include { ORTHOFINDER_PREP as ORTHOFINDER_PREP_ALL  } from '../modules/local/ort
 include { ORTHOFINDER_PREP as ORTHOFINDER_PREP_TEST } from '../modules/local/orthofinder_prep'
 include { ORTHOFINDER_MCL as ORTHOFINDER_MCL_TEST   } from '../modules/local/orthofinder_mcl'
 include { ORTHOFINDER_MCL as ORTHOFINDER_MCL_ALL    } from '../modules/local/orthofinder_mcl'
-include { ANNOTATE_UNIPROT                          } from '../modules/local/annotate_uniprot'
 include { COGEQC                                    } from '../modules/local/cogeqc'
 include { FILTER_ORTHOGROUPS                        } from '../modules/local/filter_orthogroups'
 include { ASTEROID                                  } from '../modules/local/asteroid'

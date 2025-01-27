@@ -2,7 +2,7 @@ process FASTTREE {
     tag "$meta.og"
     label 'process_fasttree'
 
-    array 100
+    array params.array_size
 
     container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/fasttree_2.1.11:1.0.0':
         workflow.containerEngine == 'apptainer' ? 'arcadiascience/fasttree_2.1.11:1.0.0':

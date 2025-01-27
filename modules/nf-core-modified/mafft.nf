@@ -6,7 +6,7 @@ process MAFFT {
     tag "$fasta"
     label 'process_mafft'
 
-    array 100
+    array params.array_size
 
     conda (params.enable_conda ? "bioconda::mafft=7.490" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

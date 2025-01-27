@@ -52,8 +52,8 @@ dir.create(paste0(OUTPUT_DIR, 'orthofinder'), showWarnings = F)
 # Set colours to plot supergroups (taxonomy field in samplesheet1)
 
 SUPERGROUP_COLS <- c(
-  Bilateria_Deuterostomia = "#8DD3C7",
-  Bilateria_Protostomia = "#FFFFB3",
+  Deuterostomia = "#8DD3C7",
+  Protostomia = "#FFFFB3",
   Choanoflagellata = "#BEBADA",
   Cnidaria = "#FB8072",
   Ctenophora = "#80B1D3",
@@ -284,8 +284,8 @@ samplesheet <- read.table(SAMPLESHEET, sep = ",", header = T)
 # species, or per taxonomic supergroup:
 og_tax_count <- data.frame("gene_family" = generax_res_per_fam$events_per_og$gene_family,
              "total_number_species" = generax_res_per_fam$events_per_og$number_species,
-             "bilateria_deuterostomia_number_species" = NA,
-             "bilateria_protostomia_number_species" = NA,
+             "deuterostomia_number_species" = NA,
+             "protostomia_number_species" = NA,
              "choanoflagellata_number_species" = NA,
              "cnidaria_number_species" = NA,
              "ctenophora_number_species" = NA,
@@ -297,8 +297,8 @@ og_tax_count <- data.frame("gene_family" = generax_res_per_fam$events_per_og$gen
 
 og_tax_copynum <- data.frame("gene_family" = generax_res_per_fam$events_per_og$gene_family,
              "total_copy_number" = generax_res_per_fam$events_per_og$number_gene_copies,
-             "bilateria_deuterostomia_copy_number" = NA,
-             "bilateria_protostomia_copy_number" = NA,
+             "deuterostomia_copy_number" = NA,
+             "protostomia_copy_number" = NA,
              "choanoflagellata_copy_number" = NA,
              "cnidaria_copy_number" = NA,
              "ctenophora_copy_number" = NA,
@@ -345,8 +345,8 @@ event_rates_3d_plt <-
                           'Family: ', rates_per_og$gene_family, '<br>', 
                           'Total # Spp.: ', og_tax_summary$total_number_species, '<br>',
                           'Total Copy #: ', og_tax_summary$total_copy_number, '<br>',
-                          '# Bilateria Deuterostomia: ', og_tax_summary$bilateria_deuterostomia_number_species, '<br>',
-                          '# Bilateria Protostomia: ', og_tax_summary$bilateria_protostomia_number_species, '<br>',
+                          '# Deuterostomia: ', og_tax_summary$deuterostomia_number_species, '<br>',
+                          '# Protostomia: ', og_tax_summary$protostomia_number_species, '<br>',
                           '# Choanoflagellata: ', og_tax_summary$choanoflagellata_number_species, '<br>',
                           '# Cnidaria: ', og_tax_summary$cnidaria_number_species, '<br>',
                           '# Ctenophora: ', og_tax_summary$ctenophora_number_species, '<br>',

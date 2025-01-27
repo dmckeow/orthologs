@@ -3,7 +3,7 @@ process GENERAX_PER_FAMILY {
     label 'process_generax'
     stageInMode 'copy' // Must stage in as copy, or OpenMPI will try to contantly read from S3 which causes problems.
 
-    array 100
+    array params.array_size
 
     container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/generax_19604b71:1.0.0':
         workflow.containerEngine == 'apptainer' ? 'arcadiascience/generax_19604b71:1.0.0':

@@ -4,7 +4,7 @@ process DIAMOND_BLASTP {
     tag "$meta.id"
     label 'process_diamond'
 
-    array 100
+    array params.array_size
 
     publishDir(
         path: "${params.outdir}/${publish_subdir}/diamond",

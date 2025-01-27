@@ -8,7 +8,7 @@ process IQTREE {
     tag "$alignment"
     label 'process_iqtree'
 
-    array 100
+    array params.array_size
 
     container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/iqtree_2.2.0.5:1.0.0':
         '' }"

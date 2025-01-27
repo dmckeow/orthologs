@@ -36,33 +36,9 @@ orthofinder_dir <- args[3]
 orthofinder_tree <- args[4]
 
 
-# Load orthogroups
-og <- tryCatch(
-  read.csv(orthogroups_file, header = TRUE, stringsAsFactors = FALSE),
-  error = function(e) {
-    print(paste("Error reading orthogroups file:", e))
-    quit(status = 1)
-  }
-)
 
-# DFunction for parsing differene orthogroup callers results
-process_og <- function(data, variable_chosen) {
-  # Rename variables
-  data$Orthogroup <- data[[variable_chosen]]
-  data$Species <- data$sample
-  data$Gene <- data$cleaned_defline
-  data <- subset(data, !is.na(Orthogroup) & Orthogroup != "")
-  data <- data %>%
-    distinct(Orthogroup, Species, Gene, .keep_all = TRUE)
-  # Select the columns
-  output_data <- data.frame(
-    Orthogroup = data$Orthogroup,
-    Species = data$Species,
-    Gene = data$Gene
-  )
-  # Return the output data frame
-  return(output_data)
-}
+
+
 
 # Load samplesheet
 samplesheet <- tryCatch(
@@ -101,70 +77,6 @@ for (i in 1:nrow(samplesheet)) {
 }
 
 
-# Print summary of loaded data
-print(paste("Loaded", length(annotation), "annotation files"))
-print("Samples:")
-print(names(annotation))
-
-og$cleaned_defline <- sub(":[0-9]+-[0-9]+$", "", og$original_defline)
-
-# Identify protein names that do not match between orthologs and annotations
-# Remove those with no matches from og and list those that were removed
-
-og_cleaned_and_unmatched <- lapply(names(annotation), function(species) {
-  # Extract species-specific genes from annotation
-  species_genes <- annotation[[species]]$Gene
-  
-  # Filter og for the given species
-  species_og <- og %>%
-    filter(sample == species)
-  
-  # Find rows in og where cleaned_defline does not match any Gene in annotation
-  unmatched_rows <- species_og %>%
-    filter(!cleaned_defline %in% species_genes)
-  
-  # If unmatched rows exist, print them
-  if (nrow(unmatched_rows) > 0) {
-    cat("Species:", species, "- Unmatched entries:", nrow(unmatched_rows), "\n")
-    print(unmatched_rows)
-  }
-  
-  # Remove the unmatched rows from the species_og data
-  species_og_cleaned <- species_og %>%
-    filter(cleaned_defline %in% species_genes)  # Keep only matched rows
-  
-  # Return both the cleaned data and unmatched rows
-  list(cleaned_data = species_og_cleaned, unmatched_data = unmatched_rows)
-})
-
-# Combine all cleaned species data frames
-og <- bind_rows(lapply(og_cleaned_and_unmatched, function(x) x$cleaned_data))
-
-# Combine all unmatched rows into a single data frame for review
-og_unmatched <- bind_rows(lapply(og_cleaned_and_unmatched, function(x) x$unmatched_data))
-
-
-# To filter annotation list only by what is in the corresponding orthogroup calling
-filter_annotation_by_genes <- function(annotation_list, gene_df, gene_column = "Gene") {
-  # Extract unique genes from the gene_df
-  unique_genes <- unique(gene_df[[gene_column]])
-
-  # Iterate through each dataframe in the annotation_list
-  filtered_annotations <- lapply(annotation_list, function(annotation_df) {
-    # Filter the current annotation_df by matching genes
-    filtered_annotation <- annotation_df %>%
-      filter(Gene %in% unique_genes)
-    
-    # Return filtered dataframe (empty ones will have 0 rows)
-    return(filtered_annotation)
-  })
-  
-  # Remove empty dataframes (those with 0 rows)
-  filtered_annotations <- Filter(function(x) nrow(x) > 0, filtered_annotations)
-
-  # Return the filtered list of annotations
-  return(filtered_annotations)
-}
 
 
 # Extract ortholog table for each source tool
@@ -407,6 +319,106 @@ OUT_overlaps_ogs <- plot_og_overlap(ortho_stats)
 OUT_overlaps_ogs
 
 
-# Reference protein recall?
 
-# OrthoBench?
+
+
+##### new version for Rmd
+
+
+clean_pfam_scan_file <- function(file_path, header) {
+  lines <- readLines(file_path)
+  lines <- lines[!grepl("^#", lines)]
+  lines <- lines[nchar(lines) > 0] # remove empty lines
+  lines <- trimws(lines) # remove trailing leading whitespace
+  lines <- gsub("\\s+", ",", lines)
+  data <- read.table(text = lines, header = FALSE, sep = ",", stringsAsFactors = FALSE)
+  colnames(data) <- header
+  return(data)
+}
+
+# Path to save the functional_annotations RDS file
+orthogroups_data <- "data/orthogroups.rds"
+defline_info_data <- "data/defline_info.rds"
+functional_annotations_data <- "data/functional_annotations.rds"
+
+# Check if all three RDS files exist
+if (file.exists(orthogroups_data) && file.exists(defline_info_data) && file.exists(functional_annotations_data)) {
+  cat("RDS files already exist - loading data from them...\n")
+  # If all RDS files exist, load them
+  orthogroups <- readRDS(orthogroups_data)
+  defline_info <- readRDS(defline_info_data)
+  functional_annotations <- readRDS(functional_annotations_data)
+} else {
+  # If any file is missing, proceed with processing (you can add your processing logic here)
+  cat("One or more RDS files are missing. Proceeding with data processing...\n")
+  
+  # Load orthogroups
+  orthogroups <- cogeqc::read_orthogroups("/users/asebe/dmckeown/projects/crg-bcaortho/project-ioo_mz46/results/orthofinder_results/orthofinder_mcl/Orthogroups.tsv")
+
+  # Get all defline info 
+  file_paths <- list.files("/users/asebe/dmckeown/projects/crg-bcaortho/project-ioo_mz46/results/prefilter/initial/defline_info/", 
+                           pattern = "*.csv", full.names = TRUE)
+  defline_info <- lapply(file_paths, read.csv)
+
+  # Get functional annotations
+  species_list <- unique(orthogroups$Species)
+  file_paths <- list.files("/users/asebe/xgraubove/genomes/annotation_functional/", 
+                           pattern = "*_long.pep.pfamscan.csv", full.names = TRUE)
+
+  # Filter the file paths based on species in the orthogroups
+  filtered_file_paths <- file_paths[sapply(file_paths, function(x) {
+    any(sapply(species_list, function(species) grepl(species, x)))
+  })]
+
+  pfam_header <- c("seq_id", "alignment_start", "alignment_end", "envelope_start", "envelope_end", 
+                    "hmm_acc", "hmm_name", "type", "hmm_start", "hmm_end", "hmm_length", 
+                    "bit_score", "E_value", "significance", "clan")
+
+  # Read the filtered CSV files
+  functional_annotations <- lapply(filtered_file_paths, clean_pfam_scan_file, header = pfam_header)
+
+  # Extract seq_id values from defline_info (assuming parent_seq contains the seq_ids)
+  seq_ids_defline <- unique(unlist(lapply(defline_info, function(x) x$parent_seq)))
+
+  # Filter functional_annotations based on matching seq_id in deflines
+  functional_annotations <- lapply(functional_annotations, function(annotation_df) {
+    filtered_df <- annotation_df[annotation_df$seq_id %in% seq_ids_defline, ]
+    filtered_df <- filtered_df[, c("seq_id", "hmm_acc")]
+    colnames(filtered_df) <- c("Gene", "Annotation")
+    return(filtered_df)
+  })
+
+  functional_annotations <- do.call(rbind, functional_annotations)
+
+  # Create a mapping between parent_seq and clean_seq from defline_info
+parent_seq_to_clean_seq <- do.call(rbind, lapply(defline_info, function(x) {
+  unique(x[, c("parent_seq", "clean_seq")])
+}))
+
+# Merge functional_annotations with the clean_seq mapping
+functional_annotations <- merge(functional_annotations, parent_seq_to_clean_seq, 
+                                by.x = "Gene", by.y = "parent_seq", 
+                                all.x = TRUE)
+
+# Replace 'Gene' column (seq_id) with 'clean_seq'
+functional_annotations$Gene <- functional_annotations$clean_seq
+
+# Drop the 'parent_seq' and 'clean_seq' columns, as we don't need them anymore
+functional_annotations <- functional_annotations[, c("Gene", "Annotation")]
+
+
+  # Replace Gene annotations with clean version
+
+  # Save the processed functional_annotations to the RDS file
+  saveRDS(orthogroups, orthogroups_data)
+  saveRDS(defline_info, defline_info_data)
+  saveRDS(functional_annotations, functional_annotations_data)
+}
+
+
+og_assessment_orthofinder <- assess_orthogroups(orthogroups, functional_annotations)
+
+
+
+
+

@@ -6,7 +6,7 @@ process WITCH {
         workflow.containerEngine == 'apptainer' ? 'arcadiascience/witch_0.3.0:1.0.0' :
         '' }"
 
-    array 100
+    array params.array_size
     
     // TODO: address this issue (permission related errors) in future release
     // I removed this because using apptainer removes the need ??

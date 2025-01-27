@@ -1,4 +1,8 @@
 
+
+
+
+
 ####################################
 
 # Function to calculate the bootstrapped support values from 
@@ -112,13 +116,11 @@ plot_spp_tree <-
 # Function to read in and get per-species gene copy number
 # for each orthogroup
 get_per_spp_og_counts <- 
-  function(results_dir = NULL, out_dir = NULL){
-    orthogroup_dir <- 
-      list.files(path = paste0(results_dir, "orthofinder/complete_dataset/"), pattern = "Results_Inflation", full.names = T)
+  function(results_dir = NULL, out_dir = NULL, gene_count_tsv = NULL){
     
     # read in per-species gene copy number per gene family
     og_counts <- 
-      read.table(paste0(orthogroup_dir, "/Orthogroups/Orthogroups.GeneCount.tsv"), 
+      read.table(gene_count_tsv, 
                  header = T, check.names = F)
     colnames(og_counts) <- gsub("\\..*", "", colnames(og_counts))
     
@@ -331,7 +333,7 @@ get_per_spp_ofinder_stats <-
            grp_name = "Group", tip_grp_cols = NULL, 
            count_cols = arcadia_cividis,
            prop_cols = arcadia_viridis, outgroup = NULL,
-           out_dir = NULL){
+           out_dir = NULL, og_stats_perspp_fpath = NULL){
     
     if(is.null(tree)){tree <- read.tree(tree_fpath)}
     if(is.null(tree) & is.null(tree_fpath)){
@@ -344,11 +346,6 @@ get_per_spp_ofinder_stats <-
     # Orthogroup statistics per species       #
     ###########################################
     species <- tree$tip.label[order(tree$tip.label)]
-    
-    og_stats_perspp_fpath <- 
-      list.files(path = paste0(results_dir, "/orthofinder/complete_dataset/"), 
-                 pattern = "Statistics_PerSpecies.tsv", 
-                 recursive = T, full.names = T)
     
     # First read in the overall stats per species and write out as a table
     og_stats_perspp <- 
