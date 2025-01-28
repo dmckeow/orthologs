@@ -325,98 +325,9 @@ OUT_overlaps_ogs
 ##### new version for Rmd
 
 
-clean_pfam_scan_file <- function(file_path, header) {
-  lines <- readLines(file_path)
-  lines <- lines[!grepl("^#", lines)]
-  lines <- lines[nchar(lines) > 0] # remove empty lines
-  lines <- trimws(lines) # remove trailing leading whitespace
-  lines <- gsub("\\s+", ",", lines)
-  data <- read.table(text = lines, header = FALSE, sep = ",", stringsAsFactors = FALSE)
-  colnames(data) <- header
-  return(data)
-}
-
-# Path to save the functional_annotations RDS file
-orthogroups_data <- "data/orthogroups.rds"
-defline_info_data <- "data/defline_info.rds"
-functional_annotations_data <- "data/functional_annotations.rds"
-
-# Check if all three RDS files exist
-if (file.exists(orthogroups_data) && file.exists(defline_info_data) && file.exists(functional_annotations_data)) {
-  cat("RDS files already exist - loading data from them...\n")
-  # If all RDS files exist, load them
-  orthogroups <- readRDS(orthogroups_data)
-  defline_info <- readRDS(defline_info_data)
-  functional_annotations <- readRDS(functional_annotations_data)
-} else {
-  # If any file is missing, proceed with processing (you can add your processing logic here)
-  cat("One or more RDS files are missing. Proceeding with data processing...\n")
-  
-  # Load orthogroups
-  orthogroups <- cogeqc::read_orthogroups("/users/asebe/dmckeown/projects/crg-bcaortho/project-ioo_mz46/results/orthofinder_results/orthofinder_mcl/Orthogroups.tsv")
-
-  # Get all defline info 
-  file_paths <- list.files("/users/asebe/dmckeown/projects/crg-bcaortho/project-ioo_mz46/results/prefilter/initial/defline_info/", 
-                           pattern = "*.csv", full.names = TRUE)
-  defline_info <- lapply(file_paths, read.csv)
-
-  # Get functional annotations
-  species_list <- unique(orthogroups$Species)
-  file_paths <- list.files("/users/asebe/xgraubove/genomes/annotation_functional/", 
-                           pattern = "*_long.pep.pfamscan.csv", full.names = TRUE)
-
-  # Filter the file paths based on species in the orthogroups
-  filtered_file_paths <- file_paths[sapply(file_paths, function(x) {
-    any(sapply(species_list, function(species) grepl(species, x)))
-  })]
-
-  pfam_header <- c("seq_id", "alignment_start", "alignment_end", "envelope_start", "envelope_end", 
-                    "hmm_acc", "hmm_name", "type", "hmm_start", "hmm_end", "hmm_length", 
-                    "bit_score", "E_value", "significance", "clan")
-
-  # Read the filtered CSV files
-  functional_annotations <- lapply(filtered_file_paths, clean_pfam_scan_file, header = pfam_header)
-
-  # Extract seq_id values from defline_info (assuming parent_seq contains the seq_ids)
-  seq_ids_defline <- unique(unlist(lapply(defline_info, function(x) x$parent_seq)))
-
-  # Filter functional_annotations based on matching seq_id in deflines
-  functional_annotations <- lapply(functional_annotations, function(annotation_df) {
-    filtered_df <- annotation_df[annotation_df$seq_id %in% seq_ids_defline, ]
-    filtered_df <- filtered_df[, c("seq_id", "hmm_acc")]
-    colnames(filtered_df) <- c("Gene", "Annotation")
-    return(filtered_df)
-  })
-
-  functional_annotations <- do.call(rbind, functional_annotations)
-
-  # Create a mapping between parent_seq and clean_seq from defline_info
-parent_seq_to_clean_seq <- do.call(rbind, lapply(defline_info, function(x) {
-  unique(x[, c("parent_seq", "clean_seq")])
-}))
-
-# Merge functional_annotations with the clean_seq mapping
-functional_annotations <- merge(functional_annotations, parent_seq_to_clean_seq, 
-                                by.x = "Gene", by.y = "parent_seq", 
-                                all.x = TRUE)
-
-# Replace 'Gene' column (seq_id) with 'clean_seq'
-functional_annotations$Gene <- functional_annotations$clean_seq
-
-# Drop the 'parent_seq' and 'clean_seq' columns, as we don't need them anymore
-functional_annotations <- functional_annotations[, c("Gene", "Annotation")]
 
 
-  # Replace Gene annotations with clean version
 
-  # Save the processed functional_annotations to the RDS file
-  saveRDS(orthogroups, orthogroups_data)
-  saveRDS(defline_info, defline_info_data)
-  saveRDS(functional_annotations, functional_annotations_data)
-}
-
-
-og_assessment_orthofinder <- assess_orthogroups(orthogroups, functional_annotations)
 
 
 

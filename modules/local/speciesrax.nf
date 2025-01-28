@@ -57,7 +57,7 @@ process SPECIESRAX {
     do
         # Get the OG name
         og=\$(echo \$msa | sed -E 's/^(OG_[0-9]+|OG[0-9]+).*/\\1/')
-        tree=\$(ls \${og}*.treefile)
+        tree=\$(ls \${og}_*.treefile)
 
         # Populate the families file for this gene family for the
         # analysis with SpeciesRax

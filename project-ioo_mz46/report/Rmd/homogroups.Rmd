@@ -55,7 +55,7 @@ We will begin by creating a variable that specifies where all workflow outputs a
 
 ```{r Preparation, results = FALSE}
 suppressPackageStartupMessages(suppressWarnings(source('R/packages.R')))
-suppressPackageStartupMessages(suppressWarnings(source('R/summary-functions.R')))
+suppressPackageStartupMessages(suppressWarnings(source('R/homogroup-functions.R')))
 source('R/arcadia-color-gradients.R')
 
 # INPUTS
@@ -120,3 +120,44 @@ og_counts <- get_per_spp_og_counts(results_dir = RESULT_DIR, gene_count_tsv = GE
 ___
 
 ## Homogroup Homogeneity
+```{r Homogroup homogeneity}
+df_main <- prepare_all_data()
+
+cogeqc_input_of <- prepare_cogeqc_inputs(
+  input_df = df_main,
+  orthogroup_col = Orthogroup_Orthofinder,
+  species_col = id,
+  gene_col = clean_seq,
+  annot_col = hmm_acc,
+  annot_filter_col = type,
+  annot_filter_value = "Domain"
+)
+
+cogeqc_input_br <- prepare_cogeqc_inputs(
+  input_df = df_main,
+  orthogroup_col = Orthogroup_Broccoli,
+  species_col = id,
+  gene_col = clean_seq,
+  annot_col = hmm_acc,
+  annot_filter_col = type,
+  annot_filter_value = "Domain"
+)
+# Calculate mean orthogroup homogeneity scores across species
+og_assessment_of <- assess_orthogroups(cogeqc_input_of[["orthogroups"]], cogeqc_input_of[["annotations"]])
+og_assessment_br <- assess_orthogroups(cogeqc_input_br[["orthogroups"]], cogeqc_input_br[["annotations"]])
+
+
+og_hscores_of <- get_cogeqc_hscores(cogeqc_input_of[["orthogroups"]], cogeqc_input_of[["annotations"]])
+og_hscores_br <- get_cogeqc_hscores(cogeqc_input_br[["orthogroups"]], cogeqc_input_br[["annotations"]])
+
+
+# Example call
+cogeqc_outputs <- compare_homogeneity_scores(
+  og_hscores_of,
+  og_hscores_br,
+  comps = list(c("orthofinder", "broccoli"))
+)
+
+
+
+```
