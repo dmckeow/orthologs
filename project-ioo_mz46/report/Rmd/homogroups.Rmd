@@ -161,3 +161,116 @@ cogeqc_outputs <- compare_homogeneity_scores(
 
 
 ```
+
+---
+
+## Algorithm Comparison
+```{r Algorithm Comparison}
+# Create lists of sequences associated with each algorithm
+comp_ogs_of <- split(df_main$clean_seq, df_main$Orthogroup_Orthofinder)
+comp_ogs_of <- lapply(comp_ogs_of, unique)
+
+comp_ogs_br <- split(df_main$clean_seq, df_main$Orthogroup_Broccoli)
+comp_ogs_br <- lapply(comp_ogs_br, unique)
+
+# Initialize an empty list to store the Jaccard similarity matrices
+jaccard_results <- list()
+
+# Perform a comparison and store the result in the list with a meaningful name
+jaccard_results$of_vs_br <- calculate_jaccard_similarity(comp_ogs_of, comp_ogs_br)
+jaccard_results$of_vs_of <- calculate_jaccard_similarity(comp_ogs_of, comp_ogs_of) # self of
+jaccard_results$br_vs_br <- calculate_jaccard_similarity(comp_ogs_br, comp_ogs_br) # self br
+
+
+
+# Define the function to calculate the metrics for a matrix
+calculate_jaccard_metrics <- function(data, tool1_name, tool2_name) {
+  data_matrix <- as.matrix(data)
+  all_values <- as.vector(data_matrix)
+  total_ogs <- nrow(data_matrix) + ncol(data_matrix) - 1
+
+  rows_with_one <- sum(apply(data_matrix, 1, function(row) any(row == 1, na.rm = TRUE)))
+  cols_with_one <- sum(apply(data_matrix, 1, function(col) any(col == 1, na.rm = TRUE)))
+  total_ogs_with_one = rows_with_one + cols_with_one - 1
+  portion_ones <- (total_ogs_with_one / total_ogs)
+
+  max_jaccard_per_column <- apply(data_matrix, 2, max, na.rm = TRUE)
+  mean_best_jaccard_index <- mean(max_jaccard_per_column, na.rm = TRUE)
+
+  # Create a data frame with the results
+  result <- data.frame(
+    tool1 = tool1_name,
+    tool2 = tool2_name,
+    Portion_of_OGs_identical_pw = portion_ones,
+    Mean_Best_Jaccard = mean_best_jaccard_index
+  )
+  
+  return(result)
+}
+
+
+# Assuming jaccard_results is a list with matrices for each pair
+metrics_of_vs_br <- calculate_jaccard_metrics(jaccard_results$of_vs_br, "OrthoFinder", "Broccoli")
+metrics_br_vs_br <- calculate_jaccard_metrics(jaccard_results$br_vs_br, "Broccoli", "Broccoli")
+metrics_of_vs_of <- calculate_jaccard_metrics(jaccard_results$of_vs_of, "OrthoFinder", "OrthoFinder")
+
+metrics_all <- rbind(metrics_of_vs_br, metrics_br_vs_br, metrics_of_vs_of)
+
+
+######### test
+
+# Create the data frame
+df <- data.frame(
+  tool1 = c("OrthoFinder", "Broccoli", "OrthoFinder"),
+  tool2 = c("Broccoli", "Broccoli", "OrthoFinder"),
+  Portion_of_OGs_identical_pw = c(0.004711752, 1.000000000, 1.000000000),
+  Mean_Best_Jaccard = c(0.4436596, 1.0000000, 1.0000000)
+)
+
+
+# Step 1: Split into two data frames
+df_portion <- df[, c("tool1", "tool2", "Portion_of_OGs_identical_pw")]
+df_jaccard <- df[, c("tool1", "tool2", "Mean_Best_Jaccard")]
+
+# Step 2: Process the Mean_Best_Jaccard data frame
+# Remove rows where tool1 == tool2
+df_jaccard <- df_jaccard[df_jaccard$tool1 != df_jaccard$tool2, ]
+
+# Swap tool1 and tool2 for the remaining rows
+df_jaccard_swapped <- df_jaccard
+df_jaccard_swapped$tool1 <- df_jaccard$tool2
+df_jaccard_swapped$tool2 <- df_jaccard$tool1
+
+df_portion$Triangle <- "upper"
+df_jaccard_swapped$Triangle <- "lower"
+
+df_portion <- df_portion %>%
+  rename(Value = Portion_of_OGs_identical_pw, Metric = "Portion_of_OGs_identical_pw")
+
+df_jaccard_swapped <- df_jaccard_swapped %>%
+  rename(Value = Mean_Best_Jaccard, Metric = "Mean_Best_Jaccard")
+
+
+# Combine the two data frames
+combined_df <- rbind(df_portion, df_jaccard_swapped)
+
+# Step 1: Reshape the combined data to long format for ggplot
+combined_df_long <- melt(combined_df, id.vars = c("tool1", "tool2", "Triangle"), value.name = "Value")
+
+# Step 2: Create a custom ggplot
+ggplot(combined_df_long, aes(x = tool2, y = tool1, fill = Value)) +
+  geom_tile() +
+  scale_fill_gradient2(
+    low = "red", mid = "white", high = "blue", midpoint = 0.5, 
+    guide = "colorbar", na.value = "transparent",
+    breaks = seq(0, 1, by = 0.1)
+  ) +
+  facet_wrap(~ Triangle, scales = "free", ncol = 1) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Combined Heatmap of Portion and Jaccard",
+       x = "Tool 2", y = "Tool 1", fill = "Value") +
+  theme(strip.background = element_blank(), 
+        strip.text = element_blank()) # remove facet labels
+
+```

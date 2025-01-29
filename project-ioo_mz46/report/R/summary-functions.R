@@ -1151,3 +1151,41 @@ plot_rates_per_spp <-
       'dt_ratio' = dt_ratio_p)
     return(rate_plts)
   }
+
+
+
+
+## Jaccard pairwise
+  # Function to calculate Jaccard similarity between two sets of sequences
+jaccard_similarity <- function(set1, set2) {
+  intersection_size <- length(intersect(set1, set2))
+  union_size <- length(union(set1, set2))
+  return(intersection_size / union_size)
+}
+
+# Function to calculate pairwise Jaccard similarity between two orthogroup lists
+calculate_jaccard_similarity <- function(ogs1, ogs2) {
+  # Get the orthogroup IDs (names of the list)
+  og_ids1 <- names(ogs1)
+  og_ids2 <- names(ogs2)
+  
+  # Initialize the similarity matrix
+  jaccard_matrix <- matrix(0, nrow = length(og_ids1), ncol = length(og_ids2))
+  rownames(jaccard_matrix) <- og_ids1
+  colnames(jaccard_matrix) <- og_ids2
+  
+  # Loop through all pairs of orthogroups and calculate Jaccard similarity
+  for (i in 1:length(og_ids1)) {
+    for (j in 1:length(og_ids2)) {
+      # Get the sets of sequences
+      set1 <- ogs1[[og_ids1[i]]]
+      set2 <- ogs2[[og_ids2[j]]]
+      
+      # Calculate Jaccard similarity and store it in the matrix
+      jaccard_matrix[i, j] <- jaccard_similarity(set1, set2)
+    }
+  }
+  
+  # Return the Jaccard similarity matrix
+  return(jaccard_matrix)
+}
