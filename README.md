@@ -25,7 +25,7 @@ sbatch submit_nf.sh main.nf -profile slurm -c params-fullhmms.config
 ```
 
 # Notes
-### How Broccoli was incorporated in the pipeline
+### How Broccoli, Possvm was incorporated in the pipeline
 
 ```
 # Broccoli added as a git submodule
@@ -35,7 +35,14 @@ git submodule add https://github.com/rderelle/Broccoli.git broccoli
 git add .gitmodules broccoli
 git commit -m "Add Broccoli as a submodule"
 
-# To update the Broccoli submodule
+# possvm added as a git submodule
+git submodule add https://github.com/xgrau/possvm-orthology.git possvm
+
+# possvm submodule committed
+git add .gitmodules possvm
+git commit -m "Add possvm as a submodule"
+
+# To update a submodule
 cd broccoli
 git pull origin master
 cd ..
@@ -43,7 +50,7 @@ git add broccoli
 git commit -m "Update Broccoli submodule"
 
 
-# If the broccoli module mysteriously disappears
+# If the a submodule mysteriously disappears
 git config --file=.gitmodules --get-regexp path # check if the submodule still setup
 git submodule init
 git submodule update

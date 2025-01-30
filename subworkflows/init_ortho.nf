@@ -69,6 +69,7 @@ include { GET_ORTHOGROUP_INFO as GET_ORTHOGROUP_INFO_OF } from '../modules/local
 
 include { BROCCOLI                                  } from '../modules/local/broccoli'
 include { GET_ORTHOGROUP_INFO as GET_ORTHOGROUP_INFO_BR } from '../modules/local/get_og_info'
+include { POSSVM                           } from '../modules/local/possvm'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -366,6 +367,8 @@ if (orthogroup_caller == "orthofinder") {
     
     ch_versions = ch_versions.mix(INFER_TREES.out.versions)
 
+
+
     // Run IQ-TREE PMSF if model is specified, and subsequently collect final
     // phylogenies into a channel for downstram use
     if (params.tree_model_pmsf != 'none') {
@@ -394,33 +397,52 @@ if (orthogroup_caller == "orthofinder") {
         core_gene_tree_list = ch_core_gene_trees.collect { it[1] }
     }
 
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    OPTIONAL: species tree inference from core set of genes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
     // The following two steps will just be done for the core set of
     // orthogroups that will be used to infer the species tree
+    // If an external tree is provided, then these steps are skipped, and the external tree is used for genereax as the species tree
     //
     // MODULE: ASTEROID
-    // Alrighty, now let's infer an intial, unrooted species tree using Asteroid
+    // Asteroid is used to infer an unrooted species tree
     //
-    ASTEROID(species_name_list, core_gene_tree_list, params.outgroups, publish_subdir)
-        .rooted_spp_tree
-        .set { ch_asteroid }
-    ch_versions = ch_versions.mix(ASTEROID.out.versions)
+    if (!params.species_tree) {
+        ASTEROID(species_name_list, core_gene_tree_list, params.outgroups, publish_subdir)
+            .rooted_spp_tree
+            .set { ch_asteroid }
+        ch_versions = ch_versions.mix(ASTEROID.out.versions)
+    
+        // If no outgroups are provided (and thus no rooted species tree output
+        // by Asteroid), define ch_asteroid as a null/empty channel
+        if (params.outgroups == "none") {
+            ch_asteroid = Channel.value("none")
+        }
 
-    // If no outgroups are provided (and thus no rooted species tree output
-    // by Asteroid), define ch_asteroid as a null/empty channel
-    if (params.outgroups == "none") {
-        ch_asteroid = Channel.value("none")
+        //
+        // MODULE: SPECIESRAX
+        // Now infer the rooted species tree with SpeciesRax,
+        //
+        SPECIESRAX(core_og_maplink_list, core_gene_tree_list, core_og_clean_msa_list, ch_asteroid, publish_subdir)
+            .speciesrax_tree
+            .set { ch_speciesrax }
+        ch_versions = ch_versions.mix(SPECIESRAX.out.versions)
+    } else {
+        // Use externally provided tree
+        ch_speciesrax = Channel.fromPath(params.species_tree)
     }
 
-    //
-    // MODULE: SPECIESRAX
-    // Now infer the rooted species tree with SpeciesRax,
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    GENE FAMILY TREE RECONCILIATION WITH GENE RAX
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+
+
     // reconcile gene family trees, and infer per-family
     // rates of gene-family duplication, transfer, and loss
-    //
-    SPECIESRAX(core_og_maplink_list, core_gene_tree_list, core_og_clean_msa_list, ch_asteroid, publish_subdir)
-        .speciesrax_tree
-        .set { ch_speciesrax }
-    ch_versions = ch_versions.mix(SPECIESRAX.out.versions)
 
     // Now prepare for analysis with GeneRax
     ch_all_map_links = ch_core_og_maplinks
@@ -460,8 +482,9 @@ if (orthogroup_caller == "orthofinder") {
     // Now using the reconciled gene family trees and rooted species tree,
     // parse orthogroups/gene families into hierarchical orthogroups (HOGs)
     // to identify orthologs and output orthogroup-level summary stats.
-    // NEED to replace this with POSSVM
-if (orthogroup_caller == "orthofinder") {
+    // We will replace this with possvm, as possvm can be used for any tool, where as this is specific to Orthofinder
+    // This step does not work with species with extra species not in the samplesheet
+if (orthogroup_caller == "orthofinder_pause_phylogs") {
     ORTHOFINDER_PHYLOHOGS(
         ch_speciesrax,
         ORTHOFINDER_MCL_ALL.out.inflation_dir,
@@ -474,5 +497,15 @@ if (orthogroup_caller == "orthofinder") {
     )
 
 }
+    // Use possvm to parse the homogroups in to orthogroups using reconciled gene trees from generax
+    POSSVM(
+        GENERAX_PER_SPECIES.out.generax_per_spp_gfts,
+        publish_subdir
+    )
+
+    // We will need to parse the possvm OGs to fastas and relevant info like with the homogroups later
+
+
+
 }
 

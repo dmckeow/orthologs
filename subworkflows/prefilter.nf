@@ -6,7 +6,7 @@ nextflow.preview.output = true
 include { PREFILTER_SEARCH } from '../modules/local/prefilter_search'
 
 process CONCATENATE_FASTAS {
-    tag "Concatentaing fastas from hmmsearch to keep one input per species or OrthoFinder etc"
+    tag "Concatenating fastas from hmmsearch to keep one input per species or OrthoFinder etc"
     label 'process_low'
     publishDir "${params.outdir}/prefilter/initial/clean_fasta/merged", mode: 'copy'
     array 100

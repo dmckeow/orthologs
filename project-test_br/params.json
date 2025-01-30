@@ -13,5 +13,6 @@
         "orthofinder": true,
         "broccoli": true
     },
-    "array_size": 100
+    "array_size": 100,
+    "species_tree": "/users/asebe/gzolotarov/projects/2021_TFevol/metazoan_tf_evol_2022/030523_phylogenies/data_annotation/species_tree.newick"
 }

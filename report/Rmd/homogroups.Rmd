@@ -45,7 +45,7 @@ We will begin by creating a variable that specifies where all workflow outputs a
 /users/asebe/xgraubove/genomes/annotation_functional/*_long.pep.pfamscan.csv
   * **Precalculated functional annotations**, needs gene id, PFAM accession for OG homogeneity assessment by cogeqc
 
-### Inputs needed, but currently only available for orthofinder
+### Inputs that MIGHT be needed, but currently only available for orthofinder
 /users/asebe/dmckeown/projects/crg-bcaortho/project-ioo_mz46/results/orthofinder_mcl/complete_dataset/Results_Inflation_2.5/Comparative_Genomics_Statistics/Statistics_PerSpecies.tsv
   * Basic stats of ortholog size etc by species
 
@@ -66,6 +66,11 @@ SAMPLESHEET <- "/users/asebe/dmckeown/projects/crg-bcaortho/project-ioo_mz46/sam
 
 STATS_PER_SPP_TSV <- "../results/orthofinder_results/orthofinder_mcl/complete_dataset/Results_Inflation_2.5/Comparative_Genomics_Statistics/Statistics_PerSpecies.tsv"
 GENE_COUNTS_TSV <- "../results/orthofinder_results/orthofinder_mcl/Orthogroups.GeneCount.tsv"
+
+# If you did not provide an external tree then it will be this:
+#SPECIES_TREE <- paste0(RESULT_DIR, 'speciesrax/species_trees/inferred_species_tree.newick')
+# Otherwise, give the path to the tree you provided
+SPECIES_TREE <- '/users/asebe/gzolotarov/projects/2021_TFevol/metazoan_tf_evol_2022/030523_phylogenies/data_annotation/species_tree.newick'
 
 # OUTPUTS
 # And where summarized results should be saved.
@@ -91,7 +96,38 @@ SUPERGROUP_COLS <- c(
 ```
 
 ___
-    
+
+```{r}
+mermaid("
+graph TB
+  A[Proteome fastas]==>B[HMMsearch vs Gene Families]
+  B==>C
+  A-- Or run whole proteomes -->C{Call initial orthogroups}
+  C== Broccoli ==>D((Initial orthogroups))
+  C== OrthoFinder2 ==>D
+  C== MMSeqs2 ==>D
+  C== Other tools... ==>D
+  subgraph workflow runs in parallel for each initial OG caller
+  D==>E[Filter initial OGs by size, # species, etc...]
+  E==>F[Multiple sequence alignment, MAFFT or WITCH]
+  F==>G[Infer phylogeny, IQTree2 or Fasttree]
+  G==>H((Gene family trees))
+  G-->G2
+  G2[Infer species tree from GFT subset with Speciesrax]-->J((Species tree))
+  K((User provided species tree))==>J
+  H==>I[Reconcile GFTs with species tree with Generax]
+  J==>I
+  I==>L[Infer final orthgroups with Possvm & reconciled GFTs]
+  end
+  L==>M((Final orthogroups))
+  
+
+
+  
+  
+")
+
+```
 ___
 
 ## Gene Family Summaries {.tabset}
@@ -104,7 +140,7 @@ summ_genefam_composition(results_dir = RESULT_DIR, show_plots = T, out_dir = pas
 
 # And get orthogroup summary statistics per species
 per_spp_of_stats <-
-  get_per_spp_ofinder_stats(tree_fpath = paste0(RESULT_DIR, 'speciesrax/species_trees/inferred_species_tree.newick'),
+  get_per_spp_ofinder_stats(tree_fpath = SPECIES_TREE,
                         samplesheet_fpath = SAMPLESHEET,
                         results_dir = RESULT_DIR, grp_name = 'Supergroup',
                         out_dir = paste0(OUTPUT_DIR, 'orthofinder/'),

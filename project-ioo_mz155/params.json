@@ -1,7 +1,7 @@
 {
-    "samplesheet": "project-ioo_mz46/samplesheet1.csv",
-    "search_params": "project-ioo_mz46/samplesheet2.csv",
-    "outdir": "project-ioo_mz46/results",
+    "samplesheet": "project-ioo_mz155/samplesheet1.csv",
+    "search_params": "project-ioo_mz155/samplesheet2.csv",
+    "outdir": "project-ioo_mz155/results",
     "mcl_inflation": 2.5,
     "min_num_spp_per_og": 4,
     "min_num_grp_per_og": 2,
@@ -13,6 +13,6 @@
         "orthofinder": true,
         "broccoli": true
     },
-    "array_size": 200,
+    "array_size": 300,
     "species_tree": "/users/asebe/gzolotarov/projects/2021_TFevol/metazoan_tf_evol_2022/030523_phylogenies/data_annotation/species_tree.newick"
 }

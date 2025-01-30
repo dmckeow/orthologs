@@ -2,6 +2,7 @@
 nextflow.enable.dsl = 2
 nextflow.preview.output = true
 
+include { CHECK_SPECIES_TREE } from './modules/local/check_species_tree'
 include { PREFILTER } from './subworkflows/prefilter'
 include { INIT_ORTHO as INIT_ORTHO_ORTHOFINDER } from './subworkflows/init_ortho'
 include { INIT_ORTHO as INIT_ORTHO_BROCCOLI } from './subworkflows/init_ortho'
@@ -17,6 +18,24 @@ workflow {
 
     if (params.run.prefilter_hmmsearch && params.search_params == null) {
         log.warn "search_params needs '--search_params' option - running on whole proteome"
+    }
+    
+    if (params.species_tree) {
+        CHECK_SPECIES_TREE(
+            file(params.samplesheet),
+            params.species_tree
+        )
+
+        // Handle the log output
+        CHECK_SPECIES_TREE.out
+            .map { log ->
+                def content = log.text
+                println "Species Tree Check Log:"
+                println content
+                if (content.contains("ERROR:")) {
+                    error "Species tree validation failed. Pipeline terminated due to missing species in the tree."
+                }
+            }
     }
 
     // Run the orthology workflow

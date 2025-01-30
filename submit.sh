@@ -23,7 +23,7 @@ SLURM_ERR="logs/slurm-nf.${SLURM_JOB_ID}.err"
 SUBMISSION_TIME=$(date '+%Y-%m-%d %H:%M:%S')
 
 # Log the submission
-echo -e "${SUBMISSION_TIME}\t${SLURM_JOB_ID}\t${SLURM_LOG}\t${SLURM_ERR}\tsbatch submit_nf.sh $@\t" >> "$LOG_FILE"
+echo -e "${SUBMISSION_TIME}\t${SLURM_JOB_ID}\t${SLURM_LOG}\t${SLURM_ERR}\tsbatch submit.sh $@\t" >> "$LOG_FILE"
 
 ############################################
 
@@ -52,7 +52,7 @@ export NXF_JVM_ARGS="-Xms2g -Xmx5g"
 
 # Run the pipeline. The command uses the arguments passed to this script, e.g:
 #
-# $ sbatch submit_nf.sh nextflow/rnatoy -with-singularity
+# $ sbatch submit.sh nextflow/rnatoy -with-singularity
 #
 # will use "nextflow/rnatoy -with-singularity" as arguments
 nextflow run -ansi-log false "$@" & pid=$!
