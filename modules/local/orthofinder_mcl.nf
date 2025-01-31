@@ -9,7 +9,7 @@ process ORTHOFINDER_MCL {
     publishDir (
         path: "${params.outdir}/${publish_subdir}/orthofinder_mcl",
         mode: 'copy',
-        pattern: "${output_directory}/Results_Inflation*",
+        pattern: "OrthoFinder/Results_Inflation*",
         saveAs: { fn -> fn }
     )
 
@@ -20,12 +20,11 @@ process ORTHOFINDER_MCL {
     file(db)
     file(sppIDs)
     file(seqIDs)
-    val output_directory
     val publish_subdir
 
     output:
-    path("${output_directory}/Results_Inflation_${mcl_inflation}"), emit: inflation_dir
-    path("${output_directory}/Results_Inflation_${mcl_inflation}/Orthogroup_Sequences"), emit: initial_orthogroups_fa_dir
+    path("OrthoFinder/Results_Inflation_${mcl_inflation}"), emit: inflation_dir
+    path("OrthoFinder/Results_Inflation_${mcl_inflation}/Orthogroup_Sequences"), emit: initial_orthogroups_fa_dir
 
     when:
     task.ext.when == null || task.ext.when
@@ -35,7 +34,6 @@ process ORTHOFINDER_MCL {
 
     """
     
-
     orthofinder \\
         -b ./ \\
         -n "Inflation_${mcl_inflation}" \\
@@ -44,15 +42,5 @@ process ORTHOFINDER_MCL {
         -a ${task.cpus} \\
         $args
 
-    
-    dir=\$(pwd)
-    cd \$(ls -d OrthoFinder/*/WorkingDirectory)
-    tar -czvf Sequences_ids.tar.gz Sequences_ids
-    cd \$dir
-
-
-    # Restructure to get rid of the unnecessary "OrthoFinder" directory"
-    mkdir -p ${output_directory}
-    cp -r OrthoFinder/Results_Inflation_${mcl_inflation}/ ${output_directory}/
     """
 }

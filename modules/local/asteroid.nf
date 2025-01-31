@@ -25,8 +25,7 @@ process ASTEROID {
     path "*bsTrees.newick"                 , emit: asteroid_bs_trees
     path "*scores.txt"                     , emit: asteroid_scores
     path "disco*.newick"                   , emit: disco_trees
-    path "versions.yml"                    , emit: versions
-
+    
     when:
     task.ext.when == null || task.ext.when
 
@@ -81,10 +80,5 @@ process ASTEROID {
         reroot_speciestree.R asteroid.bestTree.newick $outgroups
     fi
 
-    # Version is hardcoded for now (asteroid doesn't output this currently)
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        asteroid: 1.0
-    END_VERSIONS
     """
 }

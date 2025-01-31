@@ -21,7 +21,7 @@ process GET_ORTHOGROUP_INFO {
     
     script:
     """
-    mkdir -p ${output_dir}
+    mkdir ${output_dir}
     python3 ${projectDir}/bin/get_og_deflines.py ${orthogroup_fasta_dir} -o ${output_dir}
     """
 }

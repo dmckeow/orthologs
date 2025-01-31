@@ -28,8 +28,7 @@ process WITCH {
     tuple val(meta), path("**_witch_cleaned.fa") , emit: cleaned_msas, optional: true
     tuple val(meta), path("**_map.link")         , emit: map_link, optional: true
     path("*")                                    , emit: results
-    path "versions.yml"                          , emit: versions
-
+    
     when:
     task.ext.when == null || task.ext.when
 
@@ -107,10 +106,6 @@ process WITCH {
         rm prot && rm spp
     fi
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        witch: v\$(python3 /WITCH/witch.py -v | cut -f2 -d " ")
-    END_VERSIONS
     """
 }
 

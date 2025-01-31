@@ -29,7 +29,6 @@ process SPECIESRAX {
     output:
     path "*"                                          , emit: results
     path "species_trees/inferred_species_tree.newick" , emit: speciesrax_tree
-    path "versions.yml"                               , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -88,9 +87,5 @@ process SPECIESRAX {
     # directory and cleaning up
     cp -r SpeciesRax/* .
     
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        generax: \$( generax | head -n1 | sed "s/.*GeneRax //g" )
-    END_VERSIONS
     """
 }

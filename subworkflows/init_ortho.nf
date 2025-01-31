@@ -131,7 +131,6 @@ workflow INIT_ORTHO {
 
     main:
 
-    ch_versions = Channel.empty()
     ch_best_inflation = Channel.of(mcl_inflation)
 
     // Determine which input to use based on prefilter
@@ -197,10 +196,8 @@ if (orthogroup_caller == "orthofinder") {
     //
     ORTHOFINDER_PREP_ALL(
         complete_prots_list,
-        "complete_dataset",
         publish_subdir
         )
-    ch_versions = ch_versions.mix(ORTHOFINDER_PREP_ALL.out.versions)
 
     //
     // MODULE: All-v-All diamond/blastp
@@ -232,7 +229,6 @@ if (orthogroup_caller == "orthofinder") {
         ORTHOFINDER_PREP_ALL.out.diamonds,
         ORTHOFINDER_PREP_ALL.out.sppIDs,
         ORTHOFINDER_PREP_ALL.out.seqIDs,
-        "complete_dataset",
         publish_subdir
     )
 
@@ -293,10 +289,8 @@ if (orthogroup_caller == "orthofinder") {
     // For the extreme core set to be used in species tree inference
     if (ch_aligner == "witch") {
             ALIGN_SEQS(ch_spptree_fas, publish_subdir)
-            ch_versions = ch_versions.mix(ALIGN_SEQS.out.versions)
     } else {
             ALIGN_SEQS(ch_spptree_fas, publish_subdir)
-            ch_versions = ch_versions.mix(ALIGN_SEQS.out.versions)
     }
 
     // And for the remaining orthogroups:
@@ -337,7 +331,6 @@ if (orthogroup_caller == "orthofinder") {
             ch_rem_og_maplinks = TRIM_REMAINING_MSAS.out.map_link
             ch_core_og_clean_msas = TRIM_MSAS.out.cleaned_msas
             ch_rem_og_clean_msas = TRIM_REMAINING_MSAS.out.cleaned_msas
-            ch_versions = ch_versions.mix(TRIM_MSAS.out.versions)
         } else {
             TRIM_MSAS(ALIGN_SEQS.out.msas, publish_subdir)
             TRIM_REMAINING_MSAS(ALIGN_REMAINING_SEQS.out.msas, publish_subdir)
@@ -345,7 +338,6 @@ if (orthogroup_caller == "orthofinder") {
             ch_rem_og_maplinks = TRIM_REMAINING_MSAS.out.map_link
             ch_core_og_clean_msas = TRIM_MSAS.out.cleaned_msas
             ch_rem_og_clean_msas = TRIM_REMAINING_MSAS.out.cleaned_msas
-            ch_versions = ch_versions.mix(TRIM_MSAS.out.versions)
         }
     }
     // Create channels that are just lists of all the msas, and protein-species
@@ -365,10 +357,6 @@ if (orthogroup_caller == "orthofinder") {
     
     INFER_REMAINING_TREES(ch_rem_og_clean_msas, params.tree_model, publish_subdir)
     
-    ch_versions = ch_versions.mix(INFER_TREES.out.versions)
-
-
-
     // Run IQ-TREE PMSF if model is specified, and subsequently collect final
     // phylogenies into a channel for downstram use
     if (params.tree_model_pmsf != 'none') {
@@ -385,7 +373,6 @@ if (orthogroup_caller == "orthofinder") {
         // Now run
         IQTREE_PMSF(ch_pmsf_input, params.tree_model_pmsf, publish_subdir)
         IQTREE_PMSF_REMAINING(ch_pmsf_input_remaining, params.tree_model_pmsf, publish_subdir)
-        ch_versions = ch_versions.mix(IQTREE_PMSF.out.versions)
 
         ch_core_gene_trees = IQTREE_PMSF.out.phylogeny
         ch_rem_gene_trees = IQTREE_PMSF_REMAINING.out.phylogeny
@@ -413,7 +400,6 @@ if (orthogroup_caller == "orthofinder") {
         ASTEROID(species_name_list, core_gene_tree_list, params.outgroups, publish_subdir)
             .rooted_spp_tree
             .set { ch_asteroid }
-        ch_versions = ch_versions.mix(ASTEROID.out.versions)
     
         // If no outgroups are provided (and thus no rooted species tree output
         // by Asteroid), define ch_asteroid as a null/empty channel
@@ -428,7 +414,6 @@ if (orthogroup_caller == "orthofinder") {
         SPECIESRAX(core_og_maplink_list, core_gene_tree_list, core_og_clean_msa_list, ch_asteroid, publish_subdir)
             .speciesrax_tree
             .set { ch_speciesrax }
-        ch_versions = ch_versions.mix(SPECIESRAX.out.versions)
     } else {
         // Use externally provided tree
         ch_speciesrax = Channel.fromPath(params.species_tree)

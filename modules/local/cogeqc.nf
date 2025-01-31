@@ -20,8 +20,7 @@ process COGEQC {
 
     output:
     path "*_cogeqc_summary.tsv" , emit: cogeqc_summary
-    path "versions.yml"         , emit: versions
-
+    
     when:
     task.ext.when == null || task.ext.when
 
@@ -33,9 +32,6 @@ process COGEQC {
     # other summary stats like number of ogs with >= the minimum # species,
     # per-species gene count per-og, etc.
     ${projectDir}/bin/cogeqc_summarize_ogs.R ${orthofinder_outdir} ${min_spp}
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        cogeqc: \$( cat version.txt | head -n1 | sed "s/\\[1] ‘//g" | sed "s/’//g" )
-    END_VERSIONS
+    
     """
 }

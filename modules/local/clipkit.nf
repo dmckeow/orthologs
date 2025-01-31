@@ -19,8 +19,7 @@ process CLIPKIT {
     output:
     tuple val(meta), path("**_clipkit.fa") , emit: cleaned_msas, optional: true
     tuple val(meta), path("**_map.link")   , emit: map_link, optional: true
-    path "versions.yml"                    , emit: versions
-
+    
     when:
     task.ext.when == null || task.ext.when
 
@@ -51,10 +50,5 @@ process CLIPKIT {
     paste prot spp > species_protein_maps/\${prefix}_map.link
     rm prot && rm spp
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        clipkit: \$( clipkit --version | sed "s/clipkit //g" )
-        seqmagick: \$( seqmagick --version | cut -f2 -d" " )
-    END_VERSIONS
     """
 }

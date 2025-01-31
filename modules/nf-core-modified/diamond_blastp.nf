@@ -33,7 +33,6 @@ process DIAMOND_BLASTP {
     path('*.sam*')      , optional: true, emit: sam
     path('*.tsv*')      , optional: true, emit: tsv
     path('*.paf*')      , optional: true, emit: paf
-    path "versions.yml" , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -76,10 +75,6 @@ process DIAMOND_BLASTP {
         --db $db \\
         $args
 
-    cat <<-END_VERSIONS >> versions.yml
-    "${task.process}":
-        diamond: \$(diamond --version 2>&1 | tail -n 1 | sed 's/^diamond version //')
-    END_VERSIONS
     """
 }
 

@@ -17,11 +17,9 @@ process BROCCOLI {
     output:
     path("dir_step3/orthologous_groups.txt"), emit: orthologous_groups
     path("dir_step3/table_OGs_protein_names.txt"), emit: table_OGs_protein_names
-    path("**"), emit: broccoli
     path("dir_step3/Orthogroup_Sequences"), emit: orthologous_groups_sequences
     path("dir_step4/orthologous_pairs.txt"), emit: orthologous_pairs
-    path "versions.yml", emit: versions
-
+    
     when:
     task.ext.when == null || task.ext.when
 
@@ -39,11 +37,6 @@ process BROCCOLI {
         -f input \\
         -o dir_step3/Orthogroup_Sequences
 
-    rm -fr input
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        broccoli: \$(python ${projectDir}/broccoli/broccoli.py --version 2>&1 | sed 's/^.*Broccoli //; s/ .*\$//')
-    END_VERSIONS
+    
     """
 }

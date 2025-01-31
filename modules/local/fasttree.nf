@@ -21,7 +21,6 @@ process FASTTREE {
 
     output:
     tuple val(meta), path("*.treefile") , emit: phylogeny
-    path "versions.yml"                 , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -42,9 +41,5 @@ process FASTTREE {
     ${projectDir}/bin/resolve_polytomies.R ${og}_ft.treefile resolved.tree
     mv resolved.tree ${og}_ft.treefile
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        FastTree: \$(FastTreeDblMP 2>&1 | head -n1 | cut -d" " -f5)
-    END_VERSIONS
     """
 }

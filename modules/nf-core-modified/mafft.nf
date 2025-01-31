@@ -27,7 +27,6 @@ process MAFFT {
     tuple val(meta), path("**_mafft.fa")         , emit: msas
     tuple val(meta), path("**_map.link")         , emit: map_link, optional: true
     path("*")                                    , emit: results
-    path "versions.yml"                          , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -53,9 +52,5 @@ process MAFFT {
         rm prot && rm spp
     fi
     
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        mafft: \$(mafft --version 2>&1 | sed 's/^v//' | sed 's/ (.*)//')
-    END_VERSIONS
     """
 }

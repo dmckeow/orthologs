@@ -20,7 +20,6 @@ process CIALIGN {
     tuple val(meta), path("**_cialign.fa") , emit: cleaned_msas, optional: true
     tuple val(meta), path("**_map.link")   , emit: map_link, optional: true
     path "*"                               , emit: results
-    path "versions.yml"                    , emit: versions
 
     script:
     def args = task.ext.args ?: ''
@@ -64,9 +63,5 @@ process CIALIGN {
         rm prot && rm spp
     fi
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        CIAlign: \$( CIAlign --version )
-    END_VERSIONS
     """
 }

@@ -26,8 +26,7 @@ process IQTREE_PMSF {
     output:
     tuple val(meta), path("*pmsf.treefile") , emit: phylogeny
     tuple val(meta), path("*.log")      , emit: iqtree_log
-    path "versions.yml"                 , emit: versions
-
+    
     when:
     task.ext.when == null || task.ext.when
 
@@ -51,9 +50,5 @@ process IQTREE_PMSF {
     mv ${alignment}.treefile ${alignment}.pmsf.treefile
     mv ${alignment}.log ${alignment}.pmsf.log
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        iqtree: \$(echo \$(iqtree -version 2>&1) | sed 's/^IQ-TREE multicore version //;s/ .*//')
-    END_VERSIONS
     """
 }

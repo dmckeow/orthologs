@@ -46,8 +46,6 @@ process FILTER_ORTHOGROUPS {
     # species/gene tree inference based on their distribution
     # and copy numbers
 
-    ####og_spp_counts=\${orthofinder_outdir}/Orthogroups/Orthogroups.GeneCount.tsv
-
     # Run the scripts to generate the orthogroup species/taxa gene count summaries and filtered sets
     ${projectDir}/bin/og_tax_summary.R ${og_spp_counts} $samplesheet $min_num_seqs $min_num_spp $min_prop_spp_for_spptree $min_num_groups $max_copy_num_filt1 $max_copy_num_filt2
 

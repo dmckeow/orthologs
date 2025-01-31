@@ -21,7 +21,6 @@ process BUSCO {
     tuple val(meta), path("short_summary.*.txt")       , emit: short_summaries_txt, optional: true
     tuple val(meta), path("short_summary.*.json")      , emit: short_summaries_json, optional: true
     tuple val(meta), path("*_busco.tar.gz")            , emit: busco_dir, optional: true
-    path "versions.yml"                                , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -84,9 +83,5 @@ process BUSCO {
     tar -czvf ${prefix}_busco.tar.gz ${prefix}_busco/
     rm -r ${prefix}_busco/
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        busco: \$( busco --version 2>&1 | sed 's/^BUSCO //' )
-    END_VERSIONS
     """
 }
