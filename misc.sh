@@ -8,6 +8,7 @@
 #SBATCH --error=logs/slurm-misc.%j.err
 
 to_delete="/users/asebe/dmckeown/projects/crg-bcaortho/work/"
-find $to_delete -type f -delete
+#find $to_delete -type f -delete
 
-find $to_delete -type d -delete
+#find $to_delete -type d -delete
+rm -fr $to_delete

@@ -1,0 +1,64 @@
+%%{
+  init: {
+    'theme': 'default',
+    'themeVariables': {
+      'fontSize': '100px'
+    }
+  }
+}%%
+graph LR
+  A{{"`Proteome fastas`"}}
+  B["`HMMsearch vs
+  Gene Families`"]
+  C["`**Call initial orthogroups**
+
+  OrthoFinder
+  Broccoli
+  ...`"]
+  D(("`Initial
+  OGs`"))
+  E["`Filter
+  OGs`"]
+  F["`**Multiple sequence alignment**
+  
+  MAFFT
+  WITCH`"]
+  G["`**Gene Family Phylogeny**
+
+  IQTree2
+  Fasttree`"]
+  G2["`Speciesrax on subset`"]
+  H(("`Gene family
+  trees`"))
+  I["`Generax reconcile GFTs
+  with species tree`"]
+  J(("`Species 
+  tree`"))
+  K(("`User provided 
+  species tree`"))
+  L2(("`Reconciled
+  GFTs`"))
+  M1[Possvm]
+  M2{{Orthogroups}}
+
+  subgraph preprocess
+  A==>B
+  end
+
+  A-- "`Whole proteomes`" -->C
+  subgraph parallel
+  B==>C
+  C==>D
+  D==>E
+  E==>F
+  F==>G
+  G==>H
+  G-->G2
+  G2-->J
+  K==>J
+  H==>I
+  J==>I
+  I==>L2
+  L2==>M1
+  end
+  M1==>M2

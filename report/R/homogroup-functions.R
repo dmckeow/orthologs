@@ -294,7 +294,8 @@ clean_pfam_scan_file <- function(file_path, header) {
   return(data)
 }
 
-prepare_all_data <- function() {
+prepare_all_data <- function(samplesheet_fpath = NULL) {
+  samplesheet <- read.delim(samplesheet_fpath, sep = ",")
   # Path to save the functional_annotations RDS file
   df_main_rds <- "data/df_main.rds"
 
@@ -310,18 +311,18 @@ prepare_all_data <- function() {
     cat(paste("File", df_main_rds, "does not exist - generating it...\n"))
     
     # Load orthogroups
-    orthogroups_of <- cogeqc::read_orthogroups("/users/asebe/dmckeown/projects/crg-bcaortho/project-ioo_mz46/results/orthofinder_results/orthofinder_mcl/Orthogroups.tsv")
-    orthogroups_br <- cogeqc::read_orthogroups("/users/asebe/dmckeown/projects/crg-bcaortho/project-ioo_mz46/results/broccoli_results/broccoli/Orthogroups.tsv")
+    orthogroups_of <- cogeqc::read_orthogroups("../project-ioo_mz46/results/orthofinder_results/orthofinder_mcl/Orthogroups.tsv")
+    orthogroups_br <- cogeqc::read_orthogroups("../project-ioo_mz46/results/broccoli_results/broccoli/Orthogroups.tsv")
 
     # Get all defline info 
-    file_paths <- list.files("/users/asebe/dmckeown/projects/crg-bcaortho/project-ioo_mz46/results/prefilter/initial/defline_info/", 
+    file_paths <- list.files("../project-ioo_mz46/results/prefilter/initial/defline_info/", 
                             pattern = "*.csv", full.names = TRUE)
     defline_info <- lapply(file_paths, read.csv)
     defline_info <- do.call(rbind, defline_info)
 
     # Get functional annotations
     species_list <- unique(defline_info$id)
-    file_paths <- list.files("/users/asebe/xgraubove/genomes/annotation_functional/", 
+    file_paths <- list.files("../../../../xgraubove/genomes/annotation_functional/", 
                             pattern = "*_long.pep.pfamscan.csv", full.names = TRUE)
 
     # Filter the file paths based on species in the orthogroups
@@ -342,6 +343,13 @@ prepare_all_data <- function() {
   # so there will be multiple duplicated seqid lines due to multiple Pfam hits, domain, family, alignment range, etc
   merged_data <- defline_info %>%
     left_join(functional_annotations, by = c("parent_seq" = "seq_id"))
+  
+  merged_data <- merged_data %>%
+    left_join(samplesheet, by = c("id" = "id")) %>%
+    rename(
+      supergroup = taxonomy
+    ) %>%
+    select(-fasta)
 
   merged_data <- merged_data %>%
     left_join(orthogroups_of, by = c("clean_seq" = "Gene")) %>%
@@ -453,7 +461,7 @@ get_cogeqc_hscores <- function(og_data, annotation) {
 }
 
 
-compare_homogeneity_scores <- function(..., comps = list(c("orthofinder", "broccoli", "dmndmcl"))) {
+compare_homogeneity_scores <- function(..., comps = NULL) {
   # Collect all dataframes passed as arguments
   df_list <- list(...)
   
@@ -573,4 +581,40 @@ filter_comparison_wilcox <- function(compare_output) {
         dplyr::select(group1, group2, n1, n2, padj, effsize, magnitude)
     
     return(filtered_df)
+}
+
+
+## Jaccard pairwise
+  # Function to calculate Jaccard similarity between two sets of sequences
+jaccard_similarity <- function(set1, set2) {
+  intersection_size <- length(intersect(set1, set2))
+  union_size <- length(union(set1, set2))
+  return(intersection_size / union_size)
+}
+
+# Function to calculate pairwise Jaccard similarity between two orthogroup lists
+calculate_jaccard_similarity <- function(ogs1, ogs2) {
+  # Get the orthogroup IDs (names of the list)
+  og_ids1 <- names(ogs1)
+  og_ids2 <- names(ogs2)
+  
+  # Initialize the similarity matrix
+  jaccard_matrix <- matrix(0, nrow = length(og_ids1), ncol = length(og_ids2))
+  rownames(jaccard_matrix) <- og_ids1
+  colnames(jaccard_matrix) <- og_ids2
+  
+  # Loop through all pairs of orthogroups and calculate Jaccard similarity
+  for (i in 1:length(og_ids1)) {
+    for (j in 1:length(og_ids2)) {
+      # Get the sets of sequences
+      set1 <- ogs1[[og_ids1[i]]]
+      set2 <- ogs2[[og_ids2[j]]]
+      
+      # Calculate Jaccard similarity and store it in the matrix
+      jaccard_matrix[i, j] <- jaccard_similarity(set1, set2)
+    }
+  }
+  
+  # Return the Jaccard similarity matrix
+  return(jaccard_matrix)
 }

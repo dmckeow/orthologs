@@ -1,5 +1,5 @@
 ---
-title: "Orthology Results: Assessing the initial orthogroups (homogroups) 46 metazoans"
+title: "Orthology Results: Assessing the initial orthogroups (homogroups) 155 metazoans"
 author: "Dean Mckeown"
 date: "`r Sys.Date()`"
 output: 
@@ -33,23 +33,23 @@ ___
 We will begin by creating a variable that specifies where all workflow outputs are stored. Additionally we will source the script containing helper functions, and setting to variable some colors that we'll use throughout. 
 ### Inputs needed
 
-/users/asebe/dmckeown/projects/crg-bcaortho/project-ioo_mz46/results/orthofinder_results/orthofinder_mcl/Orthogroups.tsv
+/users/asebe/dmckeown/projects/crg-bcaortho/project-ioo_mz155/results/orthofinder_results/orthofinder_mcl/Orthogroups.tsv
   * **Pipeline generated, for any orthocaller** - which homogroups contain what sequences
 
-/users/asebe/dmckeown/projects/crg-bcaortho/project-ioo_mz46/results/prefilter/initial/defline_info/*.csv
+/users/asebe/dmckeown/projects/crg-bcaortho/project-ioo_mz155/results/prefilter/initial/defline_info/*.csv
   * **Pipeline generated, for any orthocaller** - hmmsearch assignment for each sequence
 
-/users/asebe/dmckeown/projects/crg-bcaortho/project-ioo_mz46/results/orthofinder_results/orthofinder_mcl/Orthogroups.GeneCount.tsv
+/users/asebe/dmckeown/projects/crg-bcaortho/project-ioo_mz155/results/orthofinder_results/orthofinder_mcl/Orthogroups.GeneCount.tsv
   * **Pipeline generated, for any orthocaller** - just Orthogroups.tsv just totals instead of deflines
 
 /users/asebe/xgraubove/genomes/annotation_functional/*_long.pep.pfamscan.csv
   * **Precalculated functional annotations**, needs gene id, PFAM accession for OG homogeneity assessment by cogeqc
 
 ### Inputs that MIGHT be needed, but currently only available for orthofinder
-/users/asebe/dmckeown/projects/crg-bcaortho/project-ioo_mz46/results/orthofinder_mcl/complete_dataset/Results_Inflation_2.5/Comparative_Genomics_Statistics/Statistics_PerSpecies.tsv
+/users/asebe/dmckeown/projects/crg-bcaortho/project-ioo_mz155/results/orthofinder_mcl/complete_dataset/Results_Inflation_2.5/Comparative_Genomics_Statistics/Statistics_PerSpecies.tsv
   * Basic stats of ortholog size etc by species
 
-/users/asebe/dmckeown/projects/crg-bcaortho/project-ioo_mz46/results/orthofinder_mcl/complete_dataset/Results_Inflation_2.5/Comparative_Genomics_Statistics/Orthogroups_SpeciesOverlaps.tsv
+/users/asebe/dmckeown/projects/crg-bcaortho/project-ioo_mz155/results/orthofinder_mcl/complete_dataset/Results_Inflation_2.5/Comparative_Genomics_Statistics/Orthogroups_SpeciesOverlaps.tsv
   * matrix of all samples vs all - might need to hunt down OF code
   * the number of orthogroups shared between each species-pair as a square matrix.
 
@@ -61,16 +61,18 @@ source('R/arcadia-color-gradients.R')
 # INPUTS
 # Specify where the workflow outputs are stored (relative paths unless indicated)
 
-RESULT_DIR  <-  "../results/orthofinder_results/"
-SAMPLESHEET <- "/users/asebe/dmckeown/projects/crg-bcaortho/project-ioo_mz46/samplesheet1.csv"
+RESULT_DIR  <-  "../project-ioo_mz155/results/orthofinder_results/"
+#SAMPLESHEET <- "/users/asebe/dmckeown/projects/crg-bcaortho/project-ioo_mz155/samplesheet1.csv"
+SAMPLESHEET <- "../project-ioo_mz155/samplesheet1.csv"
 
-STATS_PER_SPP_TSV <- "../results/orthofinder_results/orthofinder_mcl/complete_dataset/Results_Inflation_2.5/Comparative_Genomics_Statistics/Statistics_PerSpecies.tsv"
-GENE_COUNTS_TSV <- "../results/orthofinder_results/orthofinder_mcl/Orthogroups.GeneCount.tsv"
+STATS_PER_SPP_TSV <- "../project-ioo_mz155/results/orthofinder_results/orthofinder_mcl/OrthoFinder/Results_Inflation_2.5/Comparative_Genomics_Statistics/Statistics_PerSpecies.tsv"
+GENE_COUNTS_TSV <- "../project-ioo_mz155/results/orthofinder_results/orthofinder_mcl/Orthogroups.GeneCount.tsv"
 
 # If you did not provide an external tree then it will be this:
 #SPECIES_TREE <- paste0(RESULT_DIR, 'speciesrax/species_trees/inferred_species_tree.newick')
 # Otherwise, give the path to the tree you provided
-SPECIES_TREE <- '/users/asebe/gzolotarov/projects/2021_TFevol/metazoan_tf_evol_2022/030523_phylogenies/data_annotation/species_tree.newick'
+#SPECIES_TREE <- '/users/asebe/gzolotarov/projects/2021_TFevol/metazoan_tf_evol_2022/030523_phylogenies/data_annotation/species_tree.newick'
+SPECIES_TREE <- '../../../../gzolotarov/projects/2021_TFevol/metazoan_tf_evol_2022/030523_phylogenies/data_annotation/species_tree.newick'
 
 # OUTPUTS
 # And where summarized results should be saved.
@@ -92,40 +94,6 @@ SUPERGROUP_COLS <- c(
   Protostomia = "#FFFFB3",
   Teretosporea = "#D9D9D9"
 )
-
-```
-
-___
-
-```{r}
-mermaid("
-graph TB
-  A[Proteome fastas]==>B[HMMsearch vs Gene Families]
-  B==>C
-  A-- Or run whole proteomes -->C{Call initial orthogroups}
-  C== Broccoli ==>D((Initial orthogroups))
-  C== OrthoFinder2 ==>D
-  C== MMSeqs2 ==>D
-  C== Other tools... ==>D
-  subgraph workflow runs in parallel for each initial OG caller
-  D==>E[Filter initial OGs by size, # species, etc...]
-  E==>F[Multiple sequence alignment, MAFFT or WITCH]
-  F==>G[Infer phylogeny, IQTree2 or Fasttree]
-  G==>H((Gene family trees))
-  G-->G2
-  G2[Infer species tree from GFT subset with Speciesrax]-->J((Species tree))
-  K((User provided species tree))==>J
-  H==>I[Reconcile GFTs with species tree with Generax]
-  J==>I
-  I==>L[Infer final orthgroups with Possvm & reconciled GFTs]
-  end
-  L==>M((Final orthogroups))
-  
-
-
-  
-  
-")
 
 ```
 ___
@@ -157,7 +125,7 @@ ___
 
 ## Homogroup Homogeneity
 ```{r Homogroup homogeneity}
-df_main <- prepare_all_data()
+df_main <- prepare_all_data(samplesheet_fpath = SAMPLESHEET)
 
 cogeqc_input_of <- prepare_cogeqc_inputs(
   input_df = df_main,
@@ -193,6 +161,9 @@ cogeqc_outputs <- compare_homogeneity_scores(
   og_hscores_br,
   comps = list(c("orthofinder", "broccoli"))
 )
+
+ggsave(cogeqc_outputs[["og_hscores_scaled_violin"]], filename = paste0(OUTPUT_DIR, "og_homogeneity_by_source.png"), 
+           height = 6, width = 12, dpi = 300)
 
 
 
@@ -252,61 +223,48 @@ metrics_of_vs_of <- calculate_jaccard_metrics(jaccard_results$of_vs_of, "OrthoFi
 
 metrics_all <- rbind(metrics_of_vs_br, metrics_br_vs_br, metrics_of_vs_of)
 
+metrics_all_long <- metrics_all %>%
+  gather(key = "Metric", value = "Value", -tool1, -tool2)
 
-######### test
-
-# Create the data frame
-df <- data.frame(
-  tool1 = c("OrthoFinder", "Broccoli", "OrthoFinder"),
-  tool2 = c("Broccoli", "Broccoli", "OrthoFinder"),
-  Portion_of_OGs_identical_pw = c(0.004711752, 1.000000000, 1.000000000),
-  Mean_Best_Jaccard = c(0.4436596, 1.0000000, 1.0000000)
-)
-
-
-# Step 1: Split into two data frames
-df_portion <- df[, c("tool1", "tool2", "Portion_of_OGs_identical_pw")]
-df_jaccard <- df[, c("tool1", "tool2", "Mean_Best_Jaccard")]
-
-# Step 2: Process the Mean_Best_Jaccard data frame
-# Remove rows where tool1 == tool2
-df_jaccard <- df_jaccard[df_jaccard$tool1 != df_jaccard$tool2, ]
-
-# Swap tool1 and tool2 for the remaining rows
-df_jaccard_swapped <- df_jaccard
-df_jaccard_swapped$tool1 <- df_jaccard$tool2
-df_jaccard_swapped$tool2 <- df_jaccard$tool1
-
-df_portion$Triangle <- "upper"
-df_jaccard_swapped$Triangle <- "lower"
-
-df_portion <- df_portion %>%
-  rename(Value = Portion_of_OGs_identical_pw, Metric = "Portion_of_OGs_identical_pw")
-
-df_jaccard_swapped <- df_jaccard_swapped %>%
-  rename(Value = Mean_Best_Jaccard, Metric = "Mean_Best_Jaccard")
-
-
-# Combine the two data frames
-combined_df <- rbind(df_portion, df_jaccard_swapped)
-
-# Step 1: Reshape the combined data to long format for ggplot
-combined_df_long <- melt(combined_df, id.vars = c("tool1", "tool2", "Triangle"), value.name = "Value")
-
-# Step 2: Create a custom ggplot
-ggplot(combined_df_long, aes(x = tool2, y = tool1, fill = Value)) +
+# Create the heatmap using ggplot2
+ggplot(metrics_all_long, aes(x = tool1, y = tool2, fill = Value)) +
   geom_tile() +
-  scale_fill_gradient2(
-    low = "red", mid = "white", high = "blue", midpoint = 0.5, 
-    guide = "colorbar", na.value = "transparent",
-    breaks = seq(0, 1, by = 0.1)
-  ) +
-  facet_wrap(~ Triangle, scales = "free", ncol = 1) +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0.5) + 
+  facet_wrap(~Metric, scales = "free") +
   theme_minimal() +
+  labs(
+    title = "Heatmaps of Metrics by Tool Pair",
+    x = "Tool 1", y = "Tool 2", fill = "Value"
+  ) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Combined Heatmap of Portion and Jaccard",
-       x = "Tool 2", y = "Tool 1", fill = "Value") +
-  theme(strip.background = element_blank(), 
-        strip.text = element_blank()) # remove facet labels
+  theme(strip.text = element_text(size = 12))
+
+
+```
+
+```{r Taxonomic Distribution}
+presence_absence_matrix <- df_main %>%
+  select(Orthogroup_Orthofinder, supergroup) %>%
+  distinct() %>%
+  mutate(Presence = 1) %>%
+  spread(key = supergroup, value = Presence, fill = 0) %>%
+  rename(
+    Name = Orthogroup_Orthofinder
+  )
+
+
+create_presence_matrix <- function(df, group_col, value_col) {
+  df %>%
+    select({{ value_col }}, {{ group_col }}) %>%  # Select the specified columns
+    distinct() %>%  # Remove duplicate combinations
+    mutate(Presence = 1) %>%  # Mark presence with 1
+    spread(key = {{ group_col }}, value = Presence, fill = 0) %>%  # Convert to wide format
+    rename(Name = {{ value_col }})  # Rename the value column to 'Name' for clarity
+}
+
+# Example usage with your data frame (df_main)
+presence_absence_matrix_of <- create_presence_matrix(df_main, supergroup, Orthogroup_Orthofinder)
+presence_absence_matrix_br <- create_presence_matrix(df_main, supergroup, Orthogroup_Broccoli)
+
 
 ```
