@@ -9,6 +9,7 @@ process IQTREE {
     label 'process_iqtree'
 
     array params.array_size
+    maxRetries 5
 
     container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/iqtree_2.2.0.5:1.0.0':
         '' }"

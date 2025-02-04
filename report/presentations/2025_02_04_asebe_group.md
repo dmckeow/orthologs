@@ -51,13 +51,12 @@ paginate: true
 
 # The current orthology pipeline
 
-* **Nextflow**, options to use **tree**, or **hybrid** tools (Broccoli, OrthoFinder)
-* OGs from all tools subject to a final reconciliation with a species tree using **GeneRax** & **Possvm**
-* Using test dataset from TF evolution, **155 genomes**, & gene families Ets, Homeodomains, zf-C2H2, zf-met
+* Test dataset from TF evolution, **155 genomes**, & gene families Ets, Homeodomains, zf-C2H2, zf-met
 ![h:275](./images/pipeline_diagram_initial.svg)
 
 <!--
-
+* **Nextflow**, options to use **tree**, or **hybrid** tools (Broccoli, OrthoFinder)
+* OGs from all tools subject to a final reconciliation with a species tree using **GeneRax** & **Possvm**
 -->
 ---
 # Benchmarking orthologs

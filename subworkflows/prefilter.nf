@@ -8,6 +8,8 @@ include { PREFILTER_SEARCH } from '../modules/local/prefilter_search'
 process CONCATENATE_FASTAS {
     tag "Concatenating fastas from hmmsearch to keep one input per species or OrthoFinder etc"
     label 'process_low'
+
+    container 'community.wave.seqera.io/library/seqkit:2.9.0--e0e29e1f5c28842a'
     publishDir "${params.outdir}/prefilter/initial/clean_fasta/merged", mode: 'copy'
     array 100
 
@@ -16,10 +18,12 @@ process CONCATENATE_FASTAS {
 
     output:
     tuple val(id), path("${id}.fasta"), emit: concatenated_fasta
+    tuple val(id), path("${id}_dup_seqs_removed"), optional: true, emit: duplicate_removed_seqs
 
     script:
     """
-    cat ${fastas.join(' ')} > ${id}.fasta
+    cat ${fastas.join(' ')} | seqkit rmdup -j ${task.cpus} -n -D ${id}_dup_seqs_removed - > ${id}.fasta
+    
     """
 }
 

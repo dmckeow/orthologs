@@ -311,11 +311,11 @@ prepare_all_data <- function(samplesheet_fpath = NULL) {
     cat(paste("File", df_main_rds, "does not exist - generating it...\n"))
     
     # Load orthogroups
-    orthogroups_of <- cogeqc::read_orthogroups("../project-ioo_mz46/results/orthofinder_results/orthofinder_mcl/Orthogroups.tsv")
-    orthogroups_br <- cogeqc::read_orthogroups("../project-ioo_mz46/results/broccoli_results/broccoli/Orthogroups.tsv")
+    orthogroups_of <- cogeqc::read_orthogroups("../project-ioo_mz155/results/orthofinder_results/orthofinder_mcl/Orthogroups.tsv")
+    orthogroups_br <- cogeqc::read_orthogroups("../project-ioo_mz155/results/broccoli_results/broccoli/Orthogroups.tsv")
 
     # Get all defline info 
-    file_paths <- list.files("../project-ioo_mz46/results/prefilter/initial/defline_info/", 
+    file_paths <- list.files("../project-ioo_mz155/results/prefilter/initial/defline_info/", 
                             pattern = "*.csv", full.names = TRUE)
     defline_info <- lapply(file_paths, read.csv)
     defline_info <- do.call(rbind, defline_info)

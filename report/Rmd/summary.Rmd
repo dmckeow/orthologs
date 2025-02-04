@@ -40,7 +40,7 @@ source('R/arcadia-color-gradients.R')
 # Specify where the workflow outputs are stored (relative paths unless indicated)
 
 RESULT_DIR  <-  "../results/"
-SAMPLESHEET <- "/users/asebe/dmckeown/projects/crg-bcaortho/project-ioo_mz46/samplesheet1.csv"
+SAMPLESHEET <- "/users/asebe/dmckeown/projects/crg-bcaortho/project-ioo_mz155/samplesheet1.csv"
 
 # OUTPUTS
 # And where summarized results should be saved.

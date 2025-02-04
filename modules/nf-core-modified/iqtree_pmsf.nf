@@ -8,6 +8,7 @@ process IQTREE_PMSF {
     // 6) input/output files in appropriate tuple format
     tag "$alignment"
     label 'process_iqtree'
+    maxRetries 5
 
     container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/iqtree_2.2.0.5:1.0.0':
         '' }"
