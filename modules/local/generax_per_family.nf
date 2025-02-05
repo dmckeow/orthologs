@@ -1,10 +1,7 @@
 process GENERAX_PER_FAMILY {
     tag "$meta.og"
     label 'process_generax'
-    stageInMode 'copy' // Must stage in as copy, or OpenMPI will try to contantly read from S3 which causes problems.
-
-    array params.array_size
-    maxRetries 5
+    stageInMode 'copy' // Must stage in as copy with OpenMPI
 
     container "${ workflow.containerEngine == 'docker' ? 'arcadiascience/generax_19604b71:1.0.0':
         workflow.containerEngine == 'apptainer' ? 'arcadiascience/generax_19604b71:1.0.0':
@@ -72,11 +69,10 @@ process GENERAX_PER_FAMILY {
         --families ${og}.family \\
         --per-family-rates \\
         --prefix $og \\
-        --prune-species-tree \\
         --reconciliation-samples 100 \\
+        --prune-species-tree \\
         $args
 
-    
     # Rename the inferred reconciled gene trees to be named after their corresponding orthogroup
     cp $og/results/$og/geneTree.newick $og/results/$og/${og}_reconciled_gft.newick
 

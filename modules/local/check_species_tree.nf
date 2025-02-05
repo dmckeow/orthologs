@@ -1,5 +1,6 @@
 process CHECK_SPECIES_TREE {
     tag "Validating species tree"
+    label 'process_low'
     
     container 'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/3d/3dd76a137e4bfd2df8b00d8e07e5ffc355dc680adccf94bfbfbc2b5bbdef9efe/data'
 

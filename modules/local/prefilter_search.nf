@@ -3,8 +3,6 @@ process PREFILTER_SEARCH {
     label 'process_prefilter_search'
     container 'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/d0/d06f9c1b929618ccc24024d4d13768bd9196a05416f9dcad078853ecbf40efa9/data'
 
-    array params.array_size
-
     publishDir(
         path: "${params.outdir}",
         mode: params.publish_dir_mode,

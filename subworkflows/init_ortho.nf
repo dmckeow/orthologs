@@ -69,7 +69,8 @@ include { GET_ORTHOGROUP_INFO as GET_ORTHOGROUP_INFO_OF } from '../modules/local
 
 include { BROCCOLI                                  } from '../modules/local/broccoli'
 include { GET_ORTHOGROUP_INFO as GET_ORTHOGROUP_INFO_BR } from '../modules/local/get_og_info'
-include { POSSVM                           } from '../modules/local/possvm'
+include { POSSVM   as POSSVM_PER_FAM                  } from '../modules/local/possvm'
+include { POSSVM   as POSSVM_PER_SPP                 } from '../modules/local/possvm'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -446,6 +447,9 @@ if (orthogroup_caller == "orthofinder") {
     
     //ch_generax_input.view { it -> "ch_generax_input: $it" }
 
+    // Difference between running generax on families vs species:
+    // 
+
     GENERAX_PER_FAMILY(
         ch_generax_input,
         publish_subdir
@@ -469,23 +473,32 @@ if (orthogroup_caller == "orthofinder") {
     // to identify orthologs and output orthogroup-level summary stats.
     // We will replace this with possvm, as possvm can be used for any tool, where as this is specific to Orthofinder
     // This step does not work with species with extra species not in the samplesheet
-if (orthogroup_caller == "orthofinder_pause_phylogs") {
-    ORTHOFINDER_PHYLOHOGS(
-        ch_speciesrax,
-        ORTHOFINDER_MCL_ALL.out.inflation_dir,
-        ORTHOFINDER_PREP_ALL.out.fastas,
-        ORTHOFINDER_PREP_ALL.out.sppIDs,
-        ORTHOFINDER_PREP_ALL.out.seqIDs,
-        ch_recon_perspp_gene_trees,
-        diamond_blast_files,
-        publish_subdir
+
+    //ORTHOFINDER_PHYLOHOGS(
+    //    ch_speciesrax,
+    //   ORTHOFINDER_MCL_ALL.out.inflation_dir,
+    //    ORTHOFINDER_PREP_ALL.out.fastas,
+    //    ORTHOFINDER_PREP_ALL.out.sppIDs,
+    //    ORTHOFINDER_PREP_ALL.out.seqIDs,
+    //    ch_recon_perspp_gene_trees,
+    //    diamond_blast_files,
+    //    publish_subdir
+    //)
+
+
+    // Use possvm to parse the homogroups in to orthogroups using reconciled gene trees from generax
+    // We run it for both per families and species from gene rax for testing purposes
+    // because I am not yet sure if the HOGs would be different
+    POSSVM_PER_SPP(
+        GENERAX_PER_SPECIES.out.generax_per_spp_gfts,
+        publish_subdir,
+        "from_generax_per_spp"
     )
 
-}
-    // Use possvm to parse the homogroups in to orthogroups using reconciled gene trees from generax
-    POSSVM(
-        GENERAX_PER_SPECIES.out.generax_per_spp_gfts,
-        publish_subdir
+    POSSVM_PER_FAM(
+        GENERAX_PER_FAMILY.out.generax_per_fam_gfts,
+        publish_subdir,
+        "from_generax_per_fam"
     )
 
     // We will need to parse the possvm OGs to fastas and relevant info like with the homogroups later

@@ -1,8 +1,3 @@
 SUBMISSION_TIME	SLURM_JOB_ID	SLURM_LOG	SLURM_ERR	COMMAND	NOTE
-# Ok now using workdir in /no_backup, trying to clear up all the tmp files from previous runs, then trying the full 155 set to see if unknown error that might have been storage
-2025-01-31 16:41:04	5910672	logs/slurm-nf.5910672.out	logs/slurm-nf.5910672.err	sbatch submit.sh main.nf -profile slurm -params-file project-test_br/params.json -resume	
-2025-01-31 17:17:20	5912984	logs/slurm-nf.5912984.out	logs/slurm-nf.5912984.err	sbatch submit.sh main.nf -profile slurm -params-file project-ioo_mz155/params.json	
-2025-02-04 08:56:47	6081960	logs/slurm-nf.6081960.out	logs/slurm-nf.6081960.err	sbatch submit.sh main.nf -profile slurm -params-file project-ioo_mz155/params.json -resume	
-2025-02-04 14:26:48	6179704	logs/slurm-nf.6179704.out	logs/slurm-nf.6179704.err	sbatch submit.sh main.nf -profile slurm -params-file project-ioo_mz155/params.json -resume	
-2025-02-04 14:38:15	6183121	logs/slurm-nf.6183121.out	logs/slurm-nf.6183121.err	sbatch submit.sh main.nf -profile slurm -params-file project-ioo_mz155/params.json -resume	
-2025-02-04 15:03:16	6196871	logs/slurm-nf.6196871.out	logs/slurm-nf.6196871.err	sbatch submit.sh main.nf -profile slurm -params-file project-test_br/params.json	
+2025-02-05 17:06:11	6297831	logs/slurm-nf.6297831.out	logs/slurm-nf.6297831.err	sbatch submit.sh main.nf -profile slurm -params-file project-test_br/params.json	New params and conf setup test
+2025-02-05 17:52:01	6309035	logs/slurm-nf.6309035.out	logs/slurm-nf.6309035.err	sbatch submit.sh main.nf -profile slurm -params-file project-test155/params.json	Running full set with proper retries

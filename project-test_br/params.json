@@ -11,7 +11,7 @@
     "tree_model": "LG+F+G4",
     "run": {
         "prefilter_hmmsearch": true,
-        "orthofinder": false,
+        "orthofinder": true,
         "broccoli": true
     },
     "array_size": 100,
