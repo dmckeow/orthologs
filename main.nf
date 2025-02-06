@@ -7,6 +7,8 @@ include { PREFILTER } from './subworkflows/prefilter'
 include { INIT_ORTHO as INIT_ORTHO_ORTHOFINDER } from './subworkflows/init_ortho'
 include { INIT_ORTHO as INIT_ORTHO_BROCCOLI } from './subworkflows/init_ortho'
 
+include { INIT_ORTHO as INIT_ORTHO_BROCCOLI_ARRAY } from './subworkflows/init_ortho'
+
 workflow {
 
     params.samplesheet = null
@@ -66,6 +68,17 @@ workflow {
             PREFILTER.out.fasta_info_metamap,
             PREFILTER.out.cleanfastas_collected,
             "broccoli"
+        )
+    }
+
+    if (params.run.broccoli_array) {
+        INIT_ORTHO_BROCCOLI_ARRAY (
+            params.samplesheet,
+            "broccoli_array_results",
+            params.mcl_inflation,
+            PREFILTER.out.fasta_info_metamap,
+            PREFILTER.out.cleanfastas_collected,
+            "broccoli_array"
         )
     }
 

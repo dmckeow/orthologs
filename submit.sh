@@ -11,7 +11,7 @@
 # Logging job submission
 
 # Add logging functionality
-LOG_FILE="joblog"
+LOG_FILE="joblog.tsv"
 
 # Create the log file with headers if it doesn't exist
 if [ ! -f "$LOG_FILE" ]; then

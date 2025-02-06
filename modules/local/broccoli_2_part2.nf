@@ -1,6 +1,6 @@
 process BROCCOLI {
     tag "Calling initial orthogroups with Broccoli"
-    label 'process_broccoli'
+    label 'process_broccoli_array'
 
     publishDir(
         path: "${params.outdir}/${publish_subdir}/broccoli",
@@ -12,11 +12,12 @@ process BROCCOLI {
 
     input:
     path(fastas, stageAs: 'input/')
+    path(broccoli_results_dir, stageAs: 'dir_step2/') // from previous step
+    path(files_start) // This will be a single line from step2 part1
     val publish_subdir
     
     output:
-    path("dir_step1/**"), emit: dir_step1
-    path("dir_step1/species_index.pic"), emit: species_index
+    path("dir_step2/**"), emit: dir_step2
     
     when:
     task.ext.when == null || task.ext.when
@@ -25,12 +26,14 @@ process BROCCOLI {
     def args = task.ext.args ?: ''
     """
     
+
     python3 ${projectDir}/broccoli/broccoli.py \\
         -dir input \\
         -threads ${task.cpus} \\
-        -steps 1 \\
+        -steps 2 \\
+        -sub_step 2 \\
+        -sub_step2_input ${files_start} \\
         $args
-    
 
     
     """

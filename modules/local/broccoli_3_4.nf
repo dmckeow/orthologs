@@ -1,9 +1,9 @@
 process BROCCOLI {
     tag "Calling initial orthogroups with Broccoli"
-    label 'process_high'
+    label 'process_broccoli'
 
     publishDir(
-        path: "${params.outdir}/${publish_subdir}/broccoli_j",
+        path: "${params.outdir}/${publish_subdir}/broccoli",
         mode: 'copy',
         saveAs: { fn -> fn }
     )
@@ -12,9 +12,11 @@ process BROCCOLI {
 
     input:
     path(fastas, stageAs: 'input/')
+    path(broccoli_results_dir, stageAs: 'dir_step2/') // from previous step
     val publish_subdir
     
     output:
+    path("dir_step3/**"), emit: dir_step3
     path("dir_step3/orthologous_groups.txt"), emit: orthologous_groups
     path("dir_step3/table_OGs_protein_names.txt"), emit: table_OGs_protein_names
     path("dir_step3/Orthogroup_Sequences"), emit: orthologous_groups_sequences
@@ -26,7 +28,6 @@ process BROCCOLI {
     script:
     def args = task.ext.args ?: ''
     """
-    # Run Broccoli
     python3 ${projectDir}/broccoli/broccoli.py \\
         -dir input \\
         -threads ${task.cpus} \\
@@ -38,6 +39,5 @@ process BROCCOLI {
         -f input \\
         -o dir_step3/Orthogroup_Sequences
 
-    
     """
 }

@@ -1,6 +1,6 @@
 process BROCCOLI {
     tag "Calling initial orthogroups with Broccoli"
-    label 'process_high'
+    label 'process_broccoli'
 
     publishDir(
         path: "${params.outdir}/${publish_subdir}/broccoli",
@@ -15,6 +15,8 @@ process BROCCOLI {
     val publish_subdir
     
     output:
+    path("dir_step1/**"), emit: dir_step1
+    path("dir_step2/**"), emit: dir_step2
     path("dir_step3/orthologous_groups.txt"), emit: orthologous_groups
     path("dir_step3/table_OGs_protein_names.txt"), emit: table_OGs_protein_names
     path("dir_step3/Orthogroup_Sequences"), emit: orthologous_groups_sequences

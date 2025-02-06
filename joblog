@@ -1,3 +1,0 @@
-SUBMISSION_TIME	SLURM_JOB_ID	SLURM_LOG	SLURM_ERR	COMMAND	NOTE
-2025-02-05 17:06:11	6297831	logs/slurm-nf.6297831.out	logs/slurm-nf.6297831.err	sbatch submit.sh main.nf -profile slurm -params-file project-test_br/params.json	New params and conf setup test
-2025-02-05 17:52:01	6309035	logs/slurm-nf.6309035.out	logs/slurm-nf.6309035.err	sbatch submit.sh main.nf -profile slurm -params-file project-test155/params.json	Running full set with proper retries

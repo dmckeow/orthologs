@@ -12,11 +12,11 @@ process BROCCOLI {
 
     input:
     path(fastas, stageAs: 'input/')
+    path(broccoli_results_dir, stageAs: 'dir_step2/') // from previous step
     val publish_subdir
     
     output:
-    path("dir_step1/**"), emit: dir_step1
-    path("dir_step1/species_index.pic"), emit: species_index
+    path("dir_step2/**"), emit: dir_step2
     
     when:
     task.ext.when == null || task.ext.when
@@ -24,14 +24,13 @@ process BROCCOLI {
     script:
     def args = task.ext.args ?: ''
     """
-    
+
     python3 ${projectDir}/broccoli/broccoli.py \\
         -dir input \\
         -threads ${task.cpus} \\
-        -steps 1 \\
+        -steps 2 \\
+        -sub_step 3 \\
         $args
-    
-
     
     """
 }

@@ -67,10 +67,17 @@ include { GENERAX_PER_SPECIES                       } from '../modules/local/gen
 include { ORTHOFINDER_PHYLOHOGS                     } from '../modules/local/orthofinder_phylohogs'
 include { GET_ORTHOGROUP_INFO as GET_ORTHOGROUP_INFO_OF } from '../modules/local/get_og_info'
 
-include { BROCCOLI                                  } from '../modules/local/broccoli'
+include { BROCCOLI                                      } from '../modules/local/broccoli'
 include { GET_ORTHOGROUP_INFO as GET_ORTHOGROUP_INFO_BR } from '../modules/local/get_og_info'
-include { POSSVM   as POSSVM_PER_FAM                  } from '../modules/local/possvm'
-include { POSSVM   as POSSVM_PER_SPP                 } from '../modules/local/possvm'
+include { POSSVM   as POSSVM_PER_FAM                    } from '../modules/local/possvm'
+include { POSSVM   as POSSVM_PER_SPP                    } from '../modules/local/possvm'
+
+// experimental parallel broccoli
+include { BROCCOLI as BROCCOLI_1                                  } from '../modules/local/broccoli_1'
+include { BROCCOLI as BROCCOLI_2_PART1                            } from '../modules/local/broccoli_2_part1'
+include { BROCCOLI as BROCCOLI_2_PART2                            } from '../modules/local/broccoli_2_part2'
+include { BROCCOLI as BROCCOLI_2_PART3                            } from '../modules/local/broccoli_2_part3'
+include { BROCCOLI as BROCCOLI_3_4                                } from '../modules/local/broccoli_3_4'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -171,18 +178,48 @@ if (orthogroup_caller == "broccoli") {
         publish_subdir
         )
 
+    ch_filter_orthogroups_dir = BROCCOLI.out.orthologous_groups_sequences
+
     // Parse the initial orthorgoups (homogroups) to tsv that can be used for cogeqc
     GET_ORTHOGROUP_INFO_BR(
-        BROCCOLI.out.orthologous_groups_sequences,
+        ch_filter_orthogroups_dir,
         "broccoli",
         publish_subdir
     )
 
-    ch_filter_orthogroups_dir = BROCCOLI.out.orthologous_groups_sequences
     ch_filter_orthogroups_genecount = GET_ORTHOGROUP_INFO_BR.out.orthogroups_genecount_tsv
 
 }
 
+if (orthogroup_caller == "broccoli_array") {
+
+    BROCCOLI_1(complete_prots_list, publish_subdir)
+
+    BROCCOLI_2_PART1(complete_prots_list, BROCCOLI_1.out.dir_step1, publish_subdir)
+
+    BROCCOLI_2_PART2(
+            complete_prots_list,
+            BROCCOLI_2_PART1.out.dir_step2,
+            BROCCOLI_2_PART1.out.files_start,
+            publish_subdir
+        )   
+
+    BROCCOLI_2_PART3(complete_prots_list, BROCCOLI_2_PART2.out.dir_step2, publish_subdir)
+
+    BROCCOLI_3_4(complete_prots_list, BROCCOLI_2_PART3.out.dir_step2, publish_subdir)
+
+    ch_filter_orthogroups_dir = BROCCOLI_3_4.out.orthologous_groups_sequences
+
+    // Parse the initial orthorgoups (homogroups) to tsv that can be used for cogeqc
+    GET_ORTHOGROUP_INFO_BR(
+        ch_filter_orthogroups_dir,
+        "broccoli",
+        publish_subdir
+    )
+
+    ch_filter_orthogroups_genecount = GET_ORTHOGROUP_INFO_BR.out.orthogroups_genecount_tsv
+
+}
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     Orthofinder
@@ -233,15 +270,15 @@ if (orthogroup_caller == "orthofinder") {
         publish_subdir
     )
 
+    ch_filter_orthogroups_dir = ORTHOFINDER_MCL_ALL.out.initial_orthogroups_fa_dir
 
     // Parse the initial orthorgoups (homogroups) to tsv that can be used for cogeqc
     GET_ORTHOGROUP_INFO_OF(
-        ORTHOFINDER_MCL_ALL.out.initial_orthogroups_fa_dir,
+        ch_filter_orthogroups_dir,
         "orthofinder_mcl",
         publish_subdir
     )
 
-    ch_filter_orthogroups_dir = ORTHOFINDER_MCL_ALL.out.initial_orthogroups_fa_dir
     ch_filter_orthogroups_genecount = GET_ORTHOGROUP_INFO_OF.out.orthogroups_genecount_tsv
 
 }

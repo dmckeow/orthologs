@@ -4,3 +4,6 @@
 [submodule "possvm"]
 	path = possvm
 	url = https://github.com/xgrau/possvm-orthology.git
+[submodule "broccoli"]
+	path = broccoli
+	url = https://github.com/dmckeow/Broccoli.git

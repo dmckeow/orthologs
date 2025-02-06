@@ -1,0 +1,14 @@
+SUBMISSION_TIME	SLURM_JOB_ID	SLURM_LOG	SLURM_ERR	COMMAND	NOTE
+2025-02-06 13:03:50	6368784	logs/slurm-nf.6368784.out	logs/slurm-nf.6368784.err	sbatch submit.sh main.nf -profile slurm -params-file inputs/params-test_br_array.json	Testing parallel broccoli
+2025-02-06 13:09:16	6368826	logs/slurm-nf.6368826.out	logs/slurm-nf.6368826.err	sbatch submit.sh main.nf -profile slurm -params-file inputs/params-test_br_array.json	
+2025-02-06 14:13:32	6369305	logs/slurm-nf.6369305.out	logs/slurm-nf.6369305.err	sbatch submit.sh main.nf -profile slurm -params-file inputs/params-test_br_array.json	
+2025-02-06 14:27:06	6369435	logs/slurm-nf.6369435.out	logs/slurm-nf.6369435.err	sbatch submit.sh main.nf -profile slurm -params-file inputs/params-test_br_array.json	
+2025-02-06 14:33:56	6369514	logs/slurm-nf.6369514.out	logs/slurm-nf.6369514.err	sbatch submit.sh main.nf -profile slurm -params-file inputs/params-test_br_array.json	
+2025-02-06 14:40:34	6369589	logs/slurm-nf.6369589.out	logs/slurm-nf.6369589.err	sbatch submit.sh main.nf -profile slurm -params-file inputs/params-test_br_array.json	
+2025-02-06 14:43:18	6369655	logs/slurm-nf.6369655.out	logs/slurm-nf.6369655.err	sbatch submit.sh main.nf -profile slurm -params-file inputs/params-test_br_array.json	
+2025-02-06 14:48:46	6369737	logs/slurm-nf.6369737.out	logs/slurm-nf.6369737.err	sbatch submit.sh main.nf -profile slurm -params-file inputs/params-test_br_array.json	
+2025-02-06 14:59:24	6369865	logs/slurm-nf.6369865.out	logs/slurm-nf.6369865.err	sbatch submit.sh main.nf -profile slurm -params-file inputs/params-test_br_array.json	
+2025-02-06 15:22:09	6370038	logs/slurm-nf.6370038.out	logs/slurm-nf.6370038.err	sbatch submit.sh main.nf -profile slurm -params-file inputs/params-test_br_array.json	
+2025-02-06 15:31:34	6370112	logs/slurm-nf.6370112.out	logs/slurm-nf.6370112.err	sbatch submit.sh main.nf -profile slurm -params-file inputs/params-test_br_array.json	
+2025-02-06 15:37:10	6370196	logs/slurm-nf.6370196.out	logs/slurm-nf.6370196.err	sbatch submit.sh main.nf -profile slurm -params-file inputs/params-test_br_array.json -resume	
+2025-02-06 15:55:20	6370241	logs/slurm-nf.6370241.out	logs/slurm-nf.6370241.err	sbatch submit.sh main.nf -profile slurm -params-file inputs/params-test_br_array.json -resume	
