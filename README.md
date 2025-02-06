@@ -55,7 +55,23 @@ git config --file=.gitmodules --get-regexp path # check if the submodule still s
 git submodule init
 git submodule update
 ```
+### Broccoli
+
+* Originally, we had the original Broccoli as a submodule
+* However, its speed scales very poorly due to the multithreaded step of building phylomes (DIAMOND and fasttree)
+* If these processes could be run as an array of independent jobs, then it would be so much faster
+* This must be addressed if we are to use Broccoli in this project
+First, I **forked** the repository of broccoli v1.2 https://github.com/rderelle/Broccoli.git to https://github.com/dmckeow/Broccoli.git then:
+```
+git submodule add https://github.com/dmckeow/Broccoli.git broccoli
+git submodule sync
+git submodule update --init --recursive --remote
+```
+See changelog within the submodule for changes I have made
+
 ### Novel tree
+* Novel was forked to examine its implementation, which is somewhat similar to our goals
+* In the end, the only substantial code from it that ended up being useful was their generax modules
 First, I **forked** the repository of noveltree v1.0.2 https://github.com/Arcadia-Science/noveltree.git to https://github.com/dmckeow/noveltree.git then:
 ```
 git submodule add https://github.com/dmckeow/noveltree.git noveltree
