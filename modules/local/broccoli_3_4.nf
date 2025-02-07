@@ -12,7 +12,12 @@ process BROCCOLI {
 
     input:
     path(fastas, stageAs: 'input/')
-    path(broccoli_results_dir, stageAs: 'dir_step2/') // from previous step
+    path(dir_step1, stageAs: 'dir_step1/')
+    path(prot_str_2_species, stageAs: 'dir_step2/')
+    path(prot_int_2_species, stageAs: 'dir_step2/')
+    path(dict_output, stageAs: 'dir_step2/dict_output/')
+    path(dict_similarity_ortho, stageAs: 'dir_step2/dict_similarity_ortho/')
+    path(dict_trees, stageAs: 'dir_step2/dict_trees/')
     val publish_subdir
     
     output:

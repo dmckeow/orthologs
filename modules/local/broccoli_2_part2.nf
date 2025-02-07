@@ -1,5 +1,5 @@
 process BROCCOLI {
-    tag "Calling initial orthogroups with Broccoli"
+    tag "Building phylome: $files_start"
     label 'process_broccoli_array'
 
     publishDir(
@@ -12,12 +12,17 @@ process BROCCOLI {
 
     input:
     path(fastas, stageAs: 'input/')
-    path(broccoli_results_dir, stageAs: 'dir_step2/') // from previous step
-    path(files_start) // This will be a single line from step2 part1
+    path(dir_step1, stageAs: 'dir_step1/')
+    path(prot_str_2_species, stageAs: 'dir_step2/')
+    path(prot_int_2_species, stageAs: 'dir_step2/')
+    path(files_start, stageAs: 'dir_step2/') // This will be a single line from step2 part1
+    path(databases, stageAs: 'dir_step2/databases/')
     val publish_subdir
     
     output:
-    path("dir_step2/**"), emit: dir_step2
+    path("dir_step2/dict_output/*.pic"), emit: dict_output
+    path("dir_step2/dict_similarity_ortho/*.pic"), emit: dict_similarity_ortho
+    path("dir_step2/dict_trees/*.pic"), emit: dict_trees
     
     when:
     task.ext.when == null || task.ext.when

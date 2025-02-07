@@ -12,7 +12,8 @@
     "run": {
         "prefilter_hmmsearch": true,
         "orthofinder": true,
-        "broccoli": true
+        "broccoli": true,
+        "broccoli_array": true
     },
     "array_size": 300,
     "species_tree": "/users/asebe/gzolotarov/projects/2021_TFevol/metazoan_tf_evol_2022/030523_phylogenies/data_annotation/species_tree.newick"

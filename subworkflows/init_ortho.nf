@@ -76,8 +76,8 @@ include { POSSVM   as POSSVM_PER_SPP                    } from '../modules/local
 include { BROCCOLI as BROCCOLI_1                                  } from '../modules/local/broccoli_1'
 include { BROCCOLI as BROCCOLI_2_PART1                            } from '../modules/local/broccoli_2_part1'
 include { BROCCOLI as BROCCOLI_2_PART2                            } from '../modules/local/broccoli_2_part2'
-include { BROCCOLI as BROCCOLI_2_PART3                            } from '../modules/local/broccoli_2_part3'
 include { BROCCOLI as BROCCOLI_3_4                                } from '../modules/local/broccoli_3_4'
+include { GET_ORTHOGROUP_INFO as GET_ORTHOGROUP_INFO_BR_ARRAY } from '../modules/local/get_og_info'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -193,31 +193,50 @@ if (orthogroup_caller == "broccoli") {
 
 if (orthogroup_caller == "broccoli_array") {
 
+    // Run Broccoli step 1 as normal
     BROCCOLI_1(complete_prots_list, publish_subdir)
 
     BROCCOLI_2_PART1(complete_prots_list, BROCCOLI_1.out.dir_step1, publish_subdir)
 
+    ch_broccoli_start_files_pic = BROCCOLI_2_PART1.out.files_start.flatten()
+    
     BROCCOLI_2_PART2(
-            complete_prots_list,
-            BROCCOLI_2_PART1.out.dir_step2,
-            BROCCOLI_2_PART1.out.files_start,
-            publish_subdir
-        )   
+        complete_prots_list,
+        BROCCOLI_1.out.dir_step1,
+        BROCCOLI_2_PART1.out.prot_str_2_species,
+        BROCCOLI_2_PART1.out.prot_int_2_species,
+        ch_broccoli_start_files_pic,
+        BROCCOLI_2_PART1.out.databases,
+        publish_subdir
+    )
 
-    BROCCOLI_2_PART3(complete_prots_list, BROCCOLI_2_PART2.out.dir_step2, publish_subdir)
+    // Gather the outputs from the parallel phylome building
+    ch_broccoli_step2_dict_output = BROCCOLI_2_PART2.out.dict_output.collect()
+    ch_broccoli_step2_dict_similarity_ortho = BROCCOLI_2_PART2.out.dict_similarity_ortho.collect()
+    ch_broccoli_step2_dict_trees = BROCCOLI_2_PART2.out.dict_trees.collect()
 
-    BROCCOLI_3_4(complete_prots_list, BROCCOLI_2_PART3.out.dir_step2, publish_subdir)
+    // Run the last steps of Broccoli as normal
+    BROCCOLI_3_4(
+        complete_prots_list,
+        BROCCOLI_1.out.dir_step1,
+        BROCCOLI_2_PART1.out.prot_str_2_species,
+        BROCCOLI_2_PART1.out.prot_int_2_species,
+        ch_broccoli_step2_dict_output,
+        ch_broccoli_step2_dict_similarity_ortho,
+        ch_broccoli_step2_dict_trees,
+        publish_subdir
+    )
 
     ch_filter_orthogroups_dir = BROCCOLI_3_4.out.orthologous_groups_sequences
 
     // Parse the initial orthorgoups (homogroups) to tsv that can be used for cogeqc
-    GET_ORTHOGROUP_INFO_BR(
+    GET_ORTHOGROUP_INFO_BR_ARRAY(
         ch_filter_orthogroups_dir,
         "broccoli",
         publish_subdir
     )
 
-    ch_filter_orthogroups_genecount = GET_ORTHOGROUP_INFO_BR.out.orthogroups_genecount_tsv
+    ch_filter_orthogroups_genecount = GET_ORTHOGROUP_INFO_BR_ARRAY.out.orthogroups_genecount_tsv
 
 }
 /*
