@@ -58,30 +58,31 @@ suppressPackageStartupMessages(suppressWarnings(source('R/packages.R')))
 suppressPackageStartupMessages(suppressWarnings(source('R/homogroup-functions.R')))
 source('R/arcadia-color-gradients.R')
 
+################################################################################
 # INPUTS
-# Specify where the workflow outputs are stored (relative paths unless indicated)
+################################################################################
 
-RESULT_DIR  <-  "../project-ioo_mz155/results/orthofinder_results/"
-#SAMPLESHEET <- "/users/asebe/dmckeown/projects/crg-bcaortho/project-ioo_mz155/samplesheet1.csv"
-SAMPLESHEET <- "../project-ioo_mz155/samplesheet1.csv"
+################################################################################
+# Pipeline run inputs
+################################################################################
+RESULT_DIR  <-  "/no_backup/asebe/dmckeown/test_br_array_vs_br/results/"
+SAMPLESHEET <- "../inputs/samplesheet1-10.csv"
+PIPELINE_RUN_NAME <- "test_br_array_vs_br" # we will use this later to identify runs if comparing them this way
 
-STATS_PER_SPP_TSV <- "../project-ioo_mz155/results/orthofinder_results/orthofinder_mcl/OrthoFinder/Results_Inflation_2.5/Comparative_Genomics_Statistics/Statistics_PerSpecies.tsv"
-GENE_COUNTS_TSV <- "../project-ioo_mz155/results/orthofinder_results/orthofinder_mcl/Orthogroups.GeneCount.tsv"
-
-# If you did not provide an external tree then it will be this:
-#SPECIES_TREE <- paste0(RESULT_DIR, 'speciesrax/species_trees/inferred_species_tree.newick')
-# Otherwise, give the path to the tree you provided
-#SPECIES_TREE <- '/users/asebe/gzolotarov/projects/2021_TFevol/metazoan_tf_evol_2022/030523_phylogenies/data_annotation/species_tree.newick'
+#SPECIES_TREE <- paste0(RESULT_DIR, 'speciesrax/species_trees/inferred_species_tree.newick') # internal speciesrax tree will be here
 SPECIES_TREE <- '../../../../gzolotarov/projects/2021_TFevol/metazoan_tf_evol_2022/030523_phylogenies/data_annotation/species_tree.newick'
 
-# OUTPUTS
-# And where summarized results should be saved.
-OUTPUT_DIR <- './results/'
-dir.create(OUTPUT_DIR, showWarnings = F)
-dir.create(paste0(OUTPUT_DIR, 'orthofinder'), showWarnings = F)
+################################################################################
+# Orthogroup caller specific stuff (subworkflow i.e. orthofinder, broccoli)
+################################################################################
 
-# OTHER PARAMETERS
-# Set colours to plot supergroups (taxonomy field in samplesheet1)
+OGS_TSV_PATH_OF <- paste0(RESULT_DIR, "orthofinder_results/orthofinder_mcl/Orthogroups.tsv")
+OGS_TSV_PATH_BR <- paste0(RESULT_DIR, "broccoli_array_results/broccoli/Orthogroups.tsv")
+
+################################################################################
+# General inputs
+################################################################################
+# Colour palette (must match taxonomy in samplesheet1)
 
 SUPERGROUP_COLS <- c(
   Choanoflagellata = "#BEBADA",
@@ -89,47 +90,84 @@ SUPERGROUP_COLS <- c(
   Ctenophora = "#80B1D3",
   Deuterostomia = "#8DD3C7",
   Filasterea = "#FDB462",
-  Placozoa = "#B3DE69",
+  #Placozoa = "#B3DE69",
   Porifera = "#FCCDE5",
-  Protostomia = "#FFFFB3",
-  Teretosporea = "#D9D9D9"
+  Protostomia = "#FFFFB3"
+  #Teretosporea = "#D9D9D9"
 )
 
+LONG_PEP_PFAMSCAN_CSVS <- list.files("../../../../xgraubove/genomes/annotation_functional/", pattern = "*_long.pep.pfamscan.csv", full.names = TRUE)
+
+GENE_FAMILIES_SEARCH_INFO <- "../../../../climate-adaptation-corals-ops/results_annotation/data/gene_families_searchinfo.csv"
+
+################################################################################
+# OUTPUTS
+################################################################################
+# And where summarized results should be saved.
+OUTPUT_DIR <- './results/'
+dir.create(OUTPUT_DIR, showWarnings = F)
+dir.create(paste0(OUTPUT_DIR, 'orthofinder'), showWarnings = F)
+
 ```
-___
-
-## Gene Family Summaries {.tabset}
-Now, let's go ahead and summarize the results from OrthoFinder. To start, this will just include some high-level summaries - number of species per gene family, gene copy number per gene family, etc.
-
-```{r Gene Family Summary Stats, fig.asp = .95}
-# Summarize gene family content, both with respect to number of species 
-# included in each gene family, and the per-species mean copy number
-summ_genefam_composition(results_dir = RESULT_DIR, show_plots = T, out_dir = paste0(OUTPUT_DIR, 'orthofinder/'))
-
-# And get orthogroup summary statistics per species
-per_spp_of_stats <-
-  get_per_spp_ofinder_stats(tree_fpath = SPECIES_TREE,
-                        samplesheet_fpath = SAMPLESHEET,
-                        results_dir = RESULT_DIR, grp_name = 'Supergroup',
-                        out_dir = paste0(OUTPUT_DIR, 'orthofinder/'),
-                        tip_grp_cols = SUPERGROUP_COLS, 
-                        count_cols = arcadia_cividis,
-                        prop_cols = arcadia_viridis,
-                        og_stats_perspp_fpath = STATS_PER_SPP_TSV)
-
-# Lastly, get the per-species orthogroup counts/copy numbers
-og_counts <- get_per_spp_og_counts(results_dir = RESULT_DIR, gene_count_tsv = GENE_COUNTS_TSV)
-```
-
 ___
 
 ## Homogroup Homogeneity
 ```{r Homogroup homogeneity}
-df_main <- prepare_all_data(samplesheet_fpath = SAMPLESHEET)
 
-cogeqc_input_of <- prepare_cogeqc_inputs(
-  input_df = df_main,
-  orthogroup_col = Orthogroup_Orthofinder,
+# Get functional annotations
+samplesheet <- read.delim(SAMPLESHEET, sep = ",")
+species_list <- unique(samplesheet$id)
+
+# Filter the file paths based on species in the orthogroups
+LONG_PEP_PFAMSCAN_CSVS_FILT <- LONG_PEP_PFAMSCAN_CSVS[sapply(LONG_PEP_PFAMSCAN_CSVS, function(x) {
+  any(sapply(species_list, function(species) grepl(species, x)))
+})]
+
+pfam_header <- c("seq_id", "alignment_start", "alignment_end", "envelope_start", "envelope_end", 
+                  "hmm_acc", "hmm_name", "type", "hmm_start", "hmm_end", "hmm_length", 
+                  "bit_score", "E_value", "significance", "clan")
+
+# Read the filtered CSV files
+functional_annotations <- lapply(LONG_PEP_PFAMSCAN_CSVS_FILT, clean_pfam_scan_file, header = pfam_header)
+functional_annotations <- do.call(rbind, functional_annotations)
+
+# Path to save the functional_annotations RDS file
+all_data_path <- "data/all_data.rds"
+
+  # Check if all three RDS files exist
+  if (file.exists(all_data_path)) {
+    cat(paste("File", all_data_path, "exists - loading data from it...\n"))
+    # If all RDS files exist, load them
+    all_data <- readRDS(all_data_path)
+    return(all_data)
+
+  } else {
+  cat(paste("File", all_data_path, "does not exist - generating it...\n"))
+  # repeat function call for each orthogroup caller to include
+  all_data <- list()
+
+    all_data[["orthofinder"]] <- prepare_all_data(
+      results_dir = RESULT_DIR,
+      samplesheet_fpath = SAMPLESHEET,
+      orthogroups_path = OGS_TSV_PATH_OF,
+      functional_annotations = functional_annotations,
+      OG_source = "orthofinder" 
+    )
+
+    all_data[["broccoli"]] <- prepare_all_data(
+      results_dir = RESULT_DIR,
+      samplesheet_fpath = SAMPLESHEET,
+      orthogroups_path = OGS_TSV_PATH_BR,
+      functional_annotations = functional_annotations,
+      OG_source = "broccoli" 
+    )
+
+  }
+
+cogeqc_input <- list()
+
+cogeqc_input[["orthofinder"]] <- prepare_cogeqc_inputs(
+  input_df = all_data[["orthofinder"]],
   species_col = id,
   gene_col = clean_seq,
   annot_col = hmm_acc,
@@ -137,9 +175,8 @@ cogeqc_input_of <- prepare_cogeqc_inputs(
   annot_filter_value = "Domain"
 )
 
-cogeqc_input_br <- prepare_cogeqc_inputs(
-  input_df = df_main,
-  orthogroup_col = Orthogroup_Broccoli,
+cogeqc_input[["broccoli"]] <- prepare_cogeqc_inputs(
+  input_df = all_data[["broccoli"]],
   species_col = id,
   gene_col = clean_seq,
   annot_col = hmm_acc,
@@ -147,23 +184,53 @@ cogeqc_input_br <- prepare_cogeqc_inputs(
   annot_filter_value = "Domain"
 )
 # Calculate mean orthogroup homogeneity scores across species
-og_assessment_of <- assess_orthogroups(cogeqc_input_of[["orthogroups"]], cogeqc_input_of[["annotations"]])
-og_assessment_br <- assess_orthogroups(cogeqc_input_br[["orthogroups"]], cogeqc_input_br[["annotations"]])
+og_assessment <- list()
+og_assessment[["orthofinder"]] <- assess_orthogroups(cogeqc_input[["orthofinder"]][["orthogroups"]], cogeqc_input[["orthofinder"]][["annotations"]])
+og_assessment[["broccoli"]] <- assess_orthogroups(cogeqc_input[["broccoli"]][["orthogroups"]], cogeqc_input[["broccoli"]][["annotations"]])
 
+og_hscores <- list()
+og_hscores[["orthofinder"]] <- get_cogeqc_hscores(cogeqc_input[["orthofinder"]][["orthogroups"]], cogeqc_input[["orthofinder"]][["annotations"]])
+og_hscores[["broccoli"]] <- get_cogeqc_hscores(cogeqc_input[["broccoli"]][["orthogroups"]], cogeqc_input[["broccoli"]][["annotations"]])
 
-og_hscores_of <- get_cogeqc_hscores(cogeqc_input_of[["orthogroups"]], cogeqc_input_of[["annotations"]])
-og_hscores_br <- get_cogeqc_hscores(cogeqc_input_br[["orthogroups"]], cogeqc_input_br[["annotations"]])
-
-
-# Example call
+# Plot COGEQC
 cogeqc_outputs <- compare_homogeneity_scores(
-  og_hscores_of,
-  og_hscores_br,
+  og_hscores[["orthofinder"]],
+  og_hscores[["broccoli"]],
   comps = list(c("orthofinder", "broccoli"))
 )
 
 ggsave(cogeqc_outputs[["og_hscores_scaled_violin"]], filename = paste0(OUTPUT_DIR, "og_homogeneity_by_source.png"), 
            height = 6, width = 12, dpi = 300)
+
+# Add cogeqc scores to all_data
+if (!file.exists(all_data_path)) {
+  all_data[["orthofinder"]] <- all_data[["orthofinder"]] %>%
+  left_join(cogeqc_outputs[["og_hscores_scaled_all"]], by = c("Orthogroup" = "Orthogroup"))
+
+  all_data[["broccoli"]] <- all_data[["broccoli"]] %>%
+  left_join(cogeqc_outputs[["og_hscores_scaled_all"]], by = c("Orthogroup" = "Orthogroup"))
+  
+  all_data_ogs <- all_data %>%
+    bind_rows() %>%
+    group_by(Orthogroup) %>%
+    summarise(
+      seq = paste(unique(seq), collapse = ","),
+      parent_seq = paste(unique(parent_seq), collapse = ","),
+      clean_seq = paste(unique(clean_seq), collapse = ","),
+      clean_parent_seq = paste(unique(clean_parent_seq), collapse = ","),
+      id = paste(unique(id), collapse = ","),
+      gene_family_name = paste(unique(gene_family_name), collapse = ","),
+      hmm_acc = paste(unique(hmm_acc), collapse = ","),
+      hmm_name = paste(unique(hmm_name), collapse = ","),
+      clan = paste(unique(clan), collapse = ","),
+      supergroup = paste(unique(supergroup), collapse = ","),
+      Score = paste(unique(Score), collapse = ","),
+      Source = paste(unique(Source), collapse = ","),
+      Score_scaled = paste(unique(Score_scaled), collapse = ",")
+    )
+
+saveRDS(all_data, all_data_path)
+}
 
 
 
@@ -174,52 +241,25 @@ ggsave(cogeqc_outputs[["og_hscores_scaled_violin"]], filename = paste0(OUTPUT_DI
 ## Algorithm Comparison
 ```{r Algorithm Comparison}
 # Create lists of sequences associated with each algorithm
-comp_ogs_of <- split(df_main$clean_seq, df_main$Orthogroup_Orthofinder)
-comp_ogs_of <- lapply(comp_ogs_of, unique)
+compare_callers <- list()
+compare_callers[["orthofinder"]] <- split(all_data[["orthofinder"]][["clean_seq"]], all_data[["orthofinder"]][["Orthogroup"]])
+compare_callers[["orthofinder"]] <- lapply(compare_callers[["orthofinder"]], unique)
 
-comp_ogs_br <- split(df_main$clean_seq, df_main$Orthogroup_Broccoli)
-comp_ogs_br <- lapply(comp_ogs_br, unique)
+compare_callers[["broccoli"]] <- split(all_data[["broccoli"]][["clean_seq"]], all_data[["broccoli"]][["Orthogroup"]])
+compare_callers[["broccoli"]] <- lapply(compare_callers[["broccoli"]], unique)
 
 # Initialize an empty list to store the Jaccard similarity matrices
 jaccard_results <- list()
 
 # Perform a comparison and store the result in the list with a meaningful name
-jaccard_results$of_vs_br <- calculate_jaccard_similarity(comp_ogs_of, comp_ogs_br)
-jaccard_results$of_vs_of <- calculate_jaccard_similarity(comp_ogs_of, comp_ogs_of) # self of
-jaccard_results$br_vs_br <- calculate_jaccard_similarity(comp_ogs_br, comp_ogs_br) # self br
-
-
-
-# Define the function to calculate the metrics for a matrix
-calculate_jaccard_metrics <- function(data, tool1_name, tool2_name) {
-  data_matrix <- as.matrix(data)
-  all_values <- as.vector(data_matrix)
-  total_ogs <- nrow(data_matrix) + ncol(data_matrix) - 1
-
-  rows_with_one <- sum(apply(data_matrix, 1, function(row) any(row == 1, na.rm = TRUE)))
-  cols_with_one <- sum(apply(data_matrix, 1, function(col) any(col == 1, na.rm = TRUE)))
-  total_ogs_with_one = rows_with_one + cols_with_one - 1
-  portion_ones <- (total_ogs_with_one / total_ogs)
-
-  max_jaccard_per_column <- apply(data_matrix, 2, max, na.rm = TRUE)
-  mean_best_jaccard_index <- mean(max_jaccard_per_column, na.rm = TRUE)
-
-  # Create a data frame with the results
-  result <- data.frame(
-    tool1 = tool1_name,
-    tool2 = tool2_name,
-    Portion_of_OGs_identical_pw = portion_ones,
-    Mean_Best_Jaccard = mean_best_jaccard_index
-  )
-  
-  return(result)
-}
-
+jaccard_results$of_vs_br <- calculate_jaccard_similarity(compare_callers[["orthofinder"]], compare_callers[["broccoli"]])
+jaccard_results$of_vs_of <- calculate_jaccard_similarity(compare_callers[["orthofinder"]], compare_callers[["orthofinder"]])
+jaccard_results$br_vs_br <- calculate_jaccard_similarity(compare_callers[["broccoli"]], compare_callers[["broccoli"]])
 
 # Assuming jaccard_results is a list with matrices for each pair
-metrics_of_vs_br <- calculate_jaccard_metrics(jaccard_results$of_vs_br, "OrthoFinder", "Broccoli")
-metrics_br_vs_br <- calculate_jaccard_metrics(jaccard_results$br_vs_br, "Broccoli", "Broccoli")
-metrics_of_vs_of <- calculate_jaccard_metrics(jaccard_results$of_vs_of, "OrthoFinder", "OrthoFinder")
+metrics_of_vs_br <- calculate_jaccard_metrics(jaccard_results$of_vs_br, "orthofinder", "broccoli")
+metrics_br_vs_br <- calculate_jaccard_metrics(jaccard_results$br_vs_br, "broccoli", "broccoli")
+metrics_of_vs_of <- calculate_jaccard_metrics(jaccard_results$of_vs_of, "orthofinder", "orthofinder")
 
 metrics_all <- rbind(metrics_of_vs_br, metrics_br_vs_br, metrics_of_vs_of)
 
@@ -243,28 +283,38 @@ ggplot(metrics_all_long, aes(x = tool1, y = tool2, fill = Value)) +
 ```
 
 ```{r Taxonomic Distribution}
-presence_absence_matrix <- df_main %>%
-  select(Orthogroup_Orthofinder, supergroup) %>%
-  distinct() %>%
-  mutate(Presence = 1) %>%
-  spread(key = supergroup, value = Presence, fill = 0) %>%
-  rename(
-    Name = Orthogroup_Orthofinder
-  )
-
-
-create_presence_matrix <- function(df, group_col, value_col) {
-  df %>%
-    select({{ value_col }}, {{ group_col }}) %>%  # Select the specified columns
-    distinct() %>%  # Remove duplicate combinations
-    mutate(Presence = 1) %>%  # Mark presence with 1
-    spread(key = {{ group_col }}, value = Presence, fill = 0) %>%  # Convert to wide format
-    rename(Name = {{ value_col }})  # Rename the value column to 'Name' for clarity
-}
-
 # Example usage with your data frame (df_main)
-presence_absence_matrix_of <- create_presence_matrix(df_main, supergroup, Orthogroup_Orthofinder)
-presence_absence_matrix_br <- create_presence_matrix(df_main, supergroup, Orthogroup_Broccoli)
+upset_input <- list()
+upset_input$orthofinder <- create_presence_matrix(all_data[["orthofinder"]], supergroup, Orthogroup)
+upset_input$broccoli <- create_presence_matrix(all_data[["broccoli"]], supergroup, Orthogroup)
+
+upset_input_all <- upset_input %>% bind_rows() # flatten the 
+
+# join in metadata to maybe use in plot
+ 
+upset_input_all <- upset_input_all %>% 
+    select(Orthogroup, Source) %>%
+    left_join(upset_input_all, by = c("Orthogroup" = "Name"))
+
+supergroups <- c("Choanoflagellata", "Cnidaria", "Ctenophora", "Deuterostomia", "Filasterea", "Porifera", "Protostomia")
+
+
+  
+
+upset(upset_input_all,
+  supergroups,
+  annotations = list(
+      'Orthogroup caller'=(
+          ggplot(mapping=aes(fill=Source))
+          + geom_bar(stat='count', position='fill')
+          + scale_y_continuous(labels=scales::percent_format())
+          + scale_fill_manual(values=c(
+              'orthofinder'='#E41A1C', 'broccoli'='#377EB8'
+          ))
+          + ylab('Orthogroup caller')
+      )
+  ),
+)
 
 
 ```

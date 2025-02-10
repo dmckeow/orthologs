@@ -1,0 +1,20 @@
+{
+    "samplesheet": "inputs/samplesheet1-155.csv",
+    "search_params": "inputs/samplesheet2-4.csv",
+    "outdir": "/no_backup/asebe/dmckeown/test_155/results_of",
+    "workdir": "/no_backup/asebe/dmckeown/work_bcaortho",
+    "mcl_inflation": 2.5,
+    "min_num_spp_per_og": 4,
+    "min_num_grp_per_og": 2,
+    "max_copy_num_spp_tree": 3,
+    "max_copy_num_gene_trees": 5,
+    "tree_model": "LG+F+G4",
+    "run": {
+        "prefilter_hmmsearch": true,
+        "orthofinder": true,
+        "broccoli": false,
+        "broccoli_array": false
+    },
+    "array_size": 100,
+    "species_tree": "/users/asebe/gzolotarov/projects/2021_TFevol/metazoan_tf_evol_2022/030523_phylogenies/data_annotation/species_tree.newick"
+}
