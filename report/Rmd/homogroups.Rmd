@@ -56,7 +56,6 @@ We will begin by creating a variable that specifies where all workflow outputs a
 ```{r Preparation, results = FALSE}
 suppressPackageStartupMessages(suppressWarnings(source('R/packages.R')))
 suppressPackageStartupMessages(suppressWarnings(source('R/homogroup-functions.R')))
-source('R/arcadia-color-gradients.R')
 
 ################################################################################
 # INPUTS
@@ -108,129 +107,234 @@ OUTPUT_DIR <- './results/'
 dir.create(OUTPUT_DIR, showWarnings = F)
 dir.create(paste0(OUTPUT_DIR, 'orthofinder'), showWarnings = F)
 
+
+################################################################################
+# LOAD DATA
+################################################################################
+########################################
+# data from pipeline run samplesheet
+samplesheet <- read.delim(SAMPLESHEET, sep = ",")
+species_list <- unique(samplesheet$id)
+########################################
+# Get all defline info 
+file_paths <- list.files(paste0(RESULT_DIR, "prefilter/initial/defline_info/"), 
+                          pattern = "*.csv", full.names = TRUE)
+defline_info <- lapply(file_paths, read.csv)
+defline_info <- do.call(rbind, defline_info)
+
+# Collapse defline info to one line per defline, collapsed gene family hit from pipeline info
+
+defline_info <- defline_info %>%
+  group_by(seq) %>%
+  summarise(
+    gene_family_names = paste(unique(gene_family_name), collapse = ", "),
+    preprocessed_fasta_paths = paste(unique(preprocessed_fasta_path), collapse = ", "),
+    # Keep the first value of other columns (they are the same for each group)
+    parent_seq = first(parent_seq), 
+    clean_seq = first(clean_seq),
+    clean_parent_seq = first(clean_parent_seq),
+    id = first(id),
+    input_fasta_path = first(input_fasta_path),
+    .groups = "drop"
+  )
+
+########################################
+# Prepare functional annotations for your genes
+# Filter down to only csvs for ids in the pipeline run (filename dependent)
+LONG_PEP_PFAMSCAN_CSVS <- LONG_PEP_PFAMSCAN_CSVS[sapply(LONG_PEP_PFAMSCAN_CSVS, function(x) {
+  any(sapply(species_list, function(species) grepl(species, x)))
+})]
+
+# This is the specific header for these annotations
+pfam_header <- c("pfam_seq_id", "pfam_alignment_start", "pfam_alignment_end", "pfam_envelope_start", "pfam_envelope_end", 
+                  "pfam_hmm_acc", "pfam_hmm_name", "pfam_type", "pfam_hmm_start", "pfam_hmm_end", "pfam_hmm_length", 
+                  "pfam_bit_score", "pfam_E_value", "pfam_significance", "pfam_clan")
+
+# Read the filtered CSV files
+functional_annotations <- lapply(LONG_PEP_PFAMSCAN_CSVS, clean_pfam_scan_file, header = pfam_header)
+# Filter down to only genes within the OG dataset
+
+functional_annotations <- lapply(functional_annotations, function(annotation_df) {
+  annotation_df %>%
+    filter(pfam_seq_id %in% defline_info$parent_seq)  # Filter where seq_id is in parent_seq
+})
+
+# Final merge of the annotations
+functional_annotations <- do.call(rbind, functional_annotations)
+
+# Add useful info from deflines info, duplicates info if using domains from proteins
+functional_annotations <- functional_annotations %>%
+    left_join(defline_info, by = c("pfam_seq_id" = "parent_seq"))
+
+# Prepare helpful annotations for assessing orthogroups and deflines
+functional_annotations_for_ogs <- functional_annotations %>%
+                                      filter(!is.na(pfam_hmm_acc)) %>%
+                                      filter(pfam_type == "Domain") %>%
+                                      select(
+                                        pfam_seq_id,
+                                        pfam_hmm_acc,
+                                        pfam_hmm_name,
+                                        pfam_type,
+                                        pfam_clan
+                                      ) %>%
+                                      unique()
+functional_annotations_for_deflines <- functional_annotations_for_ogs %>%
+                                   unique() %>%
+                                      group_by(pfam_seq_id) %>%
+                                      summarise(
+                                        pfam_hmm_accs = paste(pfam_hmm_acc, collapse = ","),
+                                        pfam_hmm_names = paste(pfam_hmm_name, collapse = ","),
+                                        pfam_types = paste(pfam_type, collapse = ","),
+                                        pfam_clans = paste(pfam_clan, collapse = ",")
+                                      ) %>%
+                                      unique()
+
+########################################
+# Prep COGEQC inputs
+# Reduce to annotations for COGEQC
+
+functional_annotations_cogeqc <- functional_annotations %>%
+    filter(!is.na(pfam_hmm_acc)) %>% 
+    filter(pfam_type == "Domain") %>% 
+    select(
+      id,
+      clean_seq,
+      pfam_hmm_acc
+    ) %>%
+    rename(
+      Species = id,
+      Gene = clean_seq,
+      Annotation = pfam_hmm_acc
+    ) %>%
+    unique()
+  
+# split into lists by species
+functional_annotations_cogeqc <- functional_annotations_cogeqc %>% 
+  split(functional_annotations_cogeqc$Species) %>%
+  lapply(function(df) {
+    df %>%
+      select(-Species)
+  })
+
+
+########################################
+# Load Orthogroup info for each OG caller
+orthogroups <- list()
+orthogroups$orthofinder <- cogeqc::read_orthogroups(OGS_TSV_PATH_OF) %>% 
+                                  filter(!is.na(Orthogroup)) %>% 
+                                  mutate(OG_source = "orthofinder") %>% 
+                                  unique()
+orthogroups$broccoli <- cogeqc::read_orthogroups(OGS_TSV_PATH_BR) %>% 
+                                  filter(!is.na(Orthogroup)) %>%
+                                  mutate(OG_source = "broccoli") %>% 
+                                  unique()
+orthogroups <- do.call(rbind, orthogroups)
+
+# reshape for COGEQC
+orthogroups_cogeqc <- list()
+orthogroups_cogeqc$orthofinder <- cogeqc::read_orthogroups(OGS_TSV_PATH_OF) %>% 
+                                  filter(!is.na(Orthogroup)) %>% 
+                                  unique()
+orthogroups_cogeqc$broccoli <- cogeqc::read_orthogroups(OGS_TSV_PATH_BR) %>% 
+                                  filter(!is.na(Orthogroup)) %>%
+                                  unique()
+
+# Calculate mean orthogroup homogeneity scores across species
+# Some OGs have no scores despite having many seqs e.g. OG_12 broccoli
+og_hscores <- list()
+og_hscores[["orthofinder"]] <- get_cogeqc_hscores(orthogroups_cogeqc[["orthofinder"]], functional_annotations_cogeqc)
+og_hscores[["broccoli"]] <- get_cogeqc_hscores(orthogroups_cogeqc[["broccoli"]], functional_annotations_cogeqc)
+
+# Generate violin plot of homogeneity scores between tools/runs, make scores scaled
+cogeqc_outputs <- compare_homogeneity_scores(
+  og_hscores[["orthofinder"]],
+  og_hscores[["broccoli"]],
+  comps = list(c("orthofinder", "broccoli"))
+)
+# Add COGEQC scores to OG info
+orthogroups_for_deflines <- orthogroups %>%
+  left_join(cogeqc_outputs[["og_hscores_scaled_all"]], by = c("Orthogroup" = "Orthogroup")) %>%
+  select(-Source) %>%
+  rename(
+      cogeqc_hscore = Score,
+      cogeqc_hscore_scaled = Score_scaled
+  ) %>%
+  unique()
+
+########################################
+# Merge useful information with the defline info
+
+merged_data <- defline_info %>%
+    left_join(samplesheet, by = c("id" = "id")) %>%
+    rename(
+      supergroup = taxonomy
+    ) %>%
+    select(-fasta)
+
+# Merge with orthogroups data
+merged_data <- merged_data %>%
+    left_join(orthogroups_for_deflines, by = c("clean_seq" = "Gene")) %>%
+    select(-Species)
+
+# functional_annotations_for_deflines
+main_deflines <- merged_data %>%
+    left_join(functional_annotations_for_deflines, by = c("parent_seq" = "pfam_seq_id"))
+
+# make OG centric dataframe
+main_ogs <- main_deflines %>%
+    select(
+      Orthogroup,
+      seq,
+      parent_seq,
+      clean_seq,
+      clean_parent_seq,
+      id,
+      supergroup,
+      OG_source,
+      cogeqc_hscore,
+      cogeqc_hscore_scaled
+    ) %>%
+    left_join(functional_annotations_for_ogs, by = c("parent_seq" = "pfam_seq_id")) %>%
+    bind_rows() %>%
+    group_by(Orthogroup) %>%
+    summarise(
+      seqs = paste(unique(seq), collapse = ","),
+      parent_seqs = paste(unique(parent_seq), collapse = ","),
+      clean_seqs = paste(unique(clean_seq), collapse = ","),
+      clean_parent_seqs = paste(unique(clean_parent_seq), collapse = ","),
+      ids = paste(unique(id), collapse = ","),
+      supergroups = paste(unique(supergroup), collapse = ","),
+      OG_source = unique(OG_source),
+      cogeqc_hscore = unique(cogeqc_hscore),
+      cogeqc_hscore_scaled = unique(cogeqc_hscore_scaled),
+      pfam_hmm_accs = paste(unique(pfam_hmm_acc), collapse = ","),
+      pfam_hmm_names = paste(unique(pfam_hmm_name), collapse = ","),
+      pfam_types = paste(unique(pfam_type), collapse = ","),
+      pfam_clans = paste(unique(pfam_clan), collapse = ","),
+      total_seqs = length(unique(seq)),
+      total_parent = length(unique(parent_seq)),
+      total_ids = length(unique(id)),
+      total_supergroups = length(unique(supergroup)),
+      most_common_pfam_hmm_name = get_mode(pfam_hmm_name),
+      total_most_common_pfam_hmm_name = count_mode(pfam_hmm_name, get_mode(pfam_hmm_name)),
+      percent_most_common_pfam_hmm_name = (total_most_common_pfam_hmm_name / length(pfam_hmm_name)) * 100
+    )
+
+
+  
 ```
 ___
 
 ## Homogroup Homogeneity
 ```{r Homogroup homogeneity}
 
-# Get functional annotations
-samplesheet <- read.delim(SAMPLESHEET, sep = ",")
-species_list <- unique(samplesheet$id)
 
-# Filter the file paths based on species in the orthogroups
-LONG_PEP_PFAMSCAN_CSVS_FILT <- LONG_PEP_PFAMSCAN_CSVS[sapply(LONG_PEP_PFAMSCAN_CSVS, function(x) {
-  any(sapply(species_list, function(species) grepl(species, x)))
-})]
-
-pfam_header <- c("seq_id", "alignment_start", "alignment_end", "envelope_start", "envelope_end", 
-                  "hmm_acc", "hmm_name", "type", "hmm_start", "hmm_end", "hmm_length", 
-                  "bit_score", "E_value", "significance", "clan")
-
-# Read the filtered CSV files
-functional_annotations <- lapply(LONG_PEP_PFAMSCAN_CSVS_FILT, clean_pfam_scan_file, header = pfam_header)
-functional_annotations <- do.call(rbind, functional_annotations)
-
-# Path to save the functional_annotations RDS file
-all_data_path <- "data/all_data.rds"
-
-  # Check if all three RDS files exist
-  if (file.exists(all_data_path)) {
-    cat(paste("File", all_data_path, "exists - loading data from it...\n"))
-    # If all RDS files exist, load them
-    all_data <- readRDS(all_data_path)
-    return(all_data)
-
-  } else {
-  cat(paste("File", all_data_path, "does not exist - generating it...\n"))
-  # repeat function call for each orthogroup caller to include
-  all_data <- list()
-
-    all_data[["orthofinder"]] <- prepare_all_data(
-      results_dir = RESULT_DIR,
-      samplesheet_fpath = SAMPLESHEET,
-      orthogroups_path = OGS_TSV_PATH_OF,
-      functional_annotations = functional_annotations,
-      OG_source = "orthofinder" 
-    )
-
-    all_data[["broccoli"]] <- prepare_all_data(
-      results_dir = RESULT_DIR,
-      samplesheet_fpath = SAMPLESHEET,
-      orthogroups_path = OGS_TSV_PATH_BR,
-      functional_annotations = functional_annotations,
-      OG_source = "broccoli" 
-    )
-
-  }
-
-cogeqc_input <- list()
-
-cogeqc_input[["orthofinder"]] <- prepare_cogeqc_inputs(
-  input_df = all_data[["orthofinder"]],
-  species_col = id,
-  gene_col = clean_seq,
-  annot_col = hmm_acc,
-  annot_filter_col = type,
-  annot_filter_value = "Domain"
-)
-
-cogeqc_input[["broccoli"]] <- prepare_cogeqc_inputs(
-  input_df = all_data[["broccoli"]],
-  species_col = id,
-  gene_col = clean_seq,
-  annot_col = hmm_acc,
-  annot_filter_col = type,
-  annot_filter_value = "Domain"
-)
-# Calculate mean orthogroup homogeneity scores across species
-og_assessment <- list()
-og_assessment[["orthofinder"]] <- assess_orthogroups(cogeqc_input[["orthofinder"]][["orthogroups"]], cogeqc_input[["orthofinder"]][["annotations"]])
-og_assessment[["broccoli"]] <- assess_orthogroups(cogeqc_input[["broccoli"]][["orthogroups"]], cogeqc_input[["broccoli"]][["annotations"]])
-
-og_hscores <- list()
-og_hscores[["orthofinder"]] <- get_cogeqc_hscores(cogeqc_input[["orthofinder"]][["orthogroups"]], cogeqc_input[["orthofinder"]][["annotations"]])
-og_hscores[["broccoli"]] <- get_cogeqc_hscores(cogeqc_input[["broccoli"]][["orthogroups"]], cogeqc_input[["broccoli"]][["annotations"]])
-
-# Plot COGEQC
-cogeqc_outputs <- compare_homogeneity_scores(
-  og_hscores[["orthofinder"]],
-  og_hscores[["broccoli"]],
-  comps = list(c("orthofinder", "broccoli"))
-)
+cogeqc_outputs[["og_hscores_scaled_violin"]]
 
 ggsave(cogeqc_outputs[["og_hscores_scaled_violin"]], filename = paste0(OUTPUT_DIR, "og_homogeneity_by_source.png"), 
            height = 6, width = 12, dpi = 300)
 
-# Add cogeqc scores to all_data
-if (!file.exists(all_data_path)) {
-  all_data[["orthofinder"]] <- all_data[["orthofinder"]] %>%
-  left_join(cogeqc_outputs[["og_hscores_scaled_all"]], by = c("Orthogroup" = "Orthogroup"))
 
-  all_data[["broccoli"]] <- all_data[["broccoli"]] %>%
-  left_join(cogeqc_outputs[["og_hscores_scaled_all"]], by = c("Orthogroup" = "Orthogroup"))
-  
-  all_data_ogs <- all_data %>%
-    bind_rows() %>%
-    group_by(Orthogroup) %>%
-    summarise(
-      seq = paste(unique(seq), collapse = ","),
-      parent_seq = paste(unique(parent_seq), collapse = ","),
-      clean_seq = paste(unique(clean_seq), collapse = ","),
-      clean_parent_seq = paste(unique(clean_parent_seq), collapse = ","),
-      id = paste(unique(id), collapse = ","),
-      gene_family_name = paste(unique(gene_family_name), collapse = ","),
-      hmm_acc = paste(unique(hmm_acc), collapse = ","),
-      hmm_name = paste(unique(hmm_name), collapse = ","),
-      clan = paste(unique(clan), collapse = ","),
-      supergroup = paste(unique(supergroup), collapse = ","),
-      Score = paste(unique(Score), collapse = ","),
-      Source = paste(unique(Source), collapse = ","),
-      Score_scaled = paste(unique(Score_scaled), collapse = ",")
-    )
-
-saveRDS(all_data, all_data_path)
-}
 
 
 

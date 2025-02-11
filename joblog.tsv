@@ -3,4 +3,5 @@ SUBMISSION_TIME	SLURM_JOB_ID	SLURM_LOG	SLURM_ERR	COMMAND	NOTE
 2025-02-07 17:38:19	6391746	logs/slurm-nf.6391746.out	logs/slurm-nf.6391746.err	sbatch submit.sh main.nf -profile slurm -params-file inputs/params-test_155.json	testing br array full set	
 2025-02-08 13:57:11	6415117	logs/slurm-nf.6415117.out	logs/slurm-nf.6415117.err	sbatch submit.sh main.nf -profile slurm -params-file inputs/params-test_155_of.json	Success
 2025-02-09 18:20:27	6455478	logs/slurm-nf.6455478.out	logs/slurm-nf.6455478.err	sbatch submit.sh main.nf -profile slurm -params-file inputs/params-test_155_br.json -resume	Success
-2025-02-10 07:34:36	6457337	logs/slurm-nf.6457337.out	logs/slurm-nf.6457337.err	sbatch submit.sh main.nf -profile slurm -params-file inputs/params-test_155_bra.json	
+2025-02-10 07:34:36	6457337	logs/slurm-nf.6457337.out	logs/slurm-nf.6457337.err	sbatch submit.sh main.nf -profile slurm -params-file inputs/params-test_155_bra.json	Success
+2025-02-11 12:06:37	6488184	logs/slurm-nf.6488184.out	logs/slurm-nf.6488184.err	sbatch submit.sh main.nf -profile slurm -params-file inputs/params-test_155_full.json	testing without hmmsearch
