@@ -4,7 +4,7 @@ author: "Dean Mckeown"
 date: "`r Sys.Date()`"
 output: 
   html_document:
-    output_file: "../results/homogroups.html"
+    output_file: "results/homogroups.html"
     toc: true
     toc_float: TRUE
     toc_depth: 4
@@ -17,6 +17,11 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, fig.path = "../results/")
 knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+# what is the root?
+#rprojroot::find_rstudio_root_file()
+knitr::opts_knit$get("root.dir")
+
+
 ```
 
 ```{css, echo=FALSE}
@@ -84,15 +89,21 @@ OGS_TSV_PATH_BR <- paste0(RESULT_DIR, "broccoli_array_results/broccoli/Orthogrou
 # Colour palette (must match taxonomy in samplesheet1)
 
 SUPERGROUP_COLS <- c(
-  Choanoflagellata = "#BEBADA",
-  Cnidaria = "#FB8072",
-  Ctenophora = "#80B1D3",
-  Deuterostomia = "#8DD3C7",
-  Filasterea = "#FDB462",
-  #Placozoa = "#B3DE69",
-  Porifera = "#FCCDE5",
-  Protostomia = "#FFFFB3"
-  #Teretosporea = "#D9D9D9"
+  Choanoflagellata = "#A6CEE3",
+  Cnidaria = "#1F78B4",
+  Ctenophora = "#B2DF8A",
+  Deuterostomia = "#33A02C",
+  Filasterea = "#FB9A99",
+  Placozoa = "#E31A1C",
+  Porifera = "#FF7F00",
+  Protostomia = "#CAB2D6",
+  Teretosporea = "#6A3D9A"
+)
+
+
+OG_CALLER_COLS <- c(
+  orthofinder = "#D95F02",
+  broccoli = "#1B9E77"
 )
 
 LONG_PEP_PFAMSCAN_CSVS <- list.files("../../../../xgraubove/genomes/annotation_functional/", pattern = "*_long.pep.pfamscan.csv", full.names = TRUE)
@@ -192,18 +203,19 @@ functional_annotations_for_deflines <- functional_annotations_for_ogs %>%
 ########################################
 # Prep COGEQC inputs
 # Reduce to annotations for COGEQC
+# clean_parent_seq is used to use whole protein annotations for COGEQC
 
 functional_annotations_cogeqc <- functional_annotations %>%
     filter(!is.na(pfam_hmm_acc)) %>% 
     filter(pfam_type == "Domain") %>% 
     select(
       id,
-      clean_seq,
+      clean_parent_seq,
       pfam_hmm_acc
     ) %>%
     rename(
       Species = id,
-      Gene = clean_seq,
+      Gene = clean_parent_seq,
       Annotation = pfam_hmm_acc
     ) %>%
     unique()
@@ -220,40 +232,60 @@ functional_annotations_cogeqc <- functional_annotations_cogeqc %>%
 ########################################
 # Load Orthogroup info for each OG caller
 orthogroups <- list()
-orthogroups$orthofinder <- cogeqc::read_orthogroups(OGS_TSV_PATH_OF) %>% 
-                                  filter(!is.na(Orthogroup)) %>% 
-                                  mutate(OG_source = "orthofinder") %>% 
-                                  unique()
-orthogroups$broccoli <- cogeqc::read_orthogroups(OGS_TSV_PATH_BR) %>% 
-                                  filter(!is.na(Orthogroup)) %>%
-                                  mutate(OG_source = "broccoli") %>% 
-                                  unique()
+orthogroups$orthofinder <- cogeqc::read_orthogroups(OGS_TSV_PATH_OF) %>%
+  filter(!is.na(Orthogroup)) %>%
+  mutate(OG_source = "orthofinder") %>%
+  unique()
+orthogroups$broccoli <- cogeqc::read_orthogroups(OGS_TSV_PATH_BR) %>%
+  filter(!is.na(Orthogroup)) %>%
+  mutate(OG_source = "broccoli") %>%
+  unique()
 orthogroups <- do.call(rbind, orthogroups)
 
 # reshape for COGEQC
+# Here we need to change from clean_seq to clean_parent_seq (use genes not domains)
 orthogroups_cogeqc <- list()
-orthogroups_cogeqc$orthofinder <- cogeqc::read_orthogroups(OGS_TSV_PATH_OF) %>% 
-                                  filter(!is.na(Orthogroup)) %>% 
-                                  unique()
-orthogroups_cogeqc$broccoli <- cogeqc::read_orthogroups(OGS_TSV_PATH_BR) %>% 
-                                  filter(!is.na(Orthogroup)) %>%
-                                  unique()
+
+name_replace_cogeqc <- defline_info %>%
+  select(clean_seq, clean_parent_seq) %>%
+  unique()
+
+
+orthogroups_cogeqc$orthofinder <- cogeqc::read_orthogroups(OGS_TSV_PATH_OF) %>%
+  filter(!is.na(Orthogroup)) %>%
+  left_join(name_replace_cogeqc, by = c("Gene" = "clean_seq")) %>%
+  select(-Gene) %>%
+  rename(Gene = clean_parent_seq) %>%
+  unique()
+orthogroups_cogeqc$broccoli <- cogeqc::read_orthogroups(OGS_TSV_PATH_BR) %>%
+  filter(!is.na(Orthogroup)) %>%
+  left_join(name_replace_cogeqc, by = c("Gene" = "clean_seq")) %>%
+  select(-Gene) %>%
+  rename(Gene = clean_parent_seq) %>%
+  unique()
 
 # Calculate mean orthogroup homogeneity scores across species
 # Some OGs have no scores despite having many seqs e.g. OG_12 broccoli
+# It has scores from assess_orthogroups
+# but NOT from get_cogeqc_hscores
+# It has many functional annotations
+# cogeqc should use whole protein as genes, not separate domains
+MAX_OG_SIZE = 2000
 og_hscores <- list()
-og_hscores[["orthofinder"]] <- get_cogeqc_hscores(orthogroups_cogeqc[["orthofinder"]], functional_annotations_cogeqc)
-og_hscores[["broccoli"]] <- get_cogeqc_hscores(orthogroups_cogeqc[["broccoli"]], functional_annotations_cogeqc)
+
+og_hscores[["orthofinder"]] <- get_cogeqc_hscores(orthogroups_cogeqc[["orthofinder"]], functional_annotations_cogeqc, max_og_size = MAX_OG_SIZE)
+
+og_hscores[["broccoli"]] <- get_cogeqc_hscores(orthogroups_cogeqc[["broccoli"]], functional_annotations_cogeqc, max_og_size = MAX_OG_SIZE)
 
 # Generate violin plot of homogeneity scores between tools/runs, make scores scaled
-cogeqc_outputs <- compare_homogeneity_scores(
+og_hscores_scaled_all <- compare_homogeneity_scores(
   og_hscores[["orthofinder"]],
   og_hscores[["broccoli"]],
   comps = list(c("orthofinder", "broccoli"))
 )
 # Add COGEQC scores to OG info
 orthogroups_for_deflines <- orthogroups %>%
-  left_join(cogeqc_outputs[["og_hscores_scaled_all"]], by = c("Orthogroup" = "Orthogroup")) %>%
+  left_join(og_hscores_scaled_all, by = c("Orthogroup" = "Orthogroup")) %>%
   select(-Source) %>%
   rename(
       cogeqc_hscore = Score,
@@ -325,55 +357,79 @@ main_ogs <- main_deflines %>%
 ```
 ___
 
-## Homogroup Homogeneity
+## Overall orthogroup information
 ```{r Homogroup homogeneity}
 
+cogeqc_hscores_scaled_violin_callers <- ggviolin(
+    og_hscores_scaled_all, y = "Score_scaled", x = "Source", 
+    trim = TRUE, 
+    add = "jitter",
+    fill = "Source", add.params = list(fill = "white"), palette = "jama"
+  ) +
+    theme(legend.position = "none") +
+    labs(y = "Scaled homogeneity scores", x = "Source of orthogroups",
+         title = "Distribution of mean homogeneity scores for orthogroups",
+         subtitle = "Scores were calculated across all genomes included per orthogroup") +
+    theme(plot.subtitle = ggtext::element_markdown())
 
-cogeqc_outputs[["og_hscores_scaled_violin"]]
+cogeqc_hscores_scaled_violin_callers
 
-ggsave(cogeqc_outputs[["og_hscores_scaled_violin"]], filename = paste0(OUTPUT_DIR, "og_homogeneity_by_source.png"), 
+ggsave(cogeqc_hscores_scaled_violin_callers, filename = paste0(OUTPUT_DIR, "og_homogeneity_by_source.png"), 
            height = 6, width = 12, dpi = 300)
 
 
-
-
+```
+---
+```{r Basic OG stats}
+p <- main_ogs %>%
+  ggplot( aes(x = total_parent,
+  y = cogeqc_hscore_scaled,
+  size = total_supergroups,
+  color = OG_source)) +
+    geom_point(alpha=0.7) +
+    scale_size(range = c(0, 10), name="Total unique genes in OG") +
+    scale_color_manual(values = OG_CALLER_COLS) +
+    theme(legend.position = "none") +
+    theme_bw()
+p
 
 ```
-
 ---
 
-## Algorithm Comparison
 ```{r Algorithm Comparison}
-# Create lists of sequences associated with each algorithm
-compare_callers <- list()
-compare_callers[["orthofinder"]] <- split(all_data[["orthofinder"]][["clean_seq"]], all_data[["orthofinder"]][["Orthogroup"]])
-compare_callers[["orthofinder"]] <- lapply(compare_callers[["orthofinder"]], unique)
-
-compare_callers[["broccoli"]] <- split(all_data[["broccoli"]][["clean_seq"]], all_data[["broccoli"]][["Orthogroup"]])
-compare_callers[["broccoli"]] <- lapply(compare_callers[["broccoli"]], unique)
+# Create lists of sequences associated with each algorithm and OG
+compare_callers <- main_ogs %>%
+  split(.$OG_source) %>%
+  lapply(function(x) split(x, x$Orthogroup)) %>%
+  lapply(function(group) {
+    lapply(group, function(x) unique(strsplit(x$clean_parent_seqs, ",")))
+  })
 
 # Initialize an empty list to store the Jaccard similarity matrices
 jaccard_results <- list()
 
 # Perform a comparison and store the result in the list with a meaningful name
 jaccard_results$of_vs_br <- calculate_jaccard_similarity(compare_callers[["orthofinder"]], compare_callers[["broccoli"]])
+jaccard_results$br_vs_of <- calculate_jaccard_similarity(compare_callers[["broccoli"]], compare_callers[["orthofinder"]])
 jaccard_results$of_vs_of <- calculate_jaccard_similarity(compare_callers[["orthofinder"]], compare_callers[["orthofinder"]])
 jaccard_results$br_vs_br <- calculate_jaccard_similarity(compare_callers[["broccoli"]], compare_callers[["broccoli"]])
 
 # Assuming jaccard_results is a list with matrices for each pair
-metrics_of_vs_br <- calculate_jaccard_metrics(jaccard_results$of_vs_br, "orthofinder", "broccoli")
-metrics_br_vs_br <- calculate_jaccard_metrics(jaccard_results$br_vs_br, "broccoli", "broccoli")
-metrics_of_vs_of <- calculate_jaccard_metrics(jaccard_results$of_vs_of, "orthofinder", "orthofinder")
+jaccard_metrics <- list()
+jaccard_metrics$of_vs_br <- calculate_jaccard_metrics(jaccard_results$of_vs_br, "orthofinder", "broccoli")
+jaccard_metrics$br_vs_of <- calculate_jaccard_metrics(jaccard_results$br_vs_of, "broccoli", "orthofinder")
+jaccard_metrics$br_vs_br <- calculate_jaccard_metrics(jaccard_results$br_vs_br, "broccoli", "broccoli")
+jaccard_metrics$of_vs_of <- calculate_jaccard_metrics(jaccard_results$of_vs_of, "orthofinder", "orthofinder")
 
-metrics_all <- rbind(metrics_of_vs_br, metrics_br_vs_br, metrics_of_vs_of)
+jaccard_metrics_all <- bind_rows(jaccard_metrics)
 
-metrics_all_long <- metrics_all %>%
+jaccard_metrics_all_long <- jaccard_metrics_all %>%
   gather(key = "Metric", value = "Value", -tool1, -tool2)
 
 # Create the heatmap using ggplot2
-ggplot(metrics_all_long, aes(x = tool1, y = tool2, fill = Value)) +
+jaccard_metrics_heat_callers <- ggplot(jaccard_metrics_all_long, aes(x = tool1, y = tool2, fill = Value)) + 
   geom_tile() +
-  scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0.5) + 
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0.5) +
   facet_wrap(~Metric, scales = "free") +
   theme_minimal() +
   labs(
@@ -383,38 +439,73 @@ ggplot(metrics_all_long, aes(x = tool1, y = tool2, fill = Value)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   theme(strip.text = element_text(size = 12))
 
+jaccard_metrics_heat_callers
 
 ```
 
 ```{r Taxonomic Distribution}
-# Example usage with your data frame (df_main)
 upset_input <- list()
-upset_input$orthofinder <- create_presence_matrix(all_data[["orthofinder"]], supergroup, Orthogroup)
-upset_input$broccoli <- create_presence_matrix(all_data[["broccoli"]], supergroup, Orthogroup)
+# make matrix for supergroups
+upset_input$supergroup$orthofinder <- create_presence_matrix(filter(main_deflines, OG_source == "orthofinder"), supergroup, Orthogroup)
 
-upset_input_all <- upset_input %>% bind_rows() # flatten the 
+upset_input$supergroup$broccoli <- create_presence_matrix(filter(main_deflines, OG_source == "broccoli"), supergroup, Orthogroup)
 
-# join in metadata to maybe use in plot
- 
+upset_input$supergroups <- upset_input$supergroup %>% bind_rows()
+
+supergroups <- colnames(upset_input$supergroups)[-1]
+
+
+# make matrix for pfam_hmm_names gene classes
+main_deflines_geneclasses <- uncollapse_column(main_deflines, pfam_hmm_names) %>%
+  select(Orthogroup, pfam_hmm_names, parent_seq, OG_source) %>%
+  unique() %>%
+  select(Orthogroup, pfam_hmm_names, OG_source) %>%
+  mutate(pfam_hmm_names = coalesce(pfam_hmm_names, "None"))
+
+
+upset_input$geneclass$orthofinder <- create_presence_matrix(filter(main_deflines_geneclasses, OG_source == "orthofinder"), pfam_hmm_names, Orthogroup)
+
+upset_input$geneclass$broccoli <- create_presence_matrix(filter(main_deflines_geneclasses, OG_source == "broccoli"), pfam_hmm_names, Orthogroup)
+
+upset_input$geneclasses <- upset_input$geneclass %>% bind_rows()
+
+geneclasses <- colnames(upset_input$geneclasses)[-1]
+
+# bring the mutiple sets together
+upset_input_all <- left_join(upset_input$supergroups, upset_input$geneclasses, by = "Name")
+
+# join in metadata
+og_metadata_for_upset <- main_ogs %>%
+  select(
+    Orthogroup,
+    OG_source
+  ) %>%
+  unique()
+
 upset_input_all <- upset_input_all %>% 
-    select(Orthogroup, Source) %>%
-    left_join(upset_input_all, by = c("Orthogroup" = "Name"))
+  left_join(og_metadata_for_upset, by = c("Name" = "Orthogroup"))
 
-supergroups <- c("Choanoflagellata", "Cnidaria", "Ctenophora", "Deuterostomia", "Filasterea", "Porifera", "Protostomia")
-
-
-  
-
-upset(upset_input_all,
+upset_supergroups <- upset(upset_input_all,
   supergroups,
   annotations = list(
       'Orthogroup caller'=(
-          ggplot(mapping=aes(fill=Source))
+          ggplot(mapping=aes(fill=OG_source))
           + geom_bar(stat='count', position='fill')
           + scale_y_continuous(labels=scales::percent_format())
-          + scale_fill_manual(values=c(
-              'orthofinder'='#E41A1C', 'broccoli'='#377EB8'
-          ))
+          + scale_fill_manual(values = OG_CALLER_COLS)
+          + ylab('Orthogroup caller')
+      )
+  ),
+)
+
+upset_geneclasses <- upset(upset_input_all,
+  geneclasses,
+  annotations = list(
+      'Orthogroup caller'=(
+          ggplot(mapping=aes(fill=OG_source))
+          + geom_bar(stat='count', position='fill')
+          + scale_y_continuous(labels=scales::percent_format())
+          + scale_fill_manual(values = OG_CALLER_COLS)
           + ylab('Orthogroup caller')
       )
   ),

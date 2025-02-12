@@ -16,7 +16,7 @@ clean_pfam_scan_file <- function(file_path, header) {
 }
 
 
-get_cogeqc_hscores <- function(og_data, annotation) {
+get_cogeqc_hscores <- function(og_data, annotation, max_og_size = 200) {
   # Process each species
   result_list <- lapply(names(annotation), function(species) {
     # Select the species-specific annotation data
@@ -49,7 +49,10 @@ get_cogeqc_hscores <- function(og_data, annotation) {
   combined_df <- bind_rows(result_list)
   
   # Calculate homogeneity scores
-  homogeneity_scores <- calculate_H(combined_df)
+  homogeneity_scores <- calculate_H(
+                          combined_df,
+                          max_size = {{max_og_size}}
+                          )
 
   return(homogeneity_scores)
 }
@@ -72,29 +75,19 @@ compare_homogeneity_scores <- function(..., comps = NULL) {
   )
 
   # Scale scores to maximum, so that they range from 0 to 1
-  H_combined$Score_scaled <- H_combined$Score / max(H_combined$Score)
+  #H_combined$Score_scaled <- H_combined$Score / max(H_combined$Score)
+  H_combined <- H_combined %>%
+    group_by(Source) %>%
+    mutate(Score_scaled = Score / max(Score)) %>%
+    ungroup()
   
   # Force any values below 0 to be 0
   H_combined$Score_scaled <- pmax(H_combined$Score_scaled, 0)
   
-  # Visualize distributions with significant differences highlighted
-  OUT_distros <- ggviolin(
-    H_combined, y = "Score_scaled", x = "Source", 
-    trim = TRUE, 
-    add = "jitter",
-    fill = "Source", add.params = list(fill = "white"), palette = "jama"
-  ) +
-    theme(legend.position = "none") +
-    labs(y = "Scaled homogeneity scores", x = "Source of orthogroups",
-         title = "Distribution of mean homogeneity scores for orthogroups",
-         subtitle = "Scores were calculated across all genomes included per orthogroup") +
-    theme(plot.subtitle = ggtext::element_markdown())
-  
   # Return the table and plot as a list
-  return(list(
-    og_hscores_scaled_all = H_combined,
-    og_hscores_scaled_violin = OUT_distros
-  ))
+  return(
+    og_hscores_scaled_all = H_combined
+  )
 }
 
 
@@ -177,4 +170,10 @@ get_mode <- function(x) {
 
 count_mode <- function(x, mode_value) {
   sum(x == mode_value)
+}
+
+uncollapse_column <- function(df, col_name, separator = ",") {
+  df %>%
+    mutate({{ col_name }} := strsplit(as.character({{ col_name }}), separator)) %>%  # Split by the specified separator
+    unnest(cols = {{ col_name }})  # Expand list elements into separate rows
 }
