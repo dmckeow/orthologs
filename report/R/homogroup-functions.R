@@ -75,14 +75,16 @@ compare_homogeneity_scores <- function(..., comps = NULL) {
   )
 
   # Scale scores to maximum, so that they range from 0 to 1
-  #H_combined$Score_scaled <- H_combined$Score / max(H_combined$Score)
+  H_combined$Score_scaled_self <- H_combined$Score / max(H_combined$Score)
+
   H_combined <- H_combined %>%
     group_by(Source) %>%
-    mutate(Score_scaled = Score / max(Score)) %>%
+    mutate(Score_scaled_all = Score / max(Score)) %>%
     ungroup()
   
   # Force any values below 0 to be 0
-  H_combined$Score_scaled <- pmax(H_combined$Score_scaled, 0)
+  H_combined$Score_scaled_self <- pmax(H_combined$Score_scaled_self, 0)
+  H_combined$Score_scaled_all <- pmax(H_combined$Score_scaled_all, 0)
   
   # Return the table and plot as a list
   return(
@@ -129,7 +131,6 @@ calculate_jaccard_similarity <- function(ogs1, ogs2) {
 
 calculate_jaccard_metrics <- function(data, tool1_name, tool2_name) {
   data_matrix <- as.matrix(data)
-  all_values <- as.vector(data_matrix)
   total_ogs <- nrow(data_matrix) + ncol(data_matrix) - 1
 
   rows_with_one <- sum(apply(data_matrix, 1, function(row) any(row == 1, na.rm = TRUE)))
@@ -137,18 +138,37 @@ calculate_jaccard_metrics <- function(data, tool1_name, tool2_name) {
   total_ogs_with_one = rows_with_one + cols_with_one - 1
   portion_ones <- (total_ogs_with_one / total_ogs)
 
-  max_jaccard_per_column <- apply(data_matrix, 2, max, na.rm = TRUE)
-  mean_best_jaccard_index <- mean(max_jaccard_per_column, na.rm = TRUE)
+  max_jaccard_per_col <- apply(data_matrix, 2, max, na.rm = TRUE)
+
+  mean_best_jaccard_index <- mean(max_jaccard_per_col, na.rm = TRUE)
 
   # Create a data frame with the results
-  result <- data.frame(
+  jaccard_by_og_source <- data.frame(
     tool1 = tool1_name,
     tool2 = tool2_name,
     Portion_of_OGs_identical_pw = portion_ones,
     Mean_Best_Jaccard = mean_best_jaccard_index
   )
+
+  return(jaccard_by_og_source)
+}
+
+calculate_jaccard_metrics_per_og <- function(data, tool1_name, tool2_name) {
+  data_matrix <- as.matrix(data)
+
+  max_jaccard_per_col <- apply(data_matrix, 2, max, na.rm = TRUE)
+  mean_jaccard_per_col <- apply(data_matrix, 2, mean, na.rm = TRUE)
   
-  return(result)
+  jaccard_by_og <- data.frame(
+    Orthogroup = colnames(data_matrix),
+    OG_source = tool2_name,
+    vs_OG_source = tool1_name,
+    Best_Jaccard = max_jaccard_per_col,
+    Mean_Jaccard = mean_jaccard_per_col
+  )
+  
+  # Return both data frames
+  return(jaccard_by_og)
 }
 
 
@@ -177,3 +197,6 @@ uncollapse_column <- function(df, col_name, separator = ",") {
     mutate({{ col_name }} := strsplit(as.character({{ col_name }}), separator)) %>%  # Split by the specified separator
     unnest(cols = {{ col_name }})  # Expand list elements into separate rows
 }
+
+
+
