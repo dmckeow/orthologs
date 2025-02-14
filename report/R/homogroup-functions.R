@@ -75,11 +75,11 @@ compare_homogeneity_scores <- function(..., comps = NULL) {
   )
 
   # Scale scores to maximum, so that they range from 0 to 1
-  H_combined$Score_scaled_self <- H_combined$Score / max(H_combined$Score)
+  H_combined$Score_scaled_all <- H_combined$Score / max(H_combined$Score)
 
   H_combined <- H_combined %>%
     group_by(Source) %>%
-    mutate(Score_scaled_all = Score / max(Score)) %>%
+    mutate(Score_scaled_self = Score / max(Score)) %>%
     ungroup()
   
   # Force any values below 0 to be 0
@@ -192,11 +192,29 @@ count_mode <- function(x, mode_value) {
   sum(x == mode_value)
 }
 
-uncollapse_column <- function(df, col_name, separator = ",") {
-  df %>%
-    mutate({{ col_name }} := strsplit(as.character({{ col_name }}), separator)) %>%  # Split by the specified separator
-    unnest(cols = {{ col_name }})  # Expand list elements into separate rows
-}
 
+
+
+# This does the opposite of separate_longer_delim
+collapse_col <- function(df, col_name, group_by_cols, separator = ",", unique_values = FALSE) {
+  # Convert col_name and group_by_cols to symbols
+  col_name <- rlang::ensym(col_name)  # Convert col_name to a symbol
+  group_by_cols <- rlang::syms(group_by_cols)  # Convert group_by_cols to symbols
+
+  # Group by multiple columns using `!!!` to splice the symbols correctly
+  df %>%
+    group_by(!!!group_by_cols) %>%  # Group by the specified columns
+    mutate(
+      !!col_name := str_c(
+        if (unique_values) {
+          unique(!!col_name)  # Apply unique if requested
+        } else {
+          !!col_name  # Otherwise, use the original column
+        }, 
+        collapse = separator
+      )
+    ) %>% 
+    ungroup()
+}
 
 

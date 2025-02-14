@@ -22,6 +22,7 @@ library(ComplexUpset)
 library(plotly)
 library(viridis)
 library(RColorBrewer)
+library(patchwork)
 
 suppressPackageStartupMessages(suppressWarnings(source('R/homogroup-functions.R')))
 

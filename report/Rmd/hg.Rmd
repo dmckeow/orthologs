@@ -66,6 +66,22 @@ OG_CALLER_COLS <- c(
   broccoli = "#1B9E77"
 )
 
+sg_axis_lab <- main_seq_long %>%
+  select(id, supergroup) %>%
+  as.data.frame() %>%
+  unique() %>%
+  ggplot(aes(id, 1, fill = supergroup)) +
+  geom_col(width = 1, position = "identity") +
+  scale_fill_manual(values = SUPERGROUP_COLS) +
+  coord_cartesian(expand = FALSE) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 16),
+        axis.text.y = element_blank(),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank()) +
+  theme(legend.position = "none")
+
+
 ################################################################################
 # OUTPUTS
 ################################################################################
@@ -89,12 +105,23 @@ tree_meta$tips <- main_seq_long %>%
   unique()
 
 # prepare data for heatmap
+# per geneclass
 tree_meta$hm_total_genes_in_id_by_geneclass <- main_seq_long %>%
   select(id, most_common_pfam_hmm_name, clean_parent_seq) %>%
   unique() %>%
   group_by(id, most_common_pfam_hmm_name) %>%
   summarise(values = n_distinct(clean_parent_seq), .groups = 'drop') %>%
   pivot_wider(names_from = most_common_pfam_hmm_name, values_from = values) %>%
+  column_to_rownames("id") %>%
+  replace(is.na(.), 0)
+
+# per OG
+tree_meta$hm_total_genes_in_id_by_og <- main_seq_long %>%
+  select(id, Orthogroup, clean_parent_seq) %>%
+  unique() %>%
+  group_by(id, Orthogroup) %>%
+  summarise(values = n_distinct(clean_parent_seq), .groups = 'drop') %>%
+  pivot_wider(names_from = Orthogroup, values_from = values) %>%
   column_to_rownames("id") %>%
   replace(is.na(.), 0)
 
@@ -109,51 +136,128 @@ sp_tree <- tree %>%
 sp_tree <- gheatmap(sp_tree, 
   tree_meta$hm_total_genes_in_id_by_geneclass,
   offset = 8,
+  width = 2,
   colnames_angle = 90,
+  colnames_offset_y = -1,
+  hjust = 1,
   low = "white",
   high = "blue",
-  color = "white",
+  color = "white"
   )
 
-sp_tree
+sp_tree +
+  ggtree::vexpand(.1, -1) +
+  coord_cartesian(clip = "off")
+
+# Save the tree and metadata for shiny
+save(tree, tree_meta, file = "data/tree_and_metadata.RData")
+
 
 ```
+## Orthogroup Homogeneity {.tabset}
+```{r Orthogroup homogeneity}
+# data reshape
+og_meta <- main_seq_long %>%
+  select(
+    id,
+    supergroup,
+    Orthogroup,
+    OG_source,
+    cogeqc_hscore,
+    cogeqc_hscore_scaled_all,
+    cogeqc_hscore_scaled_self,
+    total_seqs,
+    total_parent,
+    total_ids,
+    total_supergroups,
+    most_common_pfam_hmm_name,
+    total_most_common_pfam_hmm_name,
+    percent_most_common_pfam_hmm_name,
+    vs_OG_source,
+    Best_Jaccard,
+    Mean_Jaccard
+  ) %>%
+  rename(og_size = total_seqs) %>%
+  unique() %>%
+  collapse_col(id, c("OG_source", "Orthogroup"), ",", unique_values = TRUE) %>%
+  unique() %>%
+  collapse_col(supergroup, c("OG_source", "Orthogroup"), ",", unique_values = TRUE) %>%
+  unique()
 
-```{r Homogroup homogeneity}
-
-cogeqc_hscores_scaled_violin_callers <- ggviolin(
-    og_hscores_scaled_all, y = "Score_scaled", x = "Source", 
+# plot by tools
+vn_cogeqc_hssc_tools <- og_meta %>% ggviolin(
+    y = "cogeqc_hscore_scaled_all", x = "OG_source", 
     trim = TRUE, 
     add = "jitter",
-    fill = "Source", add.params = list(fill = "white"), palette = "jama"
+    fill = "OG_source"
   ) +
-    theme(legend.position = "none") +
+    scale_fill_manual(values = OG_CALLER_COLS) +
     labs(y = "Scaled homogeneity scores", x = "Source of orthogroups",
-         title = "Distribution of mean homogeneity scores for orthogroups",
-         subtitle = "Scores were calculated across all genomes included per orthogroup") +
+         title = "Distribution of mean homogeneity scores for orthogroups") +
     theme(plot.subtitle = ggtext::element_markdown())
 
-cogeqc_hscores_scaled_violin_callers
+# plot by species, color tools
+vn_cogeqc_hssc_species <- og_meta %>%
+separate_longer_delim(id, delim = ",") %>%
+separate_longer_delim(supergroup, delim = ",") %>%
+unique() %>%
+ggplot(aes(x = id, y = cogeqc_hscore_scaled_all, fill = OG_source)) +
+  geom_violin(trim = TRUE, position = position_dodge(1)) +
+  scale_fill_manual(values = OG_CALLER_COLS) +
+  labs(y = "Scaled homogeneity scores", x = "Species",
+       title = "Distribution of mean homogeneity scores for orthogroups") +
+  theme(plot.subtitle = ggtext::element_markdown())
 
-ggsave(cogeqc_hscores_scaled_violin_callers, filename = paste0(OUTPUT_DIR, "og_homogeneity_by_source.png"), 
-           height = 6, width = 12, dpi = 300)
+# hack to label axis with supergroup
+#vn_cogeqc_hssc_species + sg_axis_lab + plot_layout(ncol = 1, nrow = 2, heights = c(20, 1))
+
+```
+
+### OG Homogeneity by Tools
+```{r}
+vn_cogeqc_hssc_tools
+```
+
+### OG Homogeneity by Species
+```{r}
+vn_cogeqc_hssc_species
+```
+---
+## Orthogroup Stats {.tabset}
+```{r Basic OG stats}
+# reshape data to be OG centric
+
+sp_ogs_coghs_vs_size_vs_sgs <- og_meta %>%
+  ggplot( aes(x = og_size,
+  y = cogeqc_hscore_scaled_all,
+  size = total_supergroups,
+  color = OG_source)) +
+  geom_point(alpha=0.7) +
+  scale_size(range = c(0, 10)) +
+  scale_color_manual(values = OG_CALLER_COLS) +
+  theme(legend.position = "none") +
+  theme_bw()
+
+vn_size_tools <- og_meta %>%
+    ggviolin(y = "og_size", x = "OG_source", 
+    trim = TRUE, 
+    add = "jitter",
+    fill = "OG_source"
+  ) +
+    scale_fill_manual(values = OG_CALLER_COLS) +
+    labs(y = "Num genes in OG", x = "Source of orthogroups") +
+    theme(plot.subtitle = ggtext::element_markdown()) +
+    scale_y_continuous(trans = 'log10', labels = scales::comma)
 
 
 ```
----
-```{r Basic OG stats}
-p <- main_ogs %>%
-  ggplot( aes(x = total_parent,
-  y = cogeqc_hscore_scaled,
-  size = total_supergroups,
-  color = OG_source)) +
-    geom_point(alpha=0.7) +
-    scale_size(range = c(0, 10), name="Total unique genes in OG") +
-    scale_color_manual(values = OG_CALLER_COLS) +
-    theme(legend.position = "none") +
-    theme_bw()
-p
-
+### Orthogroup homogeneity score vs OG size
+```{r}
+sp_ogs_coghs_vs_size_vs_sgs
+```
+### Orthogroup size by tool
+```{r}
+vn_size_tools
 ```
 ---
 
@@ -217,7 +321,7 @@ supergroups <- colnames(upset_input$supergroups)[-1]
 
 
 # make matrix for pfam_hmm_names gene classes
-main_deflines_geneclasses <- uncollapse_column(main_deflines, pfam_hmm_names) %>%
+main_deflines_geneclasses <- main_deflines %>% separate_longer_delim(pfam_hmm_names, delim = ",") %>%
   select(Orthogroup, pfam_hmm_names, parent_seq, OG_source) %>%
   unique() %>%
   select(Orthogroup, pfam_hmm_names, OG_source) %>%
