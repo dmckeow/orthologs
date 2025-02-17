@@ -65,21 +65,25 @@ OG_CALLER_COLS <- c(
   orthofinder = "#D95F02",
   broccoli = "#1B9E77"
 )
-
-sg_axis_lab <- main_seq_long %>%
+# this is colored blocks in a single row to label axis via patchwork
+axis_lab_id_sg <- main_seq_long %>%
   select(id, supergroup) %>%
-  as.data.frame() %>%
-  unique() %>%
-  ggplot(aes(id, 1, fill = supergroup)) +
-  geom_col(width = 1, position = "identity") +
+  distinct() %>%
+  mutate(id = factor(id, levels = unique(main_seq_long %>% arrange(supergroup) %>% pull(id)))) %>%
+  ggplot(aes(x = id, y = 1, fill = supergroup)) +
+  geom_tile(width = 1, height = 1) +
   scale_fill_manual(values = SUPERGROUP_COLS) +
-  coord_cartesian(expand = FALSE) +
   theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 16),
+  theme(axis.text.x = element_blank(),
         axis.text.y = element_blank(),
         axis.title.x = element_blank(),
-        axis.title.y = element_blank()) +
-  theme(legend.position = "none")
+        axis.title.y = element_text(face = "bold", size = 10),
+        panel.grid = element_blank(),
+        plot.margin = margin(t = 0, b = 0)) +
+  ylab("Supergroup")
+
+
+
 
 
 ################################################################################
@@ -167,15 +171,22 @@ og_meta <- main_seq_long %>%
     cogeqc_hscore_scaled_all,
     cogeqc_hscore_scaled_self,
     total_seqs,
-    total_parent,
+    total_parent_seqs,
     total_ids,
     total_supergroups,
     most_common_pfam_hmm_name,
     total_most_common_pfam_hmm_name,
     percent_most_common_pfam_hmm_name,
+    vs_Orthogroup,
     vs_OG_source,
     Best_Jaccard,
-    Mean_Jaccard
+    Mean_Jaccard,
+    percent_total_seqs,
+    percent_total_parent_seqs,
+    percent_total_ids,
+    percent_total_supergroups,
+    og_size_category_seqs,
+    og_size_category_parent_seqs
   ) %>%
   rename(og_size = total_seqs) %>%
   unique() %>%
@@ -197,19 +208,23 @@ vn_cogeqc_hssc_tools <- og_meta %>% ggviolin(
     theme(plot.subtitle = ggtext::element_markdown())
 
 # plot by species, color tools
-vn_cogeqc_hssc_species <- og_meta %>%
+vn_cogeqc_hssc_sp <- og_meta %>%
 separate_longer_delim(id, delim = ",") %>%
 separate_longer_delim(supergroup, delim = ",") %>%
 unique() %>%
+mutate(id = factor(id, levels = unique(main_seq_long %>% arrange(supergroup) %>% pull(id)))) %>%
 ggplot(aes(x = id, y = cogeqc_hscore_scaled_all, fill = OG_source)) +
   geom_violin(trim = TRUE, position = position_dodge(1)) +
   scale_fill_manual(values = OG_CALLER_COLS) +
   labs(y = "Scaled homogeneity scores", x = "Species",
        title = "Distribution of mean homogeneity scores for orthogroups") +
-  theme(plot.subtitle = ggtext::element_markdown())
+  theme(plot.subtitle = ggtext::element_markdown()) +
+  theme_bw()
 
 # hack to label axis with supergroup
-#vn_cogeqc_hssc_species + sg_axis_lab + plot_layout(ncol = 1, nrow = 2, heights = c(20, 1))
+vn_cogeqc_hssc_sp <- vn_cogeqc_hssc_sp + axis_lab_id_sg + 
+plot_layout(ncol = 1, nrow = 2, heights = c(20, 0.5)) +
+plot_layout(guides = "collect")
 
 ```
 
@@ -220,15 +235,14 @@ vn_cogeqc_hssc_tools
 
 ### OG Homogeneity by Species
 ```{r}
-vn_cogeqc_hssc_species
+vn_cogeqc_hssc_sp
 ```
 ---
 ## Orthogroup Stats {.tabset}
 ```{r Basic OG stats}
-# reshape data to be OG centric
 
 sp_ogs_coghs_vs_size_vs_sgs <- og_meta %>%
-  ggplot( aes(x = og_size,
+  ggplot(aes(x = og_size,
   y = cogeqc_hscore_scaled_all,
   size = total_supergroups,
   color = OG_source)) +
@@ -251,7 +265,7 @@ vn_size_tools <- og_meta %>%
 
 
 ```
-### Orthogroup homogeneity score vs OG size
+## Orthogroup homogeneity score vs OG size
 ```{r}
 sp_ogs_coghs_vs_size_vs_sgs
 ```
@@ -260,101 +274,102 @@ sp_ogs_coghs_vs_size_vs_sgs
 vn_size_tools
 ```
 ---
-
+## Overall Tool Similarity {.tabset}
 ```{r Algorithm Comparison}
-# Create lists of sequences associated with each algorithm and OG
-compare_callers <- main_ogs %>%
-  split(.$OG_source) %>%
-  lapply(function(x) split(x, x$Orthogroup)) %>%
-  lapply(function(group) {
-    lapply(group, function(x) unique(strsplit(x$clean_parent_seqs, ",")))
-  })
-
-# Initialize an empty list to store the Jaccard similarity matrices
-jaccard_results <- list()
-
-# Perform a comparison and store the result in the list with a meaningful name
-jaccard_results$of_vs_br <- calculate_jaccard_similarity(compare_callers[["orthofinder"]], compare_callers[["broccoli"]])
-jaccard_results$br_vs_of <- calculate_jaccard_similarity(compare_callers[["broccoli"]], compare_callers[["orthofinder"]])
-jaccard_results$of_vs_of <- calculate_jaccard_similarity(compare_callers[["orthofinder"]], compare_callers[["orthofinder"]])
-jaccard_results$br_vs_br <- calculate_jaccard_similarity(compare_callers[["broccoli"]], compare_callers[["broccoli"]])
-
-# Assuming jaccard_results is a list with matrices for each pair
-jaccard_metrics <- list()
-jaccard_metrics$of_vs_br <- calculate_jaccard_metrics(jaccard_results$of_vs_br, "orthofinder", "broccoli")
-jaccard_metrics$br_vs_of <- calculate_jaccard_metrics(jaccard_results$br_vs_of, "broccoli", "orthofinder")
-jaccard_metrics$br_vs_br <- calculate_jaccard_metrics(jaccard_results$br_vs_br, "broccoli", "broccoli")
-jaccard_metrics$of_vs_of <- calculate_jaccard_metrics(jaccard_results$of_vs_of, "orthofinder", "orthofinder")
-
-jaccard_metrics_all <- bind_rows(jaccard_metrics)
-
-jaccard_metrics_all_long <- jaccard_metrics_all %>%
-  gather(key = "Metric", value = "Value", -tool1, -tool2)
-
 # Create the heatmap using ggplot2
-jaccard_metrics_heat_callers <- ggplot(jaccard_metrics_all_long, aes(x = tool1, y = tool2, fill = Value)) + 
+jaccard_metrics_heat_callers <- jaccard_metrics_all_long %>%
+ggplot(aes(x = tool1, y = tool2, fill = Value)) +
   geom_tile() +
   scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0.5) +
-  facet_wrap(~Metric, scales = "free") +
+  facet_wrap(~Metric) +
   theme_minimal() +
   labs(
     title = "Heatmaps of Metrics by Tool Pair",
     x = "Tool 1", y = "Tool 2", fill = "Value"
   ) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  theme(strip.text = element_text(size = 12))
+  theme(strip.text = element_text(size = 12)) +
+  coord_fixed(ratio = 1)
 
-jaccard_metrics_heat_callers
+# OG vs OG heatmap prep
+
+hm_ogs_vs <- og_meta %>%
+filter(OG_source == "orthofinder") %>%
+mutate(Orthogroup = factor(Orthogroup, levels = unique(Orthogroup))) %>%
+ggplot() +
+  geom_tile(aes(x = "COGEQC hscore scaled vs all", y = Orthogroup, fill = cogeqc_hscore_scaled_all)) +
+  scale_fill_gradient2(low = "#FFF5F0", high = "#67000D", limits = c(0, 1), midpoint = 0.25, guide = guide_colorbar(order = 5)) +
+
+  new_scale_fill() +
+  geom_tile(aes(x = "% of OG that is the most common Pfam", y = Orthogroup, fill = percent_most_common_pfam_hmm_name)) +
+  scale_fill_gradient2(low = "#FCFBFD", high = "#3F007D", limits = c(0, 100), midpoint = 25, guide = guide_colorbar(order = 1)) +
+
+  new_scale_fill() +
+  geom_tile(aes(x = "OG size", y = Orthogroup, fill = og_size)) +
+  scale_fill_gradient2(low = "#B2182B", high = "#2166AC", mid = "#F7F7F7", guide = guide_colorbar(order = 6)) +
+
+  new_scale_fill() +ß
+  geom_tile(aes(x = "Best JI vs ", y = Orthogroup, fill = Best_Jaccard)) +
+  scale_fill_gradient2(low = "#762A83", high = "#1B7837", mid = "#F7F7F7", limits = c(0, 1), midpoint = 0.5, guide = guide_colorbar(order = 4)) +
+
+  new_scale_fill() +
+  geom_tile(aes(x = "OG source", y = Orthogroup, fill = OG_source)) +
+  scale_fill_manual(values = OG_CALLER_COLS, guide = guide_legend(order = 7)) +
+
+  new_scale_fill() +
+  geom_tile(aes(x = "% species in OG", y = Orthogroup, fill = percent_total_ids)) +
+    scale_fill_gradient2(low = "#F7FCF5", high = "#00441B", limits = c(0, 100), midpoint = 25, guide = guide_colorbar(order = 2)) +
+
+  new_scale_fill() +
+  geom_tile(aes(x = "% supergroups in OG", y = Orthogroup, fill = percent_total_supergroups)) +
+  scale_fill_gradient2(low = "#EFF3FF", high = "#08519C", limits = c(0, 100), midpoint = 25, guide = guide_colorbar(order = 3)) +
+
+  new_scale_fill() +
+  geom_tile(aes(x = "vs OG source", y = Orthogroup, fill = vs_OG_source)) +
+  scale_fill_manual(values = OG_CALLER_COLS, guide = guide_legend(order = 8)) +
+
+
+
+  theme_bw() +
+  theme(legend.position = "bottom",
+  legend.direction = "vertical",
+  legend.title = element_blank(),
+  axis.text.x = element_text(angle = 45, hjust = 1)) +
+  facet_grid(most_common_pfam_hmm_name ~ ., scales = "free", space = "free")
+###
+
+
 
 ```
-
+### Orthogroup callers jaccard heatmap
+```{r}
+jaccard_metrics_heat_callers
+```
+### Orthogroup caller versus other callers & basic stats
+```{r}
+hm_ogs_vs
+```
+## Taxonomic Distribution of OGs {.tabset}
 ```{r Taxonomic Distribution}
-upset_input <- list()
-# make matrix for supergroups
-upset_input$supergroup$orthofinder <- create_presence_matrix(filter(main_deflines, OG_source == "orthofinder"), supergroup, Orthogroup)
+up_in_ogs <- list()
+# make matrices
+#      for supergroups
+up_in_ogs$sg <- create_presence_matrix(main_seq_long, supergroup, Orthogroup)
+up_in_ogs$sg_cols <- main_seq_long$supergroup %>% unique()
+up_in_ogs$sg <- up_in_ogs$sg %>% 
+  left_join(og_meta, by = c("Name" = "Orthogroup"))
 
-upset_input$supergroup$broccoli <- create_presence_matrix(filter(main_deflines, OG_source == "broccoli"), supergroup, Orthogroup)
+#      for gene classes
+up_in_ogs$gc <- create_presence_matrix(main_seq_long, pfam_hmm_name, Orthogroup)
+up_in_ogs$gc_cols <- colnames(up_in_ogs$gc)[-1]
+up_in_ogs$gc <- up_in_ogs$gc %>% 
+  left_join(og_meta, by = c("Name" = "Orthogroup"))
 
-upset_input$supergroups <- upset_input$supergroup %>% bind_rows()
-
-supergroups <- colnames(upset_input$supergroups)[-1]
-
-
-# make matrix for pfam_hmm_names gene classes
-main_deflines_geneclasses <- main_deflines %>% separate_longer_delim(pfam_hmm_names, delim = ",") %>%
-  select(Orthogroup, pfam_hmm_names, parent_seq, OG_source) %>%
-  unique() %>%
-  select(Orthogroup, pfam_hmm_names, OG_source) %>%
-  mutate(pfam_hmm_names = coalesce(pfam_hmm_names, "None"))
-
-
-upset_input$geneclass$orthofinder <- create_presence_matrix(filter(main_deflines_geneclasses, OG_source == "orthofinder"), pfam_hmm_names, Orthogroup)
-
-upset_input$geneclass$broccoli <- create_presence_matrix(filter(main_deflines_geneclasses, OG_source == "broccoli"), pfam_hmm_names, Orthogroup)
-
-upset_input$geneclasses <- upset_input$geneclass %>% bind_rows()
-
-geneclasses <- colnames(upset_input$geneclasses)[-1]
-
-# bring the mutiple sets together
-upset_input_all <- left_join(upset_input$supergroups, upset_input$geneclasses, by = "Name")
-
-# join in metadata
-og_metadata_for_upset <- main_ogs %>%
-  select(
-    Orthogroup,
-    OG_source
-  ) %>%
-  unique()
-
-upset_input_all <- upset_input_all %>% 
-  left_join(og_metadata_for_upset, by = c("Name" = "Orthogroup"))
-
-upset_supergroups <- upset(upset_input_all,
-  supergroups,
+up_ogs_sg <- upset(up_in_ogs$sg,
+  up_in_ogs$sg_cols,
   annotations = list(
       'Orthogroup caller'=(
-          ggplot(mapping=aes(fill=OG_source))
+          ggplot(mapping=aes(fill = OG_source))
           + geom_bar(stat='count', position='fill')
           + scale_y_continuous(labels=scales::percent_format())
           + scale_fill_manual(values = OG_CALLER_COLS)
@@ -363,7 +378,7 @@ upset_supergroups <- upset(upset_input_all,
   ),
 )
 
-upset_geneclasses <- upset(upset_input_all,
+upset_geneclasses <- upset(up_in_all,
   geneclasses,
   annotations = list(
       'Orthogroup caller'=(

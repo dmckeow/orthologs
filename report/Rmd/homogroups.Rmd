@@ -297,7 +297,7 @@ orthogroups_for_deflines <- orthogroups %>%
 # Merge useful information with the defline info
 
 merged_data <- defline_info %>%
-    left_join(samplesheet, by = c("id" = "id")) %>%
+  left_join(samplesheet, by = c("id" = "id")) %>%
     rename(
       supergroup = taxonomy
     ) %>%
@@ -305,8 +305,8 @@ merged_data <- defline_info %>%
 
 # Merge with orthogroups data
 merged_data <- merged_data %>%
-    left_join(orthogroups_for_deflines, by = c("clean_seq" = "Gene")) %>%
-    select(-Species)
+  left_join(orthogroups_for_deflines, by = c("clean_seq" = "Gene")) %>%
+  select(-Species)
 
 # functional_annotations_for_deflines
 main_deflines <- merged_data %>%

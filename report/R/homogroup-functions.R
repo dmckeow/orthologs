@@ -156,20 +156,33 @@ calculate_jaccard_metrics <- function(data, tool1_name, tool2_name) {
 calculate_jaccard_metrics_per_og <- function(data, tool1_name, tool2_name) {
   data_matrix <- as.matrix(data)
 
+  # Calculate the maximum Jaccard value for each orthogroup (column)
   max_jaccard_per_col <- apply(data_matrix, 2, max, na.rm = TRUE)
+  
+  # Find the row indices corresponding to the maximum Jaccard value for each column
+  max_jaccard_row_indices <- apply(data_matrix, 2, which.max)
+  
+  # Get the orthogroup names corresponding to the maximum values
+  max_jaccard_og_names <- rownames(data_matrix)[max_jaccard_row_indices]
+
+  # Calculate the mean Jaccard for each orthogroup (column)
   mean_jaccard_per_col <- apply(data_matrix, 2, mean, na.rm = TRUE)
   
+  # Create a data frame with the necessary information
   jaccard_by_og <- data.frame(
     Orthogroup = colnames(data_matrix),
     OG_source = tool2_name,
+    vs_Orthogroup = max_jaccard_og_names,
     vs_OG_source = tool1_name,
     Best_Jaccard = max_jaccard_per_col,
     Mean_Jaccard = mean_jaccard_per_col
   )
   
-  # Return both data frames
+  # Return the data frame
   return(jaccard_by_og)
 }
+
+
 
 
 create_presence_matrix <- function(df, group_col, value_col) {

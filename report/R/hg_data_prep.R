@@ -202,17 +202,52 @@ def_fun_sam_ogs <- m %>%
     left_join(orthgs, by = c("clean_seq" = "Gene")) %>%
     select(-Species)
 
-# add other OG info
+# sum total of certain vars
+total_seqs_all <- n_distinct(def_fun_sam_ogs$seq)
+total_parent_seqs_all <- n_distinct(def_fun_sam_ogs$parent_seq)
+total_ids_all <- n_distinct(def_fun_sam_ogs$id)
+total_supergroups_all <- n_distinct(def_fun_sam_ogs$supergroup)
+
 def_fun_sam_ogs <- def_fun_sam_ogs %>%
   group_by(Orthogroup) %>%
   mutate(
     total_seqs = length(unique(seq)),
-    total_parent = length(unique(parent_seq)),
+    total_parent_seqs = length(unique(parent_seq)),
     total_ids = length(unique(id)),
     total_supergroups = length(unique(supergroup)),
+    
     most_common_pfam_hmm_name = get_mode(pfam_hmm_name),
     total_most_common_pfam_hmm_name = count_mode(pfam_hmm_name, get_mode(pfam_hmm_name)),
-    percent_most_common_pfam_hmm_name = (total_most_common_pfam_hmm_name / length(pfam_hmm_name)) * 100
+    percent_most_common_pfam_hmm_name = (total_most_common_pfam_hmm_name / length(pfam_hmm_name)) * 100,
+
+    # Percentage of the total across the entire dataset
+    percent_total_seqs = total_seqs / total_seqs_all * 100,
+    percent_total_parent_seqs = total_parent_seqs / total_parent_seqs_all * 100,
+    percent_total_ids = total_ids / total_ids_all * 100,
+    percent_total_supergroups = total_supergroups / total_supergroups_all * 100,
+    
+    # Categorize total_seqs with exclusive ranges
+    og_size_category_seqs = case_when(
+      total_seqs > 10000 ~ ">10000",
+      total_seqs > 1000  ~ "1000-10000",
+      total_seqs > 500   ~ "500-1,000",
+      total_seqs > 200   ~ "200-500",
+      total_seqs > 100   ~ "100-200",
+      total_seqs >= 50   ~ "50-100",
+      total_seqs < 50    ~ "10-50",
+      TRUE ~ "<10"
+    ),
+    # Categorize total_parent_seqs with exclusive ranges
+    og_size_category_parent_seqs = case_when(
+      total_parent_seqs > 10000 ~ ">10000",
+      total_parent_seqs > 1000  ~ "1000-10000",
+      total_parent_seqs > 500   ~ "500-1,000",
+      total_parent_seqs > 200   ~ "200-500",
+      total_parent_seqs > 100   ~ "100-200",
+      total_parent_seqs >= 50   ~ "50-100",
+      total_parent_seqs < 50    ~ "10-50",
+      TRUE ~ "<10"
+    )
   ) %>%
   ungroup()
 
@@ -265,9 +300,9 @@ jaccard_metrics_all_long <- jaccard_metrics_all %>%
 for (i in 1:nrow(og_sources)) { 
   og_source1 <- og_sources[i, 1]
   og_source2 <- og_sources[i, 2]
-  pair_name <- paste(og_source1, "vs", og_source2, sep = "_")
+  pair_name <- paste(og_source2, "vs", og_source1, sep = "_")
   
-  jaccard_metrics_per_og[[pair_name]] <- calculate_jaccard_metrics_per_og(jaccard_mat[[pair_name]], og_source1, og_source2)
+  jaccard_metrics_per_og[[pair_name]] <- calculate_jaccard_metrics_per_og(jaccard_mat[[pair_name]], og_source2, og_source1)
 }
 
 jaccard_metrics_per_og_all <- bind_rows(jaccard_metrics_per_og) %>% 
