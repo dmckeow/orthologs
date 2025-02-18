@@ -316,3 +316,42 @@ def_fun_sam_ogs_jac <- def_fun_sam_ogs %>%
     left_join(jaccard_metrics_per_og_all, by = c("Orthogroup" = "Orthogroup", "OG_source" = "OG_source"))
 
 main_seq_long = def_fun_sam_ogs_jac
+
+
+# data reshape to make OG centric data
+og_meta <- main_seq_long %>%
+  select(
+    id,
+    supergroup,
+    Orthogroup,
+    OG_source,
+    cogeqc_hscore,
+    cogeqc_hscore_scaled_all,
+    cogeqc_hscore_scaled_self,
+    total_seqs,
+    total_parent_seqs,
+    total_ids,
+    total_supergroups,
+    most_common_pfam_hmm_name,
+    total_most_common_pfam_hmm_name,
+    percent_most_common_pfam_hmm_name,
+    vs_Orthogroup,
+    vs_OG_source,
+    Best_Jaccard,
+    Mean_Jaccard,
+    percent_total_seqs,
+    percent_total_parent_seqs,
+    percent_total_ids,
+    percent_total_supergroups,
+    og_size_category_seqs,
+    og_size_category_parent_seqs
+  ) %>%
+  rename(og_size = total_seqs) %>%
+  unique() %>%
+  collapse_col(id, c("OG_source", "Orthogroup"), ",", unique_values = TRUE) %>%
+  unique() %>%
+  collapse_col(supergroup, c("OG_source", "Orthogroup"), ",", unique_values = TRUE) %>%
+  unique()
+
+
+save(main_seq_long, og_meta, jaccard_metrics_all_long, file = "data/og_data.RData")

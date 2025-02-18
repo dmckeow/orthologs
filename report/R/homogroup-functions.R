@@ -187,12 +187,11 @@ calculate_jaccard_metrics_per_og <- function(data, tool1_name, tool2_name) {
 
 create_presence_matrix <- function(df, group_col, value_col) {
   df %>%
-    select({{ value_col }}, {{ group_col }}) %>%  # Select the specified columns
-    distinct() %>%  # Remove duplicate combinations
-    mutate(Presence = 1) %>%  # Mark presence with 1
-    spread(key = {{ group_col }}, value = Presence, fill = 0) %>%  # Convert to wide format
-    rename(Name = {{ value_col }}) %>%
-    filter(!is.na(Name))
+    select({{ value_col }}, {{ group_col }}) %>%
+    distinct() %>%
+    mutate(Presence = TRUE) %>%
+    spread(key = {{ group_col }}, value = Presence, fill = FALSE) %>%  # to wide
+    filter(!is.na({{ value_col }}))
 }
 
 

@@ -4,7 +4,7 @@ author: "Dean Mckeown"
 date: "`r Sys.Date()`"
 output: 
   html_document:
-    output_file: "results/homogroups.html"
+    output_file: "results/hg.html"
     toc: true
     toc_float: TRUE
     toc_depth: 4
@@ -37,11 +37,6 @@ ___
 ```{r Preparation, include = FALSE}
 source('R/hg_data_prep.R')
 suppressPackageStartupMessages(suppressWarnings(source('R/homogroup-functions.R')))
-
-
-################################################################################
-# INPUTS
-################################################################################
 
 ################################################################################
 # General inputs
@@ -137,7 +132,7 @@ sp_tree <- tree %>%
   geom_tiplab() +
   scale_color_manual(values = SUPERGROUP_COLS)
 
-sp_tree <- gheatmap(sp_tree, 
+sp_tree <- gheatmap(sp_tree,
   tree_meta$hm_total_genes_in_id_by_geneclass,
   offset = 8,
   width = 2,
@@ -147,9 +142,7 @@ sp_tree <- gheatmap(sp_tree,
   low = "white",
   high = "blue",
   color = "white"
-  )
-
-sp_tree +
+  ) +
   ggtree::vexpand(.1, -1) +
   coord_cartesian(clip = "off")
 
@@ -158,43 +151,8 @@ save(tree, tree_meta, file = "data/tree_and_metadata.RData")
 
 
 ```
-## Orthogroup Homogeneity {.tabset}
-```{r Orthogroup homogeneity}
-# data reshape
-og_meta <- main_seq_long %>%
-  select(
-    id,
-    supergroup,
-    Orthogroup,
-    OG_source,
-    cogeqc_hscore,
-    cogeqc_hscore_scaled_all,
-    cogeqc_hscore_scaled_self,
-    total_seqs,
-    total_parent_seqs,
-    total_ids,
-    total_supergroups,
-    most_common_pfam_hmm_name,
-    total_most_common_pfam_hmm_name,
-    percent_most_common_pfam_hmm_name,
-    vs_Orthogroup,
-    vs_OG_source,
-    Best_Jaccard,
-    Mean_Jaccard,
-    percent_total_seqs,
-    percent_total_parent_seqs,
-    percent_total_ids,
-    percent_total_supergroups,
-    og_size_category_seqs,
-    og_size_category_parent_seqs
-  ) %>%
-  rename(og_size = total_seqs) %>%
-  unique() %>%
-  collapse_col(id, c("OG_source", "Orthogroup"), ",", unique_values = TRUE) %>%
-  unique() %>%
-  collapse_col(supergroup, c("OG_source", "Orthogroup"), ",", unique_values = TRUE) %>%
-  unique()
 
+```{r Orthogroup homogeneity}
 # plot by tools
 vn_cogeqc_hssc_tools <- og_meta %>% ggviolin(
     y = "cogeqc_hscore_scaled_all", x = "OG_source", 
@@ -228,17 +186,6 @@ plot_layout(guides = "collect")
 
 ```
 
-### OG Homogeneity by Tools
-```{r}
-vn_cogeqc_hssc_tools
-```
-
-### OG Homogeneity by Species
-```{r}
-vn_cogeqc_hssc_sp
-```
----
-## Orthogroup Stats {.tabset}
 ```{r Basic OG stats}
 
 sp_ogs_coghs_vs_size_vs_sgs <- og_meta %>%
@@ -265,22 +212,13 @@ vn_size_tools <- og_meta %>%
 
 
 ```
-## Orthogroup homogeneity score vs OG size
-```{r}
-sp_ogs_coghs_vs_size_vs_sgs
-```
-### Orthogroup size by tool
-```{r}
-vn_size_tools
-```
----
-## Overall Tool Similarity {.tabset}
+
 ```{r Algorithm Comparison}
 # Create the heatmap using ggplot2
 jaccard_metrics_heat_callers <- jaccard_metrics_all_long %>%
 ggplot(aes(x = tool1, y = tool2, fill = Value)) +
   geom_tile() +
-  scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0.5) +
+  scale_fill_gradient2(low = "#2166AC", high = "#B2182B", mid = "#F7F7F7", midpoint = 0.5) +
   facet_wrap(~Metric) +
   theme_minimal() +
   labs(
@@ -308,7 +246,7 @@ ggplot() +
   geom_tile(aes(x = "OG size", y = Orthogroup, fill = og_size)) +
   scale_fill_gradient2(low = "#B2182B", high = "#2166AC", mid = "#F7F7F7", guide = guide_colorbar(order = 6)) +
 
-  new_scale_fill() +ß
+  new_scale_fill() +
   geom_tile(aes(x = "Best JI vs ", y = Orthogroup, fill = Best_Jaccard)) +
   scale_fill_gradient2(low = "#762A83", high = "#1B7837", mid = "#F7F7F7", limits = c(0, 1), midpoint = 0.5, guide = guide_colorbar(order = 4)) +
 
@@ -328,68 +266,160 @@ ggplot() +
   geom_tile(aes(x = "vs OG source", y = Orthogroup, fill = vs_OG_source)) +
   scale_fill_manual(values = OG_CALLER_COLS, guide = guide_legend(order = 8)) +
 
-
-
   theme_bw() +
   theme(legend.position = "bottom",
   legend.direction = "vertical",
   legend.title = element_blank(),
   axis.text.x = element_text(angle = 45, hjust = 1)) +
   facet_grid(most_common_pfam_hmm_name ~ ., scales = "free", space = "free")
-###
 
+```
+
+```{r Taxonomic Distribution}
+up_in_ogs <- list()
+
+# complex upset - tries to use column named id as data by default
+# make matrices - for supergroups
+up_in_ogs$sg <- create_presence_matrix(main_seq_long, supergroup, Orthogroup)
+up_in_ogs$sg_cols <- colnames(up_in_ogs$sg)[-1]
+up_in_ogs$sg <- up_in_ogs$sg %>% left_join(og_meta %>% rename(species = id), by = "Orthogroup")
+
+# Prepare the colours for the sets, some R packages are so annoying!!!
+queries_list <- purrr::map(names(SUPERGROUP_COLS), ~{
+  upset_query(set = .x, color = SUPERGROUP_COLS[.x], fill = SUPERGROUP_COLS[.x])
+}) %>%
+purrr::keep(~ .x$set %in% up_in_ogs$sg_cols)
+
+
+up_ogs_by_sg <- upset(
+  up_in_ogs$sg,
+  up_in_ogs$sg_cols,
+  annotations = list(
+    'OG size' = (
+      ggplot(mapping = aes(y = og_size))
+      + geom_jitter(aes(color = OG_source), na.rm = TRUE)
+      + geom_violin(alpha = 0, na.rm = TRUE)
+      + scale_y_continuous(trans = 'log10', labels = scales::comma)
+      + scale_color_manual(values = OG_CALLER_COLS)
+      ),
+      'OG scaled Homogeneity Score' = (
+          # note that aes(x=intersection) is supplied by default
+          ggplot(mapping = aes(y = cogeqc_hscore_scaled_all))
+          + geom_jitter(aes(color = OG_source), na.rm = TRUE)
+          + geom_violin(alpha = 0, na.rm = TRUE)
+          + scale_color_manual(values = OG_CALLER_COLS)
+      ),
+      'OG source' = (
+          ggplot(mapping = aes(fill = up_in_ogs$sg$OG_source))
+         + geom_bar(stat = 'count', position = 'fill')
+         + scale_fill_manual(values = OG_CALLER_COLS)
+         + ylab('OG source')
+      )
+  ),
+  min_size = 10,
+  width_ratio = 0.1,
+  sort_intersections_by = 'degree',
+  queries = queries_list
+)
+
+
+# make matrices - for geneclasses
+up_in_ogs$gc <- create_presence_matrix(main_seq_long, pfam_hmm_name, Orthogroup)
+up_in_ogs$gc_cols <- colnames(up_in_ogs$gc)[-1]
+up_in_ogs$gc <- up_in_ogs$gc %>% left_join(og_meta %>% rename(species = id), by = "Orthogroup")
+
+up_ogs_by_gc <- upset(
+  up_in_ogs$gc,
+  up_in_ogs$gc_cols,
+  annotations = list(
+    'OG size' = (
+      ggplot(mapping = aes(y = og_size))
+      + geom_jitter(aes(color = OG_source), na.rm = TRUE)
+      + geom_violin(alpha = 0, na.rm = TRUE)
+      + scale_y_continuous(trans = 'log10', labels = scales::comma)
+      + scale_color_manual(values = OG_CALLER_COLS)
+      ),
+      'OG scaled Homogeneity Score' = (
+          # note that aes(x=intersection) is supplied by default
+          ggplot(mapping = aes(y = cogeqc_hscore_scaled_all))
+          + geom_jitter(aes(color = OG_source), na.rm = TRUE)
+          + geom_violin(alpha = 0, na.rm = TRUE)
+          + scale_color_manual(values = OG_CALLER_COLS)
+      ),
+      'OG source' = (
+          ggplot(mapping = aes(fill = up_in_ogs$gc$OG_source))
+         + geom_bar(stat = 'count', position = 'fill')
+         + scale_fill_manual(values = OG_CALLER_COLS)
+         + ylab('OG source')
+      )
+  ),
+  min_size = 5, # this is really important as it controls how many are shown
+  width_ratio = 0.1,
+  sort_intersections_by = 'degree'
+)
 
 
 ```
-### Orthogroup callers jaccard heatmap
+
+---
+
+## Overall Comparison of OG callers {.tabset}
+
+### Orthogroup callers overall OG composition Similarity
 ```{r}
 jaccard_metrics_heat_callers
 ```
-### Orthogroup caller versus other callers & basic stats
+
+### OG Homogeneity by OG callers
+```{r}
+vn_cogeqc_hssc_tools
+```
+
+### OG Homogeneity by Species
+```{r}
+vn_cogeqc_hssc_sp
+```
+
+---
+
+## Ortholog Properties {.tabset}
+
+### Orthogroup statistics
 ```{r}
 hm_ogs_vs
 ```
-## Taxonomic Distribution of OGs {.tabset}
-```{r Taxonomic Distribution}
-up_in_ogs <- list()
-# make matrices
-#      for supergroups
-up_in_ogs$sg <- create_presence_matrix(main_seq_long, supergroup, Orthogroup)
-up_in_ogs$sg_cols <- main_seq_long$supergroup %>% unique()
-up_in_ogs$sg <- up_in_ogs$sg %>% 
-  left_join(og_meta, by = c("Name" = "Orthogroup"))
 
-#      for gene classes
-up_in_ogs$gc <- create_presence_matrix(main_seq_long, pfam_hmm_name, Orthogroup)
-up_in_ogs$gc_cols <- colnames(up_in_ogs$gc)[-1]
-up_in_ogs$gc <- up_in_ogs$gc %>% 
-  left_join(og_meta, by = c("Name" = "Orthogroup"))
-
-up_ogs_sg <- upset(up_in_ogs$sg,
-  up_in_ogs$sg_cols,
-  annotations = list(
-      'Orthogroup caller'=(
-          ggplot(mapping=aes(fill = OG_source))
-          + geom_bar(stat='count', position='fill')
-          + scale_y_continuous(labels=scales::percent_format())
-          + scale_fill_manual(values = OG_CALLER_COLS)
-          + ylab('Orthogroup caller')
-      )
-  ),
-)
-
-upset_geneclasses <- upset(up_in_all,
-  geneclasses,
-  annotations = list(
-      'Orthogroup caller'=(
-          ggplot(mapping=aes(fill=OG_source))
-          + geom_bar(stat='count', position='fill')
-          + scale_y_continuous(labels=scales::percent_format())
-          + scale_fill_manual(values = OG_CALLER_COLS)
-          + ylab('Orthogroup caller')
-      )
-  ),
-)
-
-
+### Orthogroup homogeneity score vs OG size
+```{r}
+sp_ogs_coghs_vs_size_vs_sgs
 ```
+
+### Orthogroup size by tool
+```{r}
+vn_size_tools
+```
+
+---
+
+## Ortholog Distribution {.tabset}
+
+### Species tree
+```{r}
+sp_tree
+```
+
+### OG distribution across supergroups
+```{r}
+up_ogs_by_sg
+```
+
+### OG distribution across gene classes
+```{r}
+up_ogs_by_gc
+```
+
+---
+
+
+
+
