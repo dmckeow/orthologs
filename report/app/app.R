@@ -4,11 +4,11 @@ library(ggplot2)
 library(dplyr)
 
 print(getwd())
-options(shiny.trace=TRUE)
-options(shiny.fullstacktrace=TRUE)
+options(shiny.trace = TRUE)
+options(shiny.fullstacktrace = TRUE)
 
 # Load data from other scripts
-load("../data/tree_and_metadata.RData")
+load("../data/og_data.RData")
 
 SUPERGROUP_COLS <- c(
   Choanoflagellata = "#A6CEE3",
@@ -94,7 +94,7 @@ server <- function(input, output, session) {
       scale_color_manual(values = SUPERGROUP_COLS)
     
     # Add heatmap with filtered data
-    sp_tree <- gheatmap(sp_tree, 
+    sp_tree <- gheatmap(sp_tree,
                         filtered_heatmap_data(),
                         offset = 8,
                         width = 2,

@@ -23,6 +23,7 @@ library(plotly)
 library(viridis)
 library(RColorBrewer)
 library(patchwork)
+library(ggtreeExtra)
 
 suppressPackageStartupMessages(suppressWarnings(source('R/homogroup-functions.R')))
 
@@ -208,6 +209,10 @@ total_parent_seqs_all <- n_distinct(def_fun_sam_ogs$parent_seq)
 total_ids_all <- n_distinct(def_fun_sam_ogs$id)
 total_supergroups_all <- n_distinct(def_fun_sam_ogs$supergroup)
 
+
+# Define the categories for OG sizes
+categories <- c("over_10000", "from_1000_to_10000", "from_500_to_1000", "from_200_to_500", "from_100_to_200", "from_50_to_100", "from_10_to_50", "below_10")
+
 def_fun_sam_ogs <- def_fun_sam_ogs %>%
   group_by(Orthogroup) %>%
   mutate(
@@ -224,33 +229,31 @@ def_fun_sam_ogs <- def_fun_sam_ogs %>%
     percent_total_seqs = total_seqs / total_seqs_all * 100,
     percent_total_parent_seqs = total_parent_seqs / total_parent_seqs_all * 100,
     percent_total_ids = total_ids / total_ids_all * 100,
-    percent_total_supergroups = total_supergroups / total_supergroups_all * 100,
-    
-    # Categorize total_seqs with exclusive ranges
-    og_size_category_seqs = case_when(
-      total_seqs > 10000 ~ ">10000",
-      total_seqs > 1000  ~ "1000-10000",
-      total_seqs > 500   ~ "500-1,000",
-      total_seqs > 200   ~ "200-500",
-      total_seqs > 100   ~ "100-200",
-      total_seqs >= 50   ~ "50-100",
-      total_seqs < 50    ~ "10-50",
-      TRUE ~ "<10"
-    ),
-    # Categorize total_parent_seqs with exclusive ranges
-    og_size_category_parent_seqs = case_when(
-      total_parent_seqs > 10000 ~ ">10000",
-      total_parent_seqs > 1000  ~ "1000-10000",
-      total_parent_seqs > 500   ~ "500-1,000",
-      total_parent_seqs > 200   ~ "200-500",
-      total_parent_seqs > 100   ~ "100-200",
-      total_parent_seqs >= 50   ~ "50-100",
-      total_parent_seqs < 50    ~ "10-50",
-      TRUE ~ "<10"
-    )
+    percent_total_supergroups = total_supergroups / total_supergroups_all * 100
   ) %>%
-  ungroup()
+  ungroup() %>%
+  # Add new columns for each category
+  mutate(
+    # For total_seqs
+    seqs_over_10000 = as.integer(total_seqs > 10000),
+    seqs_from_1000_to_10000 = as.integer(total_seqs > 1000 & total_seqs <= 10000),
+    seqs_from_500_to_1000 = as.integer(total_seqs > 500 & total_seqs <= 1000),
+    seqs_from_200_to_500 = as.integer(total_seqs > 200 & total_seqs <= 500),
+    seqs_from_100_to_200 = as.integer(total_seqs > 100 & total_seqs <= 200),
+    seqs_from_50_to_100 = as.integer(total_seqs >= 50 & total_seqs <= 100),
+    seqs_from_10_to_50 = as.integer(total_seqs >= 10 & total_seqs < 50),
+    seqs_below_10 = as.integer(total_seqs < 10),
 
+    # For total_parent_seqs
+    parent_seqs_over_10000 = as.integer(total_parent_seqs > 10000),
+    parent_seqs_from_1000_to_10000 = as.integer(total_parent_seqs > 1000 & total_parent_seqs <= 10000),
+    parent_seqs_from_500_to_1000 = as.integer(total_parent_seqs > 500 & total_parent_seqs <= 1000),
+    parent_seqs_from_200_to_500 = as.integer(total_parent_seqs > 200 & total_parent_seqs <= 500),
+    parent_seqs_from_100_to_200 = as.integer(total_parent_seqs > 100 & total_parent_seqs <= 200),
+    parent_seqs_from_50_to_100 = as.integer(total_parent_seqs >= 50 & total_parent_seqs <= 100),
+    parent_seqs_from_10_to_50 = as.integer(total_parent_seqs >= 10 & total_parent_seqs < 50),
+    parent_seqs_below_10 = as.integer(total_parent_seqs < 10)
+  )
 
 # jaccard similarity between all OGs
 
@@ -343,8 +346,14 @@ og_meta <- main_seq_long %>%
     percent_total_parent_seqs,
     percent_total_ids,
     percent_total_supergroups,
-    og_size_category_seqs,
-    og_size_category_parent_seqs
+    parent_seqs_below_10,
+    parent_seqs_from_10_to_50,
+    parent_seqs_from_50_to_100,
+    parent_seqs_from_100_to_200,
+    parent_seqs_from_200_to_500,
+    parent_seqs_from_500_to_1000,
+    parent_seqs_from_1000_to_10000,
+    parent_seqs_over_10000
   ) %>%
   rename(og_size = total_seqs) %>%
   unique() %>%
@@ -354,4 +363,155 @@ og_meta <- main_seq_long %>%
   unique()
 
 
-save(main_seq_long, og_meta, jaccard_metrics_all_long, file = "data/og_data.RData")
+######## make id centric data
+
+og_by_id_meta <- main_seq_long %>%
+  select(
+    id, # group by #
+    supergroup, # group by #
+    OG_source, # group by #
+    Orthogroup, # count & collapse #
+    cogeqc_hscore, # mean #
+    cogeqc_hscore_scaled_all, # mean #
+    cogeqc_hscore_scaled_self, # mean #
+    total_seqs, # sum, mean #
+    total_parent_seqs, # sum, mean #
+    percent_total_seqs, # sum #
+    percent_total_parent_seqs, # sum #
+    parent_seqs_below_10,
+    parent_seqs_from_10_to_50,
+    parent_seqs_from_50_to_100,
+    parent_seqs_from_100_to_200,
+    parent_seqs_from_200_to_500,
+    parent_seqs_from_500_to_1000,
+    parent_seqs_from_1000_to_10000,
+    parent_seqs_over_10000
+  ) %>%
+  unique() %>%
+  group_by(id, supergroup, OG_source) %>%
+  mutate(
+    cogeqc_hscore_mean = mean(cogeqc_hscore, na.rm = TRUE),
+    cogeqc_hscore_scaled_all_mean = mean(cogeqc_hscore_scaled_all, na.rm = TRUE),
+    cogeqc_hscore_scaled_self_mean = mean(cogeqc_hscore_scaled_self, na.rm = TRUE),
+    total_seqs_mean = mean(total_seqs, na.rm = TRUE),
+    total_seqs_sum = sum(total_seqs),
+    total_parent_seqs_mean = mean(total_parent_seqs, na.rm = TRUE),
+    total_parent_seqs_sum = sum(total_parent_seqs),
+    percent_total_seqs_sum = sum(percent_total_seqs),
+    percent_total_parent_seqs_sum = sum(percent_total_parent_seqs),
+    num_orthogroups = length(unique(Orthogroup)),
+    parent_seqs_below_10_sum = sum(parent_seqs_below_10),
+    parent_seqs_from_10_to_50_sum = sum(parent_seqs_from_10_to_50),
+    parent_seqs_from_50_to_100_sum = sum(parent_seqs_from_50_to_100),
+    parent_seqs_from_100_to_200_sum = sum(parent_seqs_from_100_to_200),
+    parent_seqs_from_200_to_500_sum = sum(parent_seqs_from_200_to_500),
+    parent_seqs_from_500_to_1000_sum = sum(parent_seqs_from_500_to_1000),
+    parent_seqs_from_1000_to_10000_sum = sum(parent_seqs_from_1000_to_10000),
+    parent_seqs_over_10000_sum = sum(parent_seqs_over_10000)
+  ) %>%
+  ungroup() %>%
+  select(
+    id,
+    supergroup,
+    OG_source,
+    cogeqc_hscore_mean,
+    cogeqc_hscore_scaled_all_mean,
+    cogeqc_hscore_scaled_self_mean,
+    total_seqs_mean,
+    total_seqs_sum,
+    total_parent_seqs_mean,
+    total_parent_seqs_sum,
+    percent_total_seqs_sum,
+    percent_total_parent_seqs_sum,
+    num_orthogroups,
+    parent_seqs_below_10_sum,
+    parent_seqs_from_10_to_50_sum,
+    parent_seqs_from_50_to_100_sum,
+    parent_seqs_from_100_to_200_sum,
+    parent_seqs_from_200_to_500_sum,
+    parent_seqs_from_500_to_1000_sum,
+    parent_seqs_from_1000_to_10000_sum,
+    parent_seqs_over_10000_sum
+  ) %>%
+  unique()
+
+
+og_by_id_gc_meta <- main_seq_long %>%
+  select(
+    id, # group by #
+    supergroup, # group by #
+    OG_source, # group by #
+    most_common_pfam_hmm_name,
+    Orthogroup, # count & collapse #
+    cogeqc_hscore, # mean #
+    cogeqc_hscore_scaled_all, # mean #
+    cogeqc_hscore_scaled_self, # mean #
+    total_seqs, # sum, mean #
+    total_parent_seqs, # sum, mean #
+    percent_total_seqs, # sum #
+    percent_total_parent_seqs
+  ) %>%
+  unique() %>%
+  group_by(id, supergroup, OG_source, most_common_pfam_hmm_name) %>%
+  mutate(
+    cogeqc_hscore_mean = mean(cogeqc_hscore, na.rm = TRUE),
+    cogeqc_hscore_scaled_all_mean = mean(cogeqc_hscore_scaled_all, na.rm = TRUE),
+    cogeqc_hscore_scaled_self_mean = mean(cogeqc_hscore_scaled_self, na.rm = TRUE),
+    total_seqs_mean = mean(total_seqs, na.rm = TRUE),
+    total_seqs_sum = sum(total_seqs),
+    total_parent_seqs_mean = mean(total_parent_seqs, na.rm = TRUE),
+    total_parent_seqs_sum = sum(total_parent_seqs),
+    percent_total_seqs_sum = sum(percent_total_seqs),
+    percent_total_parent_seqs_sum = sum(percent_total_parent_seqs),
+    num_orthogroups = length(unique(Orthogroup))
+  ) %>%
+  ungroup() %>%
+  select(
+    -Orthogroup,
+    -cogeqc_hscore,
+    -cogeqc_hscore_scaled_all,
+    -cogeqc_hscore_scaled_self,
+    -total_seqs,
+    -total_parent_seqs,
+    -percent_total_seqs,
+    -percent_total_parent_seqs
+  ) %>%
+  unique()
+
+########## prep for tree
+tree <- read.tree(SPECIES_TREE)
+
+tree_meta <- list()
+
+tree_meta$tips <- main_seq_long %>%
+  select(
+    id,
+    supergroup
+  ) %>%
+  unique()
+
+# prepare data for heatmap
+# per geneclass - og for gheatmap
+tree_meta$hm_total_genes_in_id_by_geneclass <- main_seq_long %>%
+  select(id, most_common_pfam_hmm_name, clean_parent_seq) %>%
+  unique() %>%
+  group_by(id, most_common_pfam_hmm_name) %>%
+  summarise(values = n_distinct(clean_parent_seq), .groups = 'drop') %>%
+  pivot_wider(names_from = most_common_pfam_hmm_name, values_from = values) %>%
+  column_to_rownames("id") %>%
+  replace(is.na(.), 0)
+
+
+
+## save data for shiny
+#save(tree, tree_meta, file = "data/tree_and_metadata.RData")
+save(
+  tree,
+  tree_meta,
+  main_seq_long,
+  og_meta,
+  og_by_id_meta,
+  og_by_id_gc_meta,
+  jaccard_metrics_all_long,
+  file = "data/og_data.RData"
+  )
