@@ -97,116 +97,96 @@ sp_tree <- tree %>%
     linewidth = 1.0,
     layout = "rectangular"
   ) %<+% tree_meta$tips +
-  geom_tiplab() +
+  geom_tiplab(align = TRUE) +
   scale_color_manual(values = SUPERGROUP_COLS) +
-  geom_treescale()
+  geom_treescale() +
+  scale_x_continuous(expand = expansion(0.2)) +
+  scale_y_tree()
 
-sp_tree <- gheatmap(sp_tree,
-  tree_meta$hm_total_genes_in_id_by_geneclass,
-  offset = 8,
-  width = 2,
-  colnames_angle = 90,
-  colnames_offset_y = -1,
-  hjust = 1,
-  low = "white",
-  high = "blue",
-  color = "white"
-  ) +
-  ggtree::vexpand(.1, -1) +
-  coord_cartesian(clip = "off")
+# Adjust the second plot to align with the tree and facet grid titles properly
 
-hm_for_tree_id <- og_by_id_meta %>%
-ggplot() +
-  geom_tile(aes(x = "Mean COGEQC hscore scaled vs all", y = id, fill = cogeqc_hscore_scaled_all_mean)) +
-  scale_fill_gradient2(low = "#2166AC", high = "#B2182B", mid = "#F7F7F7", limits = c(0, 1), midpoint = 0.5, guide = guide_colorbar(order = 1)) +
-
+hm_for_tree_id <- ggtreeplot(sp_tree, og_by_id_meta, data_label = "id", expand_limits = expand_scale(0, 1.2)) +
+  geom_tile(aes(x = "Mean COGEQC hscore scaled vs all", fill = cogeqc_hscore_scaled_all_mean)) +
+  scale_fill_gradient2(low = "#2166AC", high = "#B2182B", mid = "#F7F7F7", midpoint = median(og_by_id_meta$cogeqc_hscore_scaled_all_mean, na.rm = TRUE), guide = guide_colorbar(order = 1)) +
+  
   new_scale_fill() +
-  geom_tile(aes(x = "Mean OG size", y = id, fill = total_parent_seqs_mean)) +
+  geom_tile(aes(x = "Mean OG size", fill = total_parent_seqs_mean)) +
   scale_fill_gradient2(low = "#FCFBFD", high = "#3F007D", guide = guide_colorbar(order = 2)) +
 
   new_scale_fill() +
-  geom_tile(aes(x = "Num of OGs including species", y = id, fill = num_orthogroups)) +
+  geom_tile(aes(x = "Num of OGs including species", fill = num_orthogroups)) +
   scale_fill_gradient2(low = "#EFF3FF", high = "#08519C", guide = guide_colorbar(order = 3)) +
 
   new_scale_fill() +
-  geom_tile(aes(x = "Num of OGs with < 10 genes that include species", y = id, fill = parent_seqs_below_10_sum)) +
+  geom_tile(aes(x = "Num of OGs with < 10 genes that include species", fill = parent_seqs_below_10_sum)) +
   scale_fill_gradient2(low = "#74C476", high = "#00441B", guide = guide_colorbar(order = 4)) +
 
   new_scale_fill() +
-  geom_tile(aes(x = "Num of OGs with 10-50 genes that include species", y = id, fill = parent_seqs_from_10_to_50_sum)) +
+  geom_tile(aes(x = "Num of OGs with 10-50 genes that include species", fill = parent_seqs_from_10_to_50_sum)) +
   scale_fill_gradient2(low = "#74C476", high = "#00441B", guide = guide_colorbar(order = 5)) +
 
   new_scale_fill() +
-  geom_tile(aes(x = "Num of OGs with 50-100 genes that include species", y = id, fill = parent_seqs_from_50_to_100_sum)) +
+  geom_tile(aes(x = "Num of OGs with 50-100 genes that include species", fill = parent_seqs_from_50_to_100_sum)) +
   scale_fill_gradient2(low = "#74C476", high = "#00441B", guide = guide_colorbar(order = 6)) +
 
   new_scale_fill() +
-  geom_tile(aes(x = "Num of OGs with 100-200 genes that include species", y = id, fill = parent_seqs_from_100_to_200_sum)) +
+  geom_tile(aes(x = "Num of OGs with 100-200 genes that include species", fill = parent_seqs_from_100_to_200_sum)) +
   scale_fill_gradient2(low = "#74C476", high = "#00441B", guide = guide_colorbar(order = 7)) +
 
   new_scale_fill() +
-  geom_tile(aes(x = "Num of OGs with 200-500 genes that include species", y = id, fill = parent_seqs_from_200_to_500_sum)) +
+  geom_tile(aes(x = "Num of OGs with 200-500 genes that include species", fill = parent_seqs_from_200_to_500_sum)) +
   scale_fill_gradient2(low = "#74C476", high = "#00441B", guide = guide_colorbar(order = 8)) +
 
   new_scale_fill() +
-  geom_tile(aes(x = "Num of OGs with 500-1000 genes that include species", y = id, fill = parent_seqs_from_500_to_1000_sum)) +
+  geom_tile(aes(x = "Num of OGs with 500-1000 genes that include species", fill = parent_seqs_from_500_to_1000_sum)) +
   scale_fill_gradient2(low = "#74C476", high = "#00441B", guide = guide_colorbar(order = 9)) +
 
   new_scale_fill() +
-  geom_tile(aes(x = "Num of OGs with 1000-10000 genes that include species", y = id, fill = parent_seqs_from_1000_to_10000_sum)) +
+  geom_tile(aes(x = "Num of OGs with 1000-10000 genes that include species", fill = parent_seqs_from_1000_to_10000_sum)) +
   scale_fill_gradient2(low = "#74C476", high = "#00441B", guide = guide_colorbar(order = 10)) +
 
   new_scale_fill() +
-  geom_tile(aes(x = "Num of OGs with > 10000 genes that include species", y = id, fill = parent_seqs_over_10000_sum)) +
+  geom_tile(aes(x = "Num of OGs with > 10000 genes that include species", fill = parent_seqs_over_10000_sum)) +
   scale_fill_gradient2(low = "#74C476", high = "#00441B", guide = guide_colorbar(order = 11)) +
 
   theme_bw() +
-  theme(legend.position = "bottom",
-  legend.direction = "vertical",
-  legend.title = element_blank(),
-  axis.text.x = element_text(angle = 45, hjust = 1)) +
-  facet_grid(. ~ OG_source, scales = "free", space = "free")
+  theme(
+    legend.title = element_blank(),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  ) +
+  facet_grid(. ~ OG_source, scales = "free_y", space = "free") +
+  no_y_axis()
 
 
+tree_hm_for_tree_id <- sp_tree + hm_for_tree_id +
+  plot_annotation() +
+  plot_layout(guides = "collect") &
+  theme(legend.position = "bottom", legend.direction = "vertical")
 
 
+## ggplot method
 
 
-hm_for_tree_id_gc <- ggplot(og_by_id_gc_meta, aes(tree_y(sp_tree, og_by_id_gc_meta))) +
-  geom_tile(aes(x = most_common_pfam_hmm_name, y = id, fill = cogeqc_hscore_scaled_all_mean)) +
+# plot the geom with y axis plotted using tree_y to reorder the y axis to match tree
+
+hm_for_tree_id_gc <- ggtreeplot(sp_tree, og_by_id_gc_meta, aes(x = most_common_pfam_hmm_name), data_label = "id", expand_limits = expand_scale(0,1.2)) +
+  geom_tile(aes(fill = cogeqc_hscore_scaled_all_mean)) +
   scale_fill_gradient2(
-    low = "#2166AC", 
-    high = "#B2182B", 
+    low = "#2166AC",
+    high = "#B2182B",
     mid = "#F7F7F7",
     midpoint = median(og_by_id_gc_meta$cogeqc_hscore_scaled_all_mean, na.rm = TRUE)
   ) +
   theme_bw() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  facet_grid(. ~ OG_source, scales = "free_y", space = "free")
+  facet_grid(. ~ OG_source, scales = "free_y", space = "free") +
+  no_y_axis()
 
+# now to align the tree tips with the y axis of geom
 
-sp_tree + geom_facet(panel = "og_by_id_gc_meta", data = og_by_id_gc_meta, geom = geom_tile, mapping=aes(x = most_common_pfam_hmm_name, fill = cogeqc_hscore_scaled_all_mean))
-
-sp_tree + hm_for_tree_id_gc + plot_annotation()
-
-sp_tree + hm_for_tree_id_gc +
-  plot_layout(ncol = 2, widths = c(1, 3))
-
-
-
-sp_tree + geom_fruit(
-  data = og_by_id_gc_meta,
-  geom = geom_tile,
-  mapping = aes(y = id, x = most_common_pfam_hmm_name, fill = cogeqc_hscore_scaled_all_mean),
-  scale_fill_gradient2(
-    low = "#2166AC", 
-    high = "#B2182B", 
-    mid = "#F7F7F7",
-    midpoint = median(og_by_id_gc_meta$cogeqc_hscore_scaled_all_mean, na.rm = TRUE)
-  ) +
-  theme_bw() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  facet_grid(. ~ OG_source, scales = "free_y", space = "free"))
+tree_hm_for_tree_id_gc <- sp_tree + hm_for_tree_id_gc +
+plot_annotation() +
+plot_layout(guides = "collect")
 
 ```
 
@@ -421,58 +401,77 @@ up_ogs_by_gc <- upset(
 
 ---
 
-## Overall Comparison of OG callers {.tabset}
+# Overall Comparison of OG callers
 
-### Orthogroup callers overall OG composition Similarity
+## Orthogroup callers overall OG composition Similarity
 ```{r}
 jaccard_metrics_heat_callers
 ```
 
-### OG Homogeneity by OG callers
+---
+
+## OG Homogeneity by OG callers
 ```{r}
 vn_cogeqc_hssc_tools
 ```
 
-### OG Homogeneity by Species
+---
+
+## OG Homogeneity by Species
 ```{r}
 vn_cogeqc_hssc_sp
 ```
 
 ---
 
-## Ortholog Properties {.tabset}
+# Ortholog Properties
 
-### Orthogroup statistics
-```{r}
+## Orthogroup statistics
+```{r, fig.width=16, fig.height=16}
 hm_ogs_vs
 ```
 
-### Orthogroup homogeneity score vs OG size
+---
+
+## Orthogroup homogeneity score vs OG size
 ```{r}
 sp_ogs_coghs_vs_size_vs_sgs
 ```
 
-### Orthogroup size by tool
+---
+
+## Orthogroup size by tool
 ```{r}
 vn_size_tools
 ```
 
 ---
 
-## Ortholog Distribution {.tabset}
+# Ortholog Distribution
 
-### Species tree
-```{r}
-sp_tree
+## Species tree
+```{r, fig.width=16, fig.height=16}
+tree_hm_for_tree_id
 ```
 
-### OG distribution across supergroups
-```{r}
+---
+
+## Species tree by geneclass
+```{r, fig.width=16, fig.height=16}
+tree_hm_for_tree_id_gc
+```
+
+---
+
+## OG distribution across supergroups
+```{r, fig.width=16, fig.height=16}
 up_ogs_by_sg
 ```
 
-### OG distribution across gene classes
-```{r}
+---
+
+## OG distribution across gene classes
+```{r, fig.width=16, fig.height=16}
 up_ogs_by_gc
 ```
 

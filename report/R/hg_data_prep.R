@@ -23,7 +23,6 @@ library(plotly)
 library(viridis)
 library(RColorBrewer)
 library(patchwork)
-library(ggtreeExtra)
 
 suppressPackageStartupMessages(suppressWarnings(source('R/homogroup-functions.R')))
 
@@ -34,19 +33,25 @@ suppressPackageStartupMessages(suppressWarnings(source('R/homogroup-functions.R'
 ################################################################################
 # Pipeline run inputs
 ################################################################################
-RESULT_DIR  <-  "/no_backup/asebe/dmckeown/test_br_array_vs_br/results/"
-SAMPLESHEET <- "../inputs/samplesheet1-10.csv"
-PIPELINE_RUN_NAME <- "test_br_array_vs_br" # we will use this later to identify runs if comparing them this way
+# for small test set
+#RESULT_DIR  <-  "/no_backup/asebe/dmckeown/test_br_array_vs_br/results/"
+#SAMPLESHEET <- "../inputs/samplesheet1-10.csv"
+#SPECIES_TREE <- '../../../../gzolotarov/projects/2021_TFevol/metazoan_tf_evol_2022/030523_phylogenies/data_annotation/species_tree.newick'
+#OGS_TSV_PATH_OF <- paste0(RESULT_DIR, "orthofinder_results/orthofinder_mcl/Orthogroups.tsv")
+#OGS_TSV_PATH_BR <- paste0(RESULT_DIR, "broccoli_array_results/broccoli/Orthogroups.tsv")
 
-#SPECIES_TREE <- paste0(RESULT_DIR, 'speciesrax/species_trees/inferred_species_tree.newick') # internal speciesrax tree will be here
+# for 155 with hmmsearch
+RESULT_DIR <- "/no_backup/asebe/dmckeown/test_155/results_of/"
+RESULT_DIR1 <- "/no_backup/asebe/dmckeown/test_155/results_of/"
+RESULT_DIR2 <- "/no_backup/asebe/dmckeown/test_155/results_br/"
+SAMPLESHEET <- "../inputs/samplesheet1-155.csv"
 SPECIES_TREE <- '../../../../gzolotarov/projects/2021_TFevol/metazoan_tf_evol_2022/030523_phylogenies/data_annotation/species_tree.newick'
+OGS_TSV_PATH_OF <- paste0(RESULT_DIR1, "orthofinder_results/orthofinder_mcl/Orthogroups.tsv")
+OGS_TSV_PATH_BR <- paste0(RESULT_DIR2, "broccoli_results/broccoli/Orthogroups.tsv")
 
 ################################################################################
 # Orthogroup caller specific stuff (subworkflow i.e. orthofinder, broccoli)
 ################################################################################
-
-OGS_TSV_PATH_OF <- paste0(RESULT_DIR, "orthofinder_results/orthofinder_mcl/Orthogroups.tsv")
-OGS_TSV_PATH_BR <- paste0(RESULT_DIR, "broccoli_array_results/broccoli/Orthogroups.tsv")
 
 LONG_PEP_PFAMSCAN_CSVS <- list.files("../../../../xgraubove/genomes/annotation_functional/", pattern = "*_long.pep.pfamscan.csv", full.names = TRUE)
 
