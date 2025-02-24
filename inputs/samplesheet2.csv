@@ -1,0 +1,4 @@
+gene_family_info,gene_family_name,hmm_dir
+example_data/genefam.csv,Myosin,example_data/hmms
+example_data/genefam.csv,Insulin,example_data/hmms
+example_data/genefam.csv,KH,example_data/hmms

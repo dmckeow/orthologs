@@ -1,121 +1,80 @@
+# Overview
+![pipeline_schema](report/presentations/images/pipeline_diagram_initial.svg)
+This pipeline is an implementation of ortholog callers (currently availble: [OrthoFinder](https://github.com/davidemms/OrthoFinder) and [Broccoli](https://github.com/rderelle/Broccoli)) in Nextflow.
+This pipeline applies a phylogeny-aware reconcilation of ortholog phylogeny (gene family trees) and a species tree using [GeneRax](https://github.com/BenoitMorel/GeneRax), followed by a final parsing of hierarchical orthogroups using [Possvm](https://github.com/xgrau/possvm-orthology)
+
 # Installation
-First, install conda and nextflow on your system
+First, install nextflow on your system. You will also need docker, singularity, OR apptainer installed.
 ```
-git clone --recurse-submodules https://github.com/dmckeow/crg-bcaortho.git
+git clone --recurse-submodules https://github.com/dmckeow/orthologs.git
 ```
 # Usage
 ```
-# Prepare your input fasta file directory by making symbolic soft links (ln -s) to your protein fastas (one file per genome) and place them all within a single directory
-# Running locally with example data provided
-nextflow run main.nf -profile local
-
-# Running using SLURM with example data provided
-sbatch submit_nf.sh main.nf -profile slurm
+main.nf -params-file inputs/params-example.json
 ```
-## Changing parameters, resources, etc
-The following files control the paramters for the pipeline:
-    * nextflow.config - parameters unlikely to be changed. If you change anything in this it will be the memory and cpu paramaters
-        Recommendation - create new profiles in this file (see local, slurm for examples) and load them from the command line to change memory and cpus (see below)
-    * params.config - parameters that are likely to be changed frequently, such as arguments for software, etc. It is loaded by the nextflow.config by default
-        Recommendation - copy this file with a memorable name and change the parameters within, then provide to command line with -c
-You can run the pipeline with a different config.file e.g.:
-```
-sbatch submit_nf.sh main.nf -profile slurm -c params-fullhmms.config
+All inputs are provided via a params file. See **inputs/params-example.json**.
+Defaults for all pipeline parameters are set in **nextflow.config**.
+Resource allocation for specific processes is controlled by **conf/base.config**.
+The tool-specific parameters can be controlled in **conf/modules.config**.
+If you wish to use this pipeline in a SLURM environment then see **conf/slurm.config**. You will need to alter this config to suit your system.
 
-```
+## Required inputs
+1. Samplesheet 1 (--samplesheet). See **inputs/samplesheet1.csv**. Three columns, csv delimited:  
+  * id = unique name for the sample or genome, letters, underscores, and digits ONLY,  
+  * fasta = path to the protein fasta,  
+  * taxonomy = any group to which the sample belongs, does not have to be taxonomy, it is simply to aid organisation.
+## Key optional inputs
+1. Samplesheet 2 (--search_params). *Only required if using the prefilter_hmmsearch option*. See **inputs/samplesheet2.csv**. Three columns, csv delimited:  
+  * gene_family_info = path to file corresponding to the hmmprofiles in hmm_dir. See **example_data/genefam.tsv**,  
+  * gene_family_name = gene family name that corresponds exactly to the class_name column of gene_family_info,  
+  * hmm_dir = path to directory containing hmmprofiles of gene families (corresponds exactly with class_name). See **example_data/hmms**.
+2. Species tree (--species_tree). **Recommended**, if not provided then [SpeciesRax](https://github.com/BenoitMorel/GeneRax) will be used to generate a species tree based on a subset of single copy orthologs identified by the pipeline. This tree will inform the final HOGs, so it may be more robust to provide a curated species tree.
 
-# Notes
-### How Broccoli, Possvm was incorporated in the pipeline
+## Other pipeline parameters
 
-```
-# Broccoli added as a git submodule
-git submodule add https://github.com/rderelle/Broccoli.git broccoli
+outdir = 'results/example' (location of your results)  
+workdir = 'work' (location of intermediate outputs)  
+runName = "${params.outdir.tokenize('/')}" (The pipeline names the run after the outdir)  
+mcl_inflation = 2.5 (For OrthoFinder. See its documentation. Larger MCL means larger orthologs.)  
+array_size = 1 (If using an HPC environment, set this to a reasonable number to allow job array submission. The number given will be the max number of jobs submitted at any one time. This will make the pipeline faster.)  
 
-# Broccoli submodule committed
-git add .gitmodules broccoli
-git commit -m "Add Broccoli as a submodule"
+### Orthogroup filtering options
 
-# possvm added as a git submodule
-git submodule add https://github.com/xgrau/possvm-orthology.git possvm
+min_num_seq_per_og         = 4 (The minimum number of proteins a gene family must contain)  
+min_num_spp_per_og         = 2 (The minimum number of species per gene family)  
+min_prop_spp_for_spptree   = 0.75 (The minimum number of taxonomic groups per family)  
+min_num_grp_per_og         = 1 (The maximum mean copy number per species)  
+max_copy_num_spp_tree      = 5 (The maximum mean copy number per species for use in species tree estimation)  
+max_copy_num_gene_trees    = 10 (The minimum proportion of species that a gene family must contain for use in species tree estimation)  
 
-# possvm submodule committed
-git add .gitmodules possvm
-git commit -m "Add possvm as a submodule"
+### Alignment method
+aligner                    = 'witch' (Options: witch, mafft)  
 
-# To update a submodule
-cd broccoli
-git pull origin master
-cd ..
-git add broccoli
-git commit -m "Update Broccoli submodule"
+### Tree Inference method
+tree_method                = 'fasttree' (options: fasttree, iqtree)  
+outgroups                  = 'none'  
 
+### Alignment trimmer options
+msa_trimmer                = 'none' (options: clipkit, cialign)  
+min_ungapped_length        = 20  
 
-# If the a submodule mysteriously disappears
-git config --file=.gitmodules --get-regexp path # check if the submodule still setup
-git submodule init
-git submodule update
-```
-### Broccoli
+### IQ-TREE options
+tree_model                 = 'LG+F+G4'  
+tree_model_pmsf            = 'none'  
 
-* Originally, we had the original Broccoli as a submodule
-* However, its speed scales very poorly due to the multithreaded step of building phylomes (DIAMOND and fasttree)
-* If these processes could be run as an array of independent jobs, then it would be so much faster
-* This must be addressed if we are to use Broccoli in this project
-First, I **forked** the repository of broccoli v1.2 https://github.com/rderelle/Broccoli.git to https://github.com/dmckeow/Broccoli.git then:
-```
-git submodule add https://github.com/dmckeow/Broccoli.git broccoli
-git submodule sync
-git submodule update --init --recursive --remote
-```
-See changelog within the submodule for changes I have made
-
-### Novel tree
-* Novel was forked to examine its implementation, which is somewhat similar to our goals
-* In the end, the only substantial code from it that ended up being useful was their generax modules
-First, I **forked** the repository of noveltree v1.0.2 https://github.com/Arcadia-Science/noveltree.git to https://github.com/dmckeow/noveltree.git then:
-```
-git submodule add https://github.com/dmckeow/noveltree.git noveltree
-git submodule sync
-git submodule update --init --recursive --remote
-```
-See changelog within the submodule for changes I have made
-
-
-### How much resources?
-## OrthoFinder
-
-## Broccoli
-8 threads & 0.1-0.5 Gb per eukaryotic genome (from Broccoli documentation)
-
-
-# Running with test dataset
-
-* Target gene families:
-    * Homeodomains
-    * Ets
-    * TFs
-    * zf-met
-    * zf-c2h2
-
-* Target genomes:
-    * **List of genomes to include:** /users/asebe/gzolotarov/projects/2021_TFevol/metazoan_tf_evol_2022/030523_phylogenies/species_list_annotation.txt
-    * **Genomes:** /users/asebe/xgraubove/genomes/data/*long.pep.fasta
-
-* HMM profies:
-    * From Grisha (has an extra field for domain name):
-        * **gene_family_info:** /users/asebe/gzolotarov/projects/2021_TFevol/metazoan_tf_evol_2022/results_phylogenies/gene_families_searchinfo.csv
-        * **hmm_dir:** /users/asebe/gzolotarov/projects/2021_TFevol/metazoan_tf_evol_2022/results_phylogenies/hmms
-    * From Xavi (larger and newer dataset):
-        * **gene_family_info:** /users/asebe/xgraubove/climate-adaptation-corals-ops/results_annotation/data/gene_families_searchinfo.csv
-        * **hmm_dir:** /users/asebe/xgraubove/climate-adaptation-corals-ops/results_annotation/data/hmms
+### Workflow control options
+run.prefilter_hmmsearch    = true (If true, runs hmmscan against the hmmprofiles specified by search_params (samplesheet 2). Otherwise it runs on the whole fastas provided)  
+run.orthofinder            = true (Pipeline will run each ortholog caller in parallel)  
+run.broccoli               = true  
+run.broccoli_array         = false (If using an HPC environment, use this instead of broccoli to speed broccoli up)  
+    
 
 
 
-# New ioo pipeline
-Many goals:
-* Use modules inspired by noveltree
-* restructure subworkflows
-  * search is become a separate workflow that is part of an optional prefilter process
-```
-nextflow run ioo-main.nf -profile local -c ioo-nextflow.config -params-file ioo-params.json
-```
+
+
+
+
+
+
+

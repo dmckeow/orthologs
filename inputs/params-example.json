@@ -1,0 +1,17 @@
+{
+    "samplesheet": "inputs/samplesheet1.csv",
+    "search_params": "inputs/samplesheet2.csv",
+    "outdir": "results",
+    "mcl_inflation": 2.5,
+    "min_num_spp_per_og": 4,
+    "min_num_grp_per_og": 2,
+    "max_copy_num_spp_tree": 3,
+    "max_copy_num_gene_trees": 5,
+    "tree_model": "LG+F+G4",
+    "run": {
+        "prefilter_hmmsearch": true,
+        "orthofinder": true,
+        "broccoli": true,
+        "broccoli_array": false
+    }
+}

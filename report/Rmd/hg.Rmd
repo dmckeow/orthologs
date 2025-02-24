@@ -1,5 +1,5 @@
 ---
-title: "Orthology Results: Assessing the initial orthogroups (homogroups) 155 metazoans"
+title: "Orthology Results"
 author: "Dean Mckeown"
 date: "`r Sys.Date()`"
 output: 

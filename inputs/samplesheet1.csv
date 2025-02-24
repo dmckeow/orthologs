@@ -1,0 +1,5 @@
+id,fasta,taxonomy
+Aque,example_data/Aque_long.pep.fasta,Porifera
+Beraby,example_data/Beraby_long.pep.fasta,Ctenophora
+Berova,example_data/Berova_long.pep.fasta,Ctenophora
+Bolinf,example_data/Bolinf_long.pep.fasta,Ctenophora
