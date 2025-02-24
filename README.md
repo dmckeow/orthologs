@@ -1,7 +1,8 @@
 # Overview
-![pipeline_schema](report/presentations/images/pipeline_diagram_initial.svg)
 This pipeline is an implementation of ortholog callers (currently availble: [OrthoFinder](https://github.com/davidemms/OrthoFinder) and [Broccoli](https://github.com/rderelle/Broccoli)) in Nextflow.
 This pipeline applies a phylogeny-aware reconcilation of ortholog phylogeny (gene family trees) and a species tree using [GeneRax](https://github.com/BenoitMorel/GeneRax), followed by a final parsing of hierarchical orthogroups using [Possvm](https://github.com/xgrau/possvm-orthology)
+
+<img src="report/presentations/images/pipeline_diagram_initial.svg" alt="drawing" width="50%"/>
 
 # Installation
 First, install nextflow on your system. You will also need docker, singularity, OR apptainer installed.

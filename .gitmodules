@@ -1,6 +1,3 @@
-[submodule "noveltree"]
-	path = noveltree
-	url = https://github.com/dmckeow/noveltree.git
 [submodule "possvm"]
 	path = possvm
 	url = https://github.com/xgrau/possvm-orthology.git
